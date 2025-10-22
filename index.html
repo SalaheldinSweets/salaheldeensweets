@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الصفحة الرئيسية | مصنع صلاح الدين</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50; /* أخضر */
+            --secondary-color: #007bff;
+            --bg-light: #f9f9f9;
+            --surface-color: #ffffff;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* حاوية الصفحة الرئيسية */
+        .main-container {
+            background-color: var(--surface-color);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 500px; 
+            text-align: center;
+            border: 1px solid #eee;
+        }
+
+        /* عنوان المصنع */
+        .header-title h1 {
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            font-size: 2em;
+            font-weight: 800;
+        }
+
+        /* اسم الإدارة */
+        .header-title p {
+            color: #555;
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        /* قائمة الوظائف */
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 40px;
+        }
+
+        .menu-list li {
+            margin-bottom: 15px;
+        }
+
+        .menu-list a {
+            display: block;
+            padding: 18px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 700;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+        }
+
+        .menu-list a:hover {
+            background-color: #43a047;
+            transform: translateY(-2px);
+        }
+
+        /* أيقونات بسيطة */
+        .menu-list a span {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+
+    <div class="header-title">
+        <h1>مصنع صلاح الدين للحلويات 🏭</h1>
+        <p>إدارة: أحمد صلاح الدين</p>
+    </div>
+
+    <ul class="menu-list">
+        <li>
+            <a href="outgoings.html">
+                <span>💰</span> المصروفات
+            </a>
+        </li>
+        <li>
+            <a href="#">
+                <span>📦</span> الإنتاج
+            </a>
+        </li>
+        <li>
+            <a href="#">
+                <span>📈</span> المبيعات
+            </a>
+        </li>
+    </ul>
+
+</div>
+
+</body>
+</html>
