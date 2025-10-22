@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المصروفات - واجهة بسيطة</title>
+    <style>
+        /* 1. الأنماط الأساسية والجمالية */
+        :root {
+            --primary-color: #4CAF50; /* أخضر مريح */
+            --secondary-color: #007bff;
+            --danger-color: #d9534f;
+            --bg-light: #f9f9f9;
+            --surface-color: #ffffff;
+            --border-radius: 12px;
+            --input-radius: 8px;
+        }
+
+        body {
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* شريط العنوان المركزي */
+        .page-header {
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .page-header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            color: #333;
+            font-weight: 700;
+        }
+
+        /* زر المصروف الطارئ (المربع الصغير) */
+        .emergency-button {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s;
+        }
+        .emergency-button:hover {
+            background-color: #c9302c;
+        }
+
+        /* حاوية النماذج (بسيطة وناعمة) */
+        .expense-form-container {
+            background-color: var(--surface-color);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* ظل ناعم جداً */
+            width: 100%;
+            max-width: 550px; 
+            margin-bottom: 25px;
+            border: 1px solid #eee;
+        }
+
+        /* الحقول والإدخال */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0; /* حدود فاتحة */
+            border-radius: var(--input-radius);
+            box-sizing: border-box;
+            font-size: 1em;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+            outline: none;
+        }
+
+        /* مدخل التاريخ والوقت التفاعلي */
+        .datetime-input-wrapper {
+            position: relative;
+            background-color: #f7f7f7;
+            border-radius: var(--input-radius);
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+        }
+        .datetime-input-wrapper:hover {
+            background-color: #eeeeee;
+        }
+
+        .datetime-input-wrapper input {
+            position: absolute; /* إخفاء حقول الإدخال الأساسية خلف الحقل التفاعلي */
+            opacity: 0;
+            cursor: pointer;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* تصميم زرار الحفظ */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: var(--input-radius);
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .btn-save {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+        .btn-save:hover {
+            background-color: #43a047;
+        }
+
+        /* النافذة المنبثقة للنجاح وعلامة الصح */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 2000; /* قيمة عالية جداً */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5); 
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 350px;
+        }
+        .checkmark-circle {
+             /* أنماط علامة الصح المتحركة (تم الاحتفاظ بها) */
+            width: 80px;
+            height: 80px;
+            position: relative;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            border: 4px solid var(--primary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: scaleIn 0.5s ease-in-out;
+        }
+        .checkmark {
+            width: 40px;
+            height: 20px;
+            border: 4px solid var(--primary-color);
+            border-top: none;
+            border-right: none;
+            transform: rotate(-45deg);
+            opacity: 0;
+            animation: checkmarkDraw 0.5s ease-in-out 0.5s forwards;
+        }
+        @keyframes scaleIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        @keyframes checkmarkDraw { 0% { width: 0; height: 0; opacity: 1; } 50% { width: 40px; height: 0; opacity: 1; } 100% { width: 40px; height: 20px; opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <button class="emergency-button" onclick="openEmergencyModal()" title="مصروف طارئ">
+        🚨
+    </button>
+    <h1>المصروفات</h1>
+</div>
+
+<div id="successModal" class="modal">
+    <div class="modal-content">
+        <div class="checkmark-circle">
+            <div class="checkmark"></div>
+        </div>
+        <h3>تم الحفظ بنجاح!</h3>
+        <p>تم تسجيل المصروف في النظام.</p>
+        <p id="additionalSuccessMessage" style="color: #ff9800; font-weight: 600;"></p>
+        <button onclick="closeModal('successModal')" class="btn btn-save" style="margin-top: 15px;">موافق</button>
+    </div>
+</div>
+
+<div id="emergencyInputModal" class="modal">
+    <div class="modal-content">
+        <span onclick="closeModal('emergencyInputModal')" style="float:left; cursor:pointer; font-size:1.5em; color:#888;">&times;</span>
+        <h3 style="color:var(--danger-color);">إدخال طارئ</h3>
+        <form id="quickEmergencyForm">
+
+            <div class="form-group">
+                <label for="quickAmount">المبلغ (اختياري):</label>
+                <input type="tel" id="quickAmount" name="quickAmount" placeholder="0.00" oninput="formatNumber(this)">
+                <span class="amount-unit">جنيه سوداني</span>
+                <div class="alert-message" id="quickAmountAlert"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="quickReminder">ملاحظة/تذكير: <span style="color:red;">*</span></label>
+                <textarea id="quickReminder" name="quickReminder" rows="2" placeholder="سبب المصروف (إجباري)" required></textarea>
+                <div class="alert-message" id="quickReminderAlert"></div>
+            </div>
+            
+            <div class="actions" style="justify-content: flex-end;">
+                <button type="submit" class="btn" style="background-color: var(--danger-color);">💾 حفظ سريع</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div class="expense-form-container main-container">
+    <h2>إدخال جديد</h2>
+
+    <form id="expenseForm">
+
+        <div class="form-group" data-group="datetime">
+            <label>التاريخ والوقت:</label>
+            <div class="datetime-input-wrapper" onclick="document.getElementById('date').click()">
+                <span id="displayDateTime">التاريخ والساعة التلقائيين</span>
+                
+                <input type="date" id="date" name="date" required onchange="handleDateChange(this.value)" style="display:none;">
+                <input type="time" id="time" name="time" step="1" required style="display:none;" onchange="updateDisplay()">
+            </div>
+        </div>
+
+
+        <div class="form-group" data-group="type">
+            <label for="expenseType">نوع المصروف: <span style="color:red;">*</span></label>
+            <select id="expenseType" name="expenseType" required onchange="handleExpenseTypeChange()">
+                <option value="" disabled selected>-- اختر نوعاً --</option>
+                <option value="raw_materials">📦 المواد الخام</option>
+                <option value="labor_wages">👷 أجور العمال</option>
+                <option value="factory_rent">🏠 إيجار المصنع</option>
+                <option value="electricity_water">⚡️ الكهرباء والمياه</option>
+                <option value="general_maintenance">🛠️ صيانة عامة</option>
+                <option value="marketing">📢 تسويق</option>
+                <option value="transfer">🚚 الترحيل</option>
+                <option value="house_expenses">🏡 المنزل (نفقات)</option>
+                <option value="asset_purchase">💎 شراء أصول (إستثمار)</option>
+            </select>
+            <div class="alert-message" id="typeAlert"></div>
+        </div>
+
+        <div class="form-group" data-group="detail">
+            <label for="expenseDetail">تفصيل المصروف: <span style="color:red;">*</span></label>
+            <div id="detailFieldContainer" class="dynamic-field-container">
+                </div>
+            <div class="alert-message" id="detailAlert"></div>
+        </div>
+
+        <div class="form-group" data-group="amount">
+            <label for="amountInput">المبلغ: <span style="color:red;">*</span></label>
+            <input type="tel" id="amountInput" name="amountInput" value="" placeholder="0.00" required oninput="formatNumber(this); validateAmountLogic(this)">
+            <input type="hidden" id="amount" name="amount" value="0"> <span class="amount-unit">جنيه سوداني</span>
+            <div class="alert-message" id="amountAlert"></div>
+        </div>
+
+        <div class="form-group" data-group="payment">
+            <label for="paymentMethod">طريقة الدفع:</label>
+            <select id="paymentMethod" name="paymentMethod">
+                <option value="cash" selected>نقد (كاش)</option>
+                <option value="bankak">بنكك</option>
+            </select>
+        </div>
+
+        <div class="form-group" data-group="notes">
+            <label for="notes">ملاحظات (اختياري):</label>
+            <textarea id="notes" name="notes" rows="3" placeholder="ملاحظات إضافية حول المصروف"></textarea>
+        </div>
+
+        <div class="actions" style="justify-content: flex-end;">
+            <button type="submit" class="btn btn-save">💾 حفظ المصروف</button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    // ------------------------------------------------------------------
+    // الجافاسكريبت (JavaScript) للتفاعلات الذكية والتحسينات
+    // ------------------------------------------------------------------
+
+    // متغير لتتبع نوع الإرسال الأخير (جديد)
+    let lastSubmissionType = ''; 
+
+    // 1. البيانات الثابتة والقوائم الديناميكية
+    
+    // قائمة العمال
+    const WORKERS = [
+        { value: 'muayyad', text: 'مؤيد' },
+        { value: 'mohammad', text: 'محمد أبو سريعة' },
+        { value: 'krom', text: 'كروم' }
+    ];
+    
+    // قائمة الشهور (جديدة للإيجار)
+    const MONTHS = [
+        { value: 'january', text: 'يناير' },
+        { value: 'february', text: 'فبراير' },
+        { value: 'march', text: 'مارس' },
+        { value: 'april', text: 'أبريل' },
+        { value: 'may', text: 'مايو' },
+        { value: 'june', text: 'يونيو' },
+        { value: 'july', text: 'يوليو' },
+        { value: 'august', text: 'أغسطس' },
+        { value: 'september', text: 'سبتمبر' },
+        { value: 'october', text: 'أكتوبر' },
+        { value: 'november', text: 'نوفمبر' },
+        { value: 'december', text: 'ديسمبر' }
+    ];
+    
+    // تفاصيل الحقول الديناميكية حسب نوع المصروف
+    const dynamicOptions = {
+        'raw_materials': [
+            { id: 'oil', text: 'زيت 17 لتر:', unit: 'صفيحة' },
+            { id: 'flour_halwani', text: 'دقيق الحلواني:', unit: 'شوال (25 كجم)' },
+            { id: 'flour_siga', text: 'دقيق سيقا الأخضر:', unit: 'باكت (10 كجم)' },
+            { id: 'flour_normal', text: 'دقيق عادي:', unit: 'شوال' },
+            { id: 'baking_powder', text: 'باكنج بودر:', unit: 'كيلو' },
+            { id: 'konafa', text: 'كنافة:', unit: 'كيلو' }
+        ],
+        
+        // أجور العمال: تحتوي على العمال فقط
+        'labor_wages': WORKERS, 
+        
+        // إيجار المصنع: قائمة الشهور
+        'factory_rent': { type: 'select', options: MONTHS, placeholder: 'اختر شهر الإيجار' }, 
+        
+        // ترحيل: قائمة فرعية
+        'transfer': [
+            { value: 'fuel', text: 'بنزين' },
+            { value: 'maintenance', text: 'صيانة' },
+            { value: 'rent', text: 'إيجار ترحيل' }
+        ],
+        
+        // المنزل (نفقات): حقل نص حر
+        'house_expenses': { type: 'text_input', placeholder: 'تفصيل نفقات المنزل (إجباري)' },
+        
+        // شراء الأصول (إستثمار): حقل نص حر
+        'asset_purchase': { type: 'text_input', placeholder: 'تفصيل عملية شراء الأصل (مثال: شراء خلاط جديد)' },
+        
+        'general_maintenance': { type: 'text_input', placeholder: 'وصف عمل الصيانة' },
+        'special_expenses': { type: 'text_input', placeholder: 'وصف دقيق للمصروف الخاص' }
+    };
+
+    const expenseLimits = { 
+        'factory_rent': 150000,
+        'electricity_water': 50000,
+        'marketing': 30000
+    };
+    
+    let draftExpenses = []; 
+
+
+    // 2. دوال مساعدة لإدارة التاريخ والوقت
+    
+    // دالة الحصول على الوقت الحالي (HH:MM:SS)
+    function getCurrentTime() {
+        const now = new Date();
+        const hour = String(now.getHours()).padStart(2, '0');
+        const minute = String(now.getMinutes()).padStart(2, '0');
+        const second = String(now.getSeconds()).padStart(2, '0');
+        return `${hour}:${minute}:${second}`; 
+    }
+
+    // دالة لإنشاء التاريخ والوقت الكاملين للحفظ
+    function getFullDateTime(datePart, timePart) {
+        return `${datePart} ${timePart}`; 
+    }
+
+    // تحديث العرض النصي للتاريخ والوقت
+    function updateDisplay() {
+        const dateInput = document.getElementById('date');
+        const timeInput = document.getElementById('time');
+        const display = document.getElementById('displayDateTime');
+
+        if (dateInput.value && timeInput.value) {
+            display.textContent = `${dateInput.value} - ${timeInput.value}`;
+        } else if (dateInput.value) {
+            display.textContent = `${dateInput.value} - اختر الوقت...`;
+        } else {
+            // القيمة الافتراضية
+            const today = new Date().toISOString().split('T')[0];
+            display.textContent = `${today} ${getCurrentTime().slice(0, 5)}`;
+            dateInput.value = today;
+            timeInput.value = getCurrentTime().slice(0, 5); // فقط الساعة والدقيقة للعرض الأولي
+        }
+    }
+    
+    // عند اختيار التاريخ، نفتح حقل الوقت
+    function handleDateChange(dateValue) {
+        document.getElementById('time').style.display = 'block'; // نظهر حقل الوقت
+        document.getElementById('time').value = getCurrentTime().slice(0, 5); // نضع الوقت الحالي (ساعة ودقيقة)
+        document.getElementById('time').focus(); 
+        updateDisplay();
+    }
+    
+    // دالة مساعدة: الحصول على اليوم فقط للمقارنة (YYYY-MM-DD)
+    function getDatePart(dateTimeStr) {
+        return dateTimeStr.split(' ')[0];
+    }
+    
+    // 3. دالة تنسيق الأرقام (إضافة فاصلة كل 3 أصفار وتقييد الإدخال)
+    function formatNumber(input) {
+        // 1. التصفية: إزالة أي حرف ليس رقماً أو فاصلة عشرية (نقطة)
+        let rawValue = input.value.replace(/[^0-9.]/g, ''); 
+        
+        // 2. معالجة الفاصلة العشرية لضمان وجود فاصلة واحدة فقط
+        const parts = rawValue.split('.');
+        if (parts.length > 2) {
+            // إذا كان هناك أكثر من نقطة (فاصلة عشرية)، نأخذ الجزء الأول ونضيف له النقطة والجزء الثاني فقط
+            rawValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // إزالة الفواصل القديمة قبل إعادة التنسيق
+        const rawDigits = rawValue.replace(/,/g, ''); 
+
+        if (isNaN(parseFloat(rawDigits)) || rawDigits.trim() === '') {
+            // إذا كان الحقل هو حقل المبلغ الرئيسي، فقم بتعيين القيمة المخفية إلى 0
+            if (input.id === 'amountInput') document.getElementById('amount').value = 0;
+            input.value = rawValue; // نحافظ على الأرقام والنقاط المفلترة
+            return;
+        }
+
+        // فصل الجزء الصحيح عن الجزء العشري
+        const formatParts = rawDigits.split('.');
+        
+        // تنسيق الجزء الصحيح (إضافة الفواصل كل 3 أرقام)
+        formatParts[0] = formatParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        
+        // إعادة تجميع الرقم وعرضه
+        input.value = formatParts.join('.');
+        
+        // حفظ القيمة الرقمية النظيفة (بدون فواصل العرض) في حقل الـ hidden
+        if (input.id === 'amountInput') {
+             document.getElementById('amount').value = parseFloat(rawDigits);
+        }
+        
+        // بعد تعديل الإدخال، نتحقق من الحدود والقيم
+        validateAmountLogic(input);
+    }
+    
+    // 4. دالة التحقق من المبلغ (حدود القيمة)
+    function validateAmountLogic(input) {
+        const amount = parseFloat(document.getElementById('amount').value);
+        const type = document.getElementById('expenseType').value;
+        const alertDiv = document.getElementById('amountAlert');
+
+        alertDiv.style.display = 'none';
+        alertDiv.textContent = '';
+
+        if (amount <= 0) {
+            alertDiv.textContent = 'المبلغ يجب أن يكون أكبر من صفر.';
+            alertDiv.style.display = 'block';
+            return;
+        }
+        
+        if (expenseLimits[type] && amount > expenseLimits[type]) {
+            alertDiv.textContent = `⚠️ تنبيه: تجاوز الحد الطبيعي. (${expenseLimits[type].toLocaleString()}).`;
+            alertDiv.style.display = 'block';
+        }
+    }
+
+    // 5. دوال النافذة المنبثقة (Modal)
+    function showSuccessModal() {
+        const additionalMessageElement = document.getElementById('additionalSuccessMessage');
+        
+        // تصفير الرسالة أولاً
+        additionalMessageElement.textContent = ''; 
+        
+        // إضافة رسالة التذكير إذا كان الإدخال طارئًا (التعديل الجديد)
+        if (lastSubmissionType === 'emergency') {
+            additionalMessageElement.textContent = "سيتم تذكيرك لاحقًا لتسجيل التفاصيل";
+        }
+
+        document.getElementById('successModal').style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        lastSubmissionType = ''; // تصفير النوع بعد الإغلاق
+    }
+    
+    function openEmergencyModal() {
+        // تهيئة النموذج عند الفتح
+        document.getElementById('quickAmount').value = '';
+        document.getElementById('quickReminder').value = '';
+        document.getElementById('quickAmountAlert').style.display = 'none';
+        document.getElementById('quickReminderAlert').style.display = 'none';
+
+        document.getElementById('emergencyInputModal').style.display = 'flex';
+    }
+
+    // 6. دالة التحقق من التكرار
+    function checkDuplicate(dateToCompare, type, detail) {
+        const dayToCompare = getDatePart(dateToCompare); 
+        const isDuplicate = draftExpenses.find(expense => 
+            getDatePart(expense.fullDateTime) === dayToCompare && 
+            expense.type === type && 
+            expense.detail === detail
+        );
+        return isDuplicate; 
+    }
+
+    function showDuplicateDraft(draft) {
+        alert(`تنبيه تكرار: مصروف مشابه في ${getDatePart(draft.fullDateTime)}. \nالنوع: ${draft.type} \nالتفصيل: ${draft.detail} \nالمبلغ: ${draft.amount.toLocaleString()}.`);
+    }
+
+    // 7. التهيئة عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', () => {
+        updateDisplay();
+        handleExpenseTypeChange();
+    });
+    
+    // دالة مساعدة: لتحديث وحدة المواد الخام
+    function updateRawMaterialDisplay() {
+        const materialSelect = document.getElementById('expenseDetailMaterial');
+        const unitDisplay = document.getElementById('quantityUnitDisplay');
+        const selectedOption = materialSelect.options[materialSelect.selectedIndex];
+        
+        if (selectedOption && selectedOption.value !== "") {
+            unitDisplay.textContent = selectedOption.getAttribute('data-unit');
+        } else {
+            unitDisplay.textContent = 'الوحدة';
+        }
+    }
+
+
+    // 8. دالة التفاعل الذكي لتغيير نوع المصروف
+    function handleExpenseTypeChange() {
+        const typeSelect = document.getElementById('expenseType');
+        const detailContainer = document.getElementById('detailFieldContainer');
+        const selectedType = typeSelect.value;
+        const options = dynamicOptions[selectedType];
+        
+        detailContainer.innerHTML = ''; // تنظيف الحاوية
+
+        // **منطق خاص للمواد الخام (حقلين)**
+        if (selectedType === 'raw_materials') {
+            
+            // إضافة حقل القائمة المنسدلة
+            const select = document.createElement('select');
+            select.id = 'expenseDetailMaterial';
+            select.name = 'expenseDetailMaterial';
+            select.required = true;
+            select.style.marginBottom = '10px';
+            select.style.width = '100%';
+            select.onchange = updateRawMaterialDisplay;
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.textContent = "-- اختر مادة خام --";
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            select.appendChild(defaultOption);
+
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.id;
+                option.textContent = opt.text;
+                option.setAttribute('data-unit', opt.unit);
+                select.appendChild(option);
+            });
+            detailContainer.appendChild(select);
+            
+            // حاوية لحقل الكمية
+            const quantityWrapper = document.createElement('div');
+            quantityWrapper.style.display = 'flex';
+            quantityWrapper.style.gap = '10px';
+
+            const inputQuantity = document.createElement('input');
+            inputQuantity.type = 'number';
+            inputQuantity.id = 'expenseDetailQuantity';
+            inputQuantity.name = 'expenseDetailQuantity';
+            inputQuantity.placeholder = 'أدخل الكمية';
+            inputQuantity.required = true;
+            inputQuantity.min = '1';
+            inputQuantity.style.flexGrow = '1';
+            
+            const unitSpan = document.createElement('span');
+            unitSpan.id = 'quantityUnitDisplay';
+            unitSpan.textContent = 'الوحدة';
+            unitSpan.style.padding = '12px 15px';
+            unitSpan.style.backgroundColor = '#eee';
+            unitSpan.style.borderRadius = '8px';
+            unitSpan.style.whiteSpace = 'nowrap';
+            unitSpan.style.display = 'flex';
+            unitSpan.style.alignItems = 'center';
+
+            quantityWrapper.appendChild(inputQuantity);
+            quantityWrapper.appendChild(unitSpan);
+            
+            detailContainer.appendChild(quantityWrapper);
+
+            return; // إنهاء الدالة بعد بناء حقول المواد الخام
+        }
+
+
+        // **منطق بناء الحقول الأخرى**
+        if (options) {
+             if (Array.isArray(options)) {
+                // إنشاء Dropdown عادي (لـ labor_wages والترحيل)
+                const select = document.createElement('select');
+                select.id = 'expenseDetail';
+                select.name = 'expenseDetail';
+                select.required = true;
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = "";
+                defaultOption.textContent = "-- اختر تفصيلاً --";
+                defaultOption.disabled = true;
+                defaultOption.selected = true;
+                select.appendChild(defaultOption);
+
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    select.appendChild(option);
+                });
+
+                detailContainer.appendChild(select);
+                
+            } else if (options.type === 'select') {
+                 // إنشاء Dropdown (مثل شهور الإيجار)
+                const select = document.createElement('select');
+                select.id = 'expenseDetail';
+                select.name = 'expenseDetail';
+                select.required = true;
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = "";
+                defaultOption.textContent = options.placeholder;
+                defaultOption.disabled = true;
+                defaultOption.selected = true;
+                select.appendChild(defaultOption);
+
+                options.options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    select.appendChild(option);
+                });
+
+                detailContainer.appendChild(select);
+                
+            } else if (options.type === 'text_input') {
+                // إنشاء حقل نص حر (لـ house_expenses، asset_purchase، إلخ)
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'expenseDetailText';
+                input.name = 'expenseDetailText';
+                input.placeholder = options.placeholder;
+                input.required = true;
+
+                detailContainer.appendChild(input);
+            }
+        }
+    }
+
+
+    // 9. منطق حفظ النموذج الأساسي
+    document.getElementById('expenseForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // التحقق من التاريخ والوقت
+        if (!document.getElementById('date').value || !document.getElementById('time').value) {
+            alert("يرجى اختيار التاريخ والوقت.");
+            return;
+        }
+
+        // 1. جمع البيانات وتحديد التفصيل والقيمة الرقمية
+        const datePart = document.getElementById('date').value;
+        const timePart = document.getElementById('time').value + ':00'; // إضافة الثواني التلقائية
+        const fullSaveDateTime = getFullDateTime(datePart, timePart);
+
+        const type = document.getElementById('expenseType').value;
+        const amount = parseFloat(document.getElementById('amount').value); 
+        
+        let detailValue;
+        
+        // **المنطق لتحديد قيمة التفصيل**
+        if (type === 'raw_materials') {
+            const material = document.getElementById('expenseDetailMaterial').options[document.getElementById('expenseDetailMaterial').selectedIndex].textContent;
+            const quantity = document.getElementById('expenseDetailQuantity').value;
+            const unit = document.getElementById('quantityUnitDisplay').textContent;
+            detailValue = `${material} - الكمية: ${quantity} ${unit}`;
+        } else if (document.getElementById('expenseDetailText')) {
+            detailValue = document.getElementById('expenseDetailText').value;
+        } else if (document.getElementById('expenseDetail')) {
+            detailValue = document.getElementById('expenseDetail').options[document.getElementById('expenseDetail').selectedIndex].textContent;
+        } else {
+            detailValue = 'غير محدد';
+        }
+
+        // 2. التحقق من التكرار
+        const duplicateDraft = checkDuplicate(fullSaveDateTime, type, detailValue); 
+
+        if (duplicateDraft) {
+            document.getElementById('typeAlert').innerHTML = `
+                لقد أدخلت مصروفاً مشابهاً في نفس اليوم! 
+                <button type="button" class="btn" style="background-color:#ffc107; color:#333; margin-right: 10px; font-size:0.9em;" onclick="showDuplicateDraft(${JSON.stringify(duplicateDraft).replace(/"/g, `'`)})">عرض المسودة المكررة</button>
+            `;
+            document.getElementById('typeAlert').style.display = 'block';
+            return; 
+        }
+        
+        // 3. الحفظ وإظهار Modal النجاح
+        draftExpenses.push({ date: datePart, fullDateTime: fullSaveDateTime, type: type, detail: detailValue, amount: amount, id: Date.now() });
+
+        lastSubmissionType = 'normal'; // تعيين نوع الإرسال
+        showSuccessModal(); 
+        
+        // إفراغ النموذج وإعادة تعيين التاريخ والوقت
+        this.reset();
+        updateDisplay();
+        document.getElementById('time').style.display = 'none'; // إخفاء حقل الوقت بعد الإرسال
+        document.getElementById('amountInput').value = '';
+        handleExpenseTypeChange(); // لإعادة بناء حقل التفصيل
+    });
+
+
+    // 10. منطق حفظ نموذج المصروف الطارئ السريع
+    document.getElementById('quickEmergencyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const rawAmount = document.getElementById('quickAmount').value.replace(/,/g, '');
+        const amountToSave = (rawAmount === "" || isNaN(parseFloat(rawAmount))) ? 0 : parseFloat(rawAmount);
+        
+        const datePart = new Date().toISOString().split('T')[0];
+        const timePart = getCurrentTime();
+        const fullSaveDateTime = getFullDateTime(datePart, timePart); 
+
+        const type = 'emergency';
+        const detailValue = document.getElementById('quickReminder').value.trim();
+        
+        // التحقق من التكرار
+        const duplicateDraft = checkDuplicate(fullSaveDateTime, type, detailValue);
+
+        if (duplicateDraft) {
+             document.getElementById('quickReminderAlert').innerHTML = `
+                لقد أدخلت مصروفاً طارئاً مشابهاً في نفس اليوم! 
+                <button type="button" class="btn" style="background-color:#ffc107; color:#333; margin-right: 10px; font-size:0.9em;" onclick="showDuplicateDraft(${JSON.stringify(duplicateDraft).replace(/"/g, `'`)})">عرض المسودة المكررة</button>
+            `;
+            document.getElementById('quickReminderAlert').style.display = 'block';
+            return;
+        }
+
+        // الحفظ وإظهار Modal النجاح
+        draftExpenses.push({ date: datePart, fullDateTime: fullSaveDateTime, type: type, detail: detailValue, amount: amountToSave, id: Date.now() });
+
+        lastSubmissionType = 'emergency'; // تعيين نوع الإرسال
+        showSuccessModal();
+        closeModal('emergencyInputModal');
+
+        this.reset();
+    });
+</script>
+
+</body>
+</html>
