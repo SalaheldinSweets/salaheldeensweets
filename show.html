@@ -1,1 +1,555 @@
-h
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل المصروفات - واجهة القراءة الأنيقة (بدون فهارس مركبة)</title>
+    <style>
+        /* 1. الأنماط الأساسية والجمالية */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #4CAF50;
+            --danger-color: #d9534f;
+            --text-color: #333;
+            --bg-light: #f4f7f6;
+            --surface-color: #ffffff;
+            --border-radius: 12px;
+            --input-radius: 8px;
+            --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+
+        /* شريط العنوان المركزي */
+        .page-header {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .page-header h1 {
+            margin: 0;
+            font-size: 2em;
+            color: var(--primary-color);
+            font-weight: 800;
+        }
+
+        /* زر العودة/التسجيل */
+        .action-button {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: var(--input-radius);
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s;
+        }
+        .action-button:hover {
+            background-color: #43a047;
+        }
+
+        /* ملخص الإجمالي (في الأعلى) */
+        .summary-card {
+            background-color: var(--surface-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 25px;
+            text-align: center;
+            border-right: 5px solid var(--primary-color);
+        }
+        .summary-card h2 {
+            margin-top: 0;
+            font-size: 1.2em;
+            color: #555;
+            font-weight: 700;
+        }
+        .summary-card p {
+            font-size: 2.2em;
+            font-weight: 800;
+            color: var(--danger-color);
+            margin: 5px 0 0;
+        }
+
+
+        /* حاوية الأدوات (الفلاتر والتجميع) */
+        .tools-container {
+            background-color: var(--surface-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 900px; 
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: space-between;
+        }
+        
+        .tools-container select, .tools-container input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--input-radius);
+            font-size: 1em;
+            flex-grow: 1;
+            min-width: 150px;
+            background-color: #fcfcfc;
+        }
+        
+        .btn-filter {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            padding: 10px 15px;
+            border: none;
+            border-radius: var(--input-radius);
+        }
+        .btn-filter:hover {
+            background-color: #0056b3;
+        }
+
+        /* 2. أنماط عرض قائمة المصروفات */
+        .expenses-list-container {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 10px;
+        }
+
+        /* مجموعة التجميع (اليوم، النوع، أو الإجمالي) */
+        .group-card {
+            margin-bottom: 25px;
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 20px;
+        }
+
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 0 15px 0;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .group-header h3 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .group-total {
+            font-size: 1.2em;
+            font-weight: 800;
+            color: var(--danger-color);
+        }
+
+        /* عنصر المصروف الواحد (استخدام نظام البطاقات) */
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-top: 10px;
+            background-color: #fcfcfc;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .expense-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .expense-details {
+            flex-grow: 1;
+        }
+
+        .expense-details strong {
+            display: block;
+            font-size: 1em;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .expense-meta {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .expense-meta span {
+            margin-left: 15px;
+        }
+
+        .expense-amount {
+            font-size: 1.3em;
+            font-weight: 800;
+            color: var(--danger-color);
+            white-space: nowrap;
+        }
+        
+        /* رسائل الحالة (تحميل، لا توجد بيانات) */
+        .status-message {
+            text-align: center;
+            padding: 40px;
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-top: 20px;
+            color: #555;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <button class="action-button" onclick="window.location.href='index.html'" title="العودة للتسجيل">
+        ➕
+    </button>
+    <h1>سجل المصروفات</h1>
+</div>
+
+<div id="summaryCard" class="summary-card" style="display:none;">
+    <h2 id="totalSummaryTitle">إجمالي المصروفات الكلية</h2>
+    <p id="totalSummaryAmount">0.00 جنيه سوداني</p>
+</div>
+
+
+<div class="tools-container">
+    
+    <select id="groupBy" onchange="loadExpenses()" style="flex-grow: 1; min-width: 180px;">
+        <option value="datePart" selected>تجميع حسب التاريخ</option>
+        <option value="type">تجميع حسب النوع</option>
+        <option value="none">عرض عام (بدون تجميع)</option>
+    </select>
+    
+    <select id="filterType" onchange="loadExpenses()" style="flex-grow: 1; min-width: 180px;">
+        <option value="">جميع الأنواع</option>
+        <option value="raw_materials">📦 المواد الخام</option>
+        <option value="labor_wages">👷 أجور العمال</option>
+        <option value="factory_rent">🏠 إيجار المصنع</option>
+        <option value="electricity_water">⚡️ الكهرباء والمياه</option>
+        <option value="general_maintenance">🛠️ صيانة عامة</option>
+        <option value="marketing">📢 تسويق</option>
+        <option value="transfer">🚚 الترحيل</option>
+        <option value="house_expenses">🏡 المنزل (نفقات)</option>
+        <option value="asset_purchase">💎 شراء أصول (إستثمار)</option>
+        <option value="emergency">🚨 طارئ/سريع</option>
+    </select>
+    
+    <input type="date" id="filterDateStart" onchange="loadExpenses()">
+    <input type="date" id="filterDateEnd" onchange="loadExpenses()">
+    
+    <button class="btn-filter" onclick="resetFilters()">
+        🔄 مسح الفلاتر
+    </button>
+</div>
+
+
+<div class="expenses-list-container">
+    <div id="statusMessage" class="status-message">يتم تحميل المصروفات... ⏳</div>
+    <div id="expensesList">
+        </div>
+</div>
+
+<script type="module">
+    // ------------------------------------------------------------------
+    // إعدادات وربط Firebase
+    // ------------------------------------------------------------------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
+    // Your web app's Firebase configuration (يجب أن تكون نفس الإعدادات في ملف التسجيل)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZCydTHThyMEMv_x261_HhJB_wZNUr7JA",
+      authDomain: "salahsweetgedo.firebaseapp.com",
+      projectId: "salahsweetgedo",
+      storageBucket: "salahsweetgedo.firebasestorage.app",
+      messagingSenderId: "1079672977254",
+      appId: "1:1079672977254:web:7e901bb6d55b71c716baa7",
+      measurementId: "G-3Y9LT7JXY0"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    getAnalytics(app); 
+    
+    // تصدير دوال قاعدة البيانات لتكون متاحة في الكود العادي
+    window.db = db;
+    window.collection = collection;
+    window.getDocs = getDocs;
+    window.query = query;
+    window.orderBy = orderBy;
+    window.where = where;
+</script>
+
+<script>
+    // ------------------------------------------------------------------
+    // الجافاسكريبت (JavaScript) لمنطق القراءة والعرض (معدّل للتبسيط)
+    // ------------------------------------------------------------------
+    
+    // أسماء أنواع المصروفات للترجمة
+    const TYPE_NAMES = {
+        'raw_materials': '📦 مواد خام',
+        'labor_wages': '👷 أجور عمال',
+        'factory_rent': '🏠 إيجار مصنع',
+        'electricity_water': '⚡️ كهرباء ومياه',
+        'general_maintenance': '🛠️ صيانة عامة',
+        'marketing': '📢 تسويق',
+        'transfer': '🚚 ترحيل',
+        'house_expenses': '🏡 نفقات منزل',
+        'asset_purchase': '💎 شراء أصول',
+        'emergency': '🚨 مصروف طارئ/سريع'
+    };
+    
+    // دالة مساعدة لتنسيق العملة
+    function formatCurrency(amount) {
+        if (amount === 0 || isNaN(amount)) return '0.00';
+        return `${parseFloat(amount).toLocaleString('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    
+    // دالة مساعدة لترجمة عنوان المجموعة
+    function formatGroupTitle(key, groupBy) {
+        if (groupBy === 'datePart') {
+            const date = new Date(key + 'T00:00:00'); 
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('ar-EG', options);
+        } else if (groupBy === 'type') {
+            return TYPE_NAMES[key] || `نوع غير معروف: ${key}`;
+        } else {
+            return 'جميع المصروفات المسجلة';
+        }
+    }
+    
+    // دالة لإنشاء رسالة ملخص الإجمالي بناءً على الفلاتر
+    function generateSummaryTitle(filterType, filterDateStart, filterDateEnd, grandTotal) {
+        let title;
+        const typeName = TYPE_NAMES[filterType] || filterType;
+        
+        if (grandTotal === 0) {
+            title = 'لم يتم العثور على مصروفات مطابقة';
+        } else if (filterType && typeName) {
+            // حالة تحديد نوع واحد
+            title = `إجمالي مصروفات ${typeName}`;
+        } else {
+            // حالة عدم تحديد نوع (الإجمالي الكلي)
+             title = 'إجمالي المصروفات الكلية';
+        }
+        
+        // إضافة نطاق التاريخ
+        if (filterDateStart && filterDateEnd && filterDateStart !== filterDateEnd) {
+            title += ` (من ${filterDateStart} إلى ${filterDateEnd})`;
+        } else if (filterDateStart && filterDateStart === filterDateEnd) {
+             title += ` ليوم ${filterDateStart}`;
+        } else if (filterDateStart) {
+             title += ` (بدءاً من ${filterDateStart})`;
+        } else if (filterDateEnd) {
+             title += ` (حتى ${filterDateEnd})`;
+        }
+        
+        return title;
+    }
+
+
+    // الدالة الرئيسية لتحميل وعرض المصروفات من Firebase
+    async function loadExpenses() {
+        const listContainer = document.getElementById('expensesList');
+        const statusMessage = document.getElementById('statusMessage');
+        const totalSummaryAmount = document.getElementById('totalSummaryAmount');
+        const totalSummaryTitle = document.getElementById('totalSummaryTitle');
+        const summaryCard = document.getElementById('summaryCard');
+        
+        const filterType = document.getElementById('filterType').value;
+        const filterDateStart = document.getElementById('filterDateStart').value;
+        const filterDateEnd = document.getElementById('filterDateEnd').value;
+        const groupBy = document.getElementById('groupBy').value; 
+        
+        statusMessage.style.display = 'block';
+        statusMessage.textContent = 'يتم تحميل المصروفات... ⏳';
+        listContainer.innerHTML = '';
+        summaryCard.style.display = 'none';
+        
+        try {
+            const expensesRef = collection(db, "expenses");
+            let q;
+            
+            // 1. **الاستعلام المُبسَّط (لتجنب الفهارس المركبة):**
+            // نقوم بجلب البيانات إما بفرز واحد فقط (التاريخ)، أو باستخدام where() مع orderBy() متطابق.
+            
+            if (filterType) {
+                 // جلب البيانات بالفلترة على النوع (فرز متطابق)
+                 q = query(expensesRef, where("type", "==", filterType), orderBy("datePart", "desc"));
+            } else {
+                 // جلب كل البيانات (أو حسب أي فلتر تاريخ منفرد يمكن أن يدعمه فهرس datePart التلقائي)
+                 // سنعتمد على الفرز الأساسي بالتاريخ فقط لجلب كل شيء بترتيب منطقي
+                 q = query(expensesRef, orderBy("datePart", "desc"));
+            }
+
+            const querySnapshot = await getDocs(q);
+            let expenses = [];
+            
+            querySnapshot.forEach((doc) => {
+                expenses.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // 2. **تطبيق الفلاتر الإضافية محلياً في JavaScript:**
+            
+            expenses = expenses.filter(expense => {
+                let match = true;
+                
+                // فلترة التاريخ محلياً (إذا لم تتم في الاستعلام)
+                if (filterDateStart && expense.datePart < filterDateStart) {
+                    match = false;
+                }
+                if (filterDateEnd && expense.datePart > filterDateEnd) {
+                    match = false;
+                }
+                
+                // فلترة النوع محلياً (إذا لم تتم في الاستعلام العام)
+                if (!filterType && document.getElementById('filterType').value !== "" && expense.type !== document.getElementById('filterType').value) {
+                    match = false;
+                }
+
+                return match;
+            });
+
+            // 3. حساب الإجمالي بعد الفلترة المحلية
+            let grandTotal = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+            // 4. عرض الملخص الكلي
+            totalSummaryAmount.textContent = `${formatCurrency(grandTotal)} جنيه سوداني`;
+            totalSummaryTitle.textContent = generateSummaryTitle(filterType, filterDateStart, filterDateEnd, grandTotal);
+            summaryCard.style.display = 'block';
+
+            if (expenses.length === 0) {
+                statusMessage.textContent = 'لا توجد مصروفات مسجلة تطابق هذه الفلاتر. 🙁';
+                return;
+            }
+            
+            statusMessage.style.display = 'none'; // إخفاء رسالة التحميل
+            
+            // 5. التجميع حسب المعيار المحدد
+            const groupedExpenses = expenses.reduce((groups, expense) => {
+                const key = (groupBy === 'none') ? 'general' : expense[groupBy];
+                
+                if (!groups[key]) {
+                    groups[key] = [];
+                }
+                groups[key].push(expense);
+                return groups;
+            }, {});
+            
+            // 6. عرض البيانات المجمعة
+            const sortedKeys = Object.keys(groupedExpenses).sort().reverse(); 
+
+            for (const key of sortedKeys) {
+                const groupExpenses = groupedExpenses[key];
+                const groupTotal = groupExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+                
+                const groupCardDiv = document.createElement('div');
+                groupCardDiv.className = 'group-card';
+                
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'group-header';
+                groupHeader.innerHTML = `
+                    <h3>${formatGroupTitle(key, groupBy)}</h3>
+                    <span class="group-total">${formatCurrency(groupTotal)} جنيه سوداني</span>
+                `;
+                groupCardDiv.appendChild(groupHeader);
+                
+                // الفرز داخل المجموعة حسب الوقت
+                groupExpenses.sort((a, b) => new Date(b.fullDateTime) - new Date(a.fullDateTime));
+
+                groupExpenses.forEach(expense => {
+                    const expenseItemDiv = document.createElement('div');
+                    expenseItemDiv.className = 'expense-item';
+                    
+                    const expenseDetailsDiv = document.createElement('div');
+                    expenseDetailsDiv.className = 'expense-details';
+                    
+                    // عرض التاريخ والوقت كاملاً
+                    expenseDetailsDiv.innerHTML = `
+                        <strong>${expense.detail}</strong>
+                        <div class="expense-meta">
+                            <span>📅 ${expense.datePart}</span>
+                            <span>⏱️ ${expense.fullDateTime.split(' ')[1].substring(0, 5)}</span>
+                            <span style="font-weight: 600;">${TYPE_NAMES[expense.type] || expense.type}</span>
+                            <span>(${expense.paymentMethod})</span>
+                        </div>
+                    `;
+                    
+                    const expenseAmountSpan = document.createElement('span');
+                    expenseAmountSpan.className = 'expense-amount';
+                    expenseAmountSpan.textContent = formatCurrency(expense.amount);
+                    
+                    expenseItemDiv.appendChild(expenseDetailsDiv);
+                    expenseItemDiv.appendChild(expenseAmountSpan);
+                    
+                    groupCardDiv.appendChild(expenseItemDiv);
+                });
+                
+                listContainer.appendChild(groupCardDiv);
+            }
+
+        } catch (error) {
+            console.error("خطأ في جلب المصروفات:", error);
+            // رسالة خطأ مناسبة للحل المبسّط
+            statusMessage.textContent = 'حدث خطأ في جلب البيانات. (قد يكون خطأ اتصال أو مشكلة في إعدادات القاعدة.) ❌';
+            statusMessage.style.display = 'block';
+            totalSummaryAmount.textContent = '0.00 جنيه سوداني';
+        }
+    }
+    
+    // دالة لمسح جميع الفلاتر وإعادة التحميل
+    function resetFilters() {
+        document.getElementById('filterType').value = '';
+        document.getElementById('filterDateStart').value = '';
+        document.getElementById('filterDateEnd').value = '';
+        document.getElementById('groupBy').value = 'datePart'; 
+        loadExpenses();
+    }
+
+
+    // التحميل الأولي عند بدء تشغيل الصفحة
+    document.addEventListener('DOMContentLoaded', () => {
+        window.loadExpenses = loadExpenses; 
+        window.resetFilters = resetFilters;
+        loadExpenses(); // بدء التحميل
+    });
+</script>
+
+</body>
+</html>
