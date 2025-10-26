@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحت التطوير - مصنع صلاح الدين</title>
+    <style>
+        /* أنماط أساسية لصفحة Under Construction */
+        body {
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* لتوزيع العناصر في الأعلى والأسفل */
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* حاوية الرأس والذيل لتحديد عرضهم الأقصى */
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* 1. رأس الصفحة (اسم المصنع) */
+        .header-section {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .header-section h1 {
+            font-size: 2.5em;
+            color: #4CAF50; /* لون أخضر (للمصنع) */
+            margin-bottom: 0;
+            font-weight: 800;
+        }
+
+        /* 2. قسم المحتوى الرئيسي (تحت التطوير) */
+        .main-content {
+            flex-grow: 1; /* للسماح لها بالتمدد لأخذ المساحة المركزية */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* لمركزة النص عمودياً */
+            align-items: center;
+            text-align: center;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .main-content h2 {
+            font-size: 2em;
+            color: #ff9800; /* لون برتقالي للتنبيه */
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .main-content p {
+            font-size: 1.1em;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* 3. ذيل الصفحة (اسم المدير) */
+        .footer-section {
+            text-align: left; /* نضع اسم المدير في الطرف الآخر */
+            margin-top: 40px;
+            font-size: 1.1em;
+            color: #555;
+            font-weight: 600;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .footer-section strong {
+            color: #007bff; /* لون أزرق للإدارة */
+        }
+        
+        /* تعديل للمحاذاة النهائية */
+        .footer-content {
+            float: left; /* لدفع النص إلى اليسار (في تصميم RTL) */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container header-section">
+        <h1>مصنع صلاح الدين</h1>
+    </div>
+
+    <div class="main-content">
+        <h2>🚧  الصفحة تحت التطوير 🚧</h2>
+        <p>
+             
+           يعني الصفحة لسه ما تم الشغل عليها 
+        </p>
+    </div>
+
+    <div class="container footer-section">
+        <span class="footer-content">
+            إدارة: <strong>أحمد صلاح الدين</strong>
+        </span>
+    </div>
+
+</body>
+</html>
