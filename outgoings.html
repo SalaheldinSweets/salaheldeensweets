@@ -26,6 +26,7 @@
             min-height: 100vh;
         }
 
+        /* شريط العنوان المركزي */
         .page-header {
             width: 100%;
             max-width: 550px;
@@ -40,6 +41,7 @@
             font-weight: 700;
         }
 
+        /* زر المصروف الطارئ (المربع الصغير) */
         .emergency-button {
             position: absolute;
             top: 0;
@@ -62,17 +64,19 @@
             background-color: #c9302c;
         }
 
+        /* حاوية النماذج (بسيطة وناعمة) */
         .expense-form-container {
             background-color: var(--surface-color);
             padding: 30px;
             border-radius: var(--border-radius);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* ظل ناعم جداً */
             width: 100%;
             max-width: 550px; 
             margin-bottom: 25px;
             border: 1px solid #eee;
         }
 
+        /* الحقول والإدخال */
         .form-group {
             margin-bottom: 20px;
             text-align: right;
@@ -91,7 +95,7 @@
         .form-group textarea {
             width: 100%;
             padding: 12px 15px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e0e0e0; /* حدود فاتحة */
             border-radius: var(--input-radius);
             box-sizing: border-box;
             font-size: 1em;
@@ -106,6 +110,7 @@
             outline: none;
         }
 
+        /* مدخل التاريخ والوقت التفاعلي */
         .datetime-input-wrapper {
             position: relative;
             background-color: #f7f7f7;
@@ -121,7 +126,7 @@
         }
 
         .datetime-input-wrapper input {
-            position: absolute;
+            position: absolute; /* إخفاء حقول الإدخال الأساسية خلف الحقل التفاعلي */
             opacity: 0;
             cursor: pointer;
             left: 0;
@@ -130,6 +135,7 @@
             height: 100%;
         }
 
+        /* تصميم زرار الحفظ */
         .btn {
             padding: 12px 25px;
             border: none;
@@ -148,10 +154,11 @@
             background-color: #43a047;
         }
 
+        /* النافذة المنبثقة للنجاح وعلامة الصح */
         .modal {
             display: none; 
             position: fixed; 
-            z-index: 2000;
+            z-index: 2000; /* قيمة عالية جداً */
             left: 0;
             top: 0;
             width: 100%;
@@ -169,6 +176,7 @@
             max-width: 350px;
         }
         .checkmark-circle {
+             /* أنماط علامة الصح المتحركة (تم الاحتفاظ بها) */
             width: 80px;
             height: 80px;
             position: relative;
@@ -192,6 +200,18 @@
         }
         @keyframes scaleIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
         @keyframes checkmarkDraw { 0% { width: 0; height: 0; opacity: 1; } 50% { width: 40px; height: 0; opacity: 1; } 100% { width: 40px; height: 20px; opacity: 1; } }
+
+        /* إضافة نمط لرسالة الخطأ */
+        .error-message {
+            color: var(--danger-color);
+            background-color: #fcebeb;
+            border: 1px solid var(--danger-color);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+        }
 
     </style>
 </head>
@@ -234,7 +254,7 @@
                 <textarea id="quickReminder" name="quickReminder" rows="2" placeholder="سبب المصروف (إجباري)" required></textarea>
                 <div class="alert-message" id="quickReminderAlert"></div>
             </div>
-
+            
             <div class="actions" style="justify-content: flex-end;">
                 <button type="submit" class="btn" style="background-color: var(--danger-color);">💾 حفظ سريع</button>
             </div>
@@ -252,7 +272,7 @@
             <label>التاريخ والوقت:</label>
             <div class="datetime-input-wrapper" onclick="document.getElementById('date').click()">
                 <span id="displayDateTime">التاريخ والساعة التلقائيين</span>
-
+                
                 <input type="date" id="date" name="date" required onchange="handleDateChange(this.value)" style="display:none;">
                 <input type="time" id="time" name="time" step="1" required style="display:none;" onchange="updateDisplay()">
             </div>
@@ -306,48 +326,118 @@
         <div class="actions" style="justify-content: flex-end;">
             <button type="submit" class="btn btn-save">💾 حفظ المصروف</button>
         </div>
+        
+        <div id="firebaseError" class="error-message">
+            <p>حدث خطأ في عملية الحفظ. يرجى التأكد من اتصالك بالإنترنت ومن أذونات قاعدة البيانات.</p>
+        </div>
 
     </form>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script type="module">
+    // ------------------------------------------------------------------
+    // إعدادات وربط Firebase
+    // ------------------------------------------------------------------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-<script>
-    // تهيئة Firebase باستخدام مفاتيحك الخاصة
+    // Your web app's Firebase configuration
     const firebaseConfig = {
-        apiKey: "AIzaSyDZCydTHThyMEMv_x261_HhJB_wZNUr7JA",
-        authDomain: "salahsweetgedo.firebaseapp.com",
-        projectId: "salahsweetgedo",
-        storageBucket: "salahsweetgedo.firebasestorage.app",
-        messagingSenderId: "1079672977254",
-        appId: "1:1079672977254:web:7e901bb6d55b71c716baa7",
-        measurementId: "G-3Y9LT7JXY0"
+      apiKey: "AIzaSyDZCydTHThyMEMv_x261_HhJB_wZNUr7JA",
+      authDomain: "salahsweetgedo.firebaseapp.com",
+      projectId: "salahsweetgedo",
+      storageBucket: "salahsweetgedo.firebasestorage.app",
+      messagingSenderId: "1079672977254",
+      appId: "1:1079672977254:web:7e901bb6d55b71c716baa7",
+      measurementId: "G-3Y9LT7JXY0"
     };
 
-    // تهيئة Firebase
-    const app = firebase.initializeApp(firebaseConfig);
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    getAnalytics(app); // تشغيل تحليلات Firebase
 
-    // الحصول على مرجع قاعدة بيانات Firestore
-    const db = app.firestore();
+    // ------------------------------------------------------------------
+    // الدوال الخاصة بقاعدة البيانات (تم نقلها إلى داخل هذا الوسم)
+    // ------------------------------------------------------------------
+    
+    // دالة جديدة: حفظ المصروف في Firestore
+    async function saveExpenseToFirestore(expenseData) {
+        document.getElementById('firebaseError').style.display = 'none'; // إخفاء أي أخطاء سابقة
+        
+        // إضافة حقل الطابع الزمني في وقت الحفظ الفعلي
+        const fullData = { 
+            ...expenseData, 
+            createdAt: new Date().toISOString()
+        };
+        
+        try {
+            // تخزين البيانات في مجموعة 'expenses'
+            const docRef = await addDoc(collection(db, "expenses"), fullData);
+            console.log("تمت إضافة المستند بالمعرّف: ", docRef.id);
+            return true;
+        } catch (e) {
+            console.error("خطأ في إضافة المستند: ", e);
+            document.getElementById('firebaseError').style.display = 'block'; // إظهار رسالة الخطأ
+            return false;
+        }
+    }
+    
+    // دالة جديدة: التحقق من التكرار في Firestore
+    async function checkDuplicateInFirestore(dateToCompare, type, detail) {
+        const dayToCompare = getDatePart(dateToCompare);
+        
+        // إنشاء استعلام للبحث عن مصروفات في نفس اليوم، بنفس النوع، ونفس التفصيل
+        const expensesRef = collection(db, "expenses");
+        const q = query(expensesRef, 
+            where("datePart", "==", dayToCompare),
+            where("type", "==", type),
+            where("detail", "==", detail)
+        );
 
-    // اسم المجموعة (Collection) الذي ستُحفظ فيه المصروفات
-    const EXPENSES_COLLECTION = "expenses"; 
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.docs.length > 0) {
+            // وجدنا مستند مكرر. نعيد بيانات المستند الأول.
+            const duplicateDoc = querySnapshot.docs[0].data();
+            // لإظهاره للمستخدم (تمثيل المصروف المكرر)
+            return {
+                fullDateTime: duplicateDoc.fullDateTime,
+                type: duplicateDoc.type,
+                detail: duplicateDoc.detail,
+                amount: duplicateDoc.amount,
+                id: querySnapshot.docs[0].id 
+            };
+        }
+        
+        return null; // لا يوجد تكرار
+    }
+    
+    // تصدير الدوال ليتم استخدامها في باقي الـ Script
+    window.saveExpenseToFirestore = saveExpenseToFirestore;
+    window.checkDuplicateInFirestore = checkDuplicateInFirestore;
+</script>
 
+
+<script>
     // ------------------------------------------------------------------
     // الجافاسكريبت (JavaScript) للتفاعلات الذكية والتحسينات
     // ------------------------------------------------------------------
 
-    // متغير لتتبع نوع الإرسال الأخير (جديد)
+    // متغير لتتبع نوع الإرسال الأخير
     let lastSubmissionType = ''; 
 
     // 1. البيانات الثابتة والقوائم الديناميكية
+    
+    // قائمة العمال
     const WORKERS = [
         { value: 'muayyad', text: 'مؤيد' },
         { value: 'mohammad', text: 'محمد أبو سريعة' },
         { value: 'krom', text: 'كروم' }
     ];
-
+    
+    // قائمة الشهور (جديدة للإيجار)
     const MONTHS = [
         { value: 'january', text: 'يناير' },
         { value: 'february', text: 'فبراير' },
@@ -362,7 +452,8 @@
         { value: 'november', text: 'نوفمبر' },
         { value: 'december', text: 'ديسمبر' }
     ];
-
+    
+    // تفاصيل الحقول الديناميكية حسب نوع المصروف
     const dynamicOptions = {
         'raw_materials': [
             { id: 'oil', text: 'زيت 17 لتر:', unit: 'صفيحة' },
@@ -372,18 +463,27 @@
             { id: 'baking_powder', text: 'باكنج بودر:', unit: 'كيلو' },
             { id: 'konafa', text: 'كنافة:', unit: 'كيلو' }
         ],
+        
+        // أجور العمال: تحتوي على العمال فقط
         'labor_wages': WORKERS, 
+        
+        // إيجار المصنع: قائمة الشهور
         'factory_rent': { type: 'select', options: MONTHS, placeholder: 'اختر شهر الإيجار' }, 
+        
+        // ترحيل: قائمة فرعية
         'transfer': [
             { value: 'fuel', text: 'بنزين' },
             { value: 'maintenance', text: 'صيانة' },
             { value: 'rent', text: 'إيجار ترحيل' }
         ],
+        
+        // المنزل (نفقات): حقل نص حر
         'house_expenses': { type: 'text_input', placeholder: 'تفصيل نفقات المنزل (إجباري)' },
+        
+        // شراء الأصول (إستثمار): حقل نص حر
         'asset_purchase': { type: 'text_input', placeholder: 'تفصيل عملية شراء الأصل (مثال: شراء خلاط جديد)' },
+        
         'general_maintenance': { type: 'text_input', placeholder: 'وصف عمل الصيانة' },
-        'electricity_water': { type: 'text_input', placeholder: 'تفاصيل فاتورة الكهرباء والمياه' }, // تم إضافة حقل نصي لها 
-        'marketing': { type: 'text_input', placeholder: 'تفاصيل مصروف التسويق' },
         'special_expenses': { type: 'text_input', placeholder: 'وصف دقيق للمصروف الخاص' }
     };
 
@@ -392,10 +492,14 @@
         'electricity_water': 50000,
         'marketing': 30000
     };
+    
+    // ** ملاحظة: تم إزالة المصفوفة draftExpenses لأن الحفظ سيتم في Firebase **
+    // let draftExpenses = []; 
 
-    // تم حذف المصفوفة draftExpenses لأننا نعتمد على Firestore الآن
 
     // 2. دوال مساعدة لإدارة التاريخ والوقت
+    
+    // دالة الحصول على الوقت الحالي (HH:MM:SS)
     function getCurrentTime() {
         const now = new Date();
         const hour = String(now.getHours()).padStart(2, '0');
@@ -404,10 +508,12 @@
         return `${hour}:${minute}:${second}`; 
     }
 
+    // دالة لإنشاء التاريخ والوقت الكاملين للحفظ
     function getFullDateTime(datePart, timePart) {
         return `${datePart} ${timePart}`; 
     }
 
+    // تحديث العرض النصي للتاريخ والوقت
     function updateDisplay() {
         const dateInput = document.getElementById('date');
         const timeInput = document.getElementById('time');
@@ -418,48 +524,68 @@
         } else if (dateInput.value) {
             display.textContent = `${dateInput.value} - اختر الوقت...`;
         } else {
+            // القيمة الافتراضية
             const today = new Date().toISOString().split('T')[0];
             display.textContent = `${today} ${getCurrentTime().slice(0, 5)}`;
             dateInput.value = today;
-            timeInput.value = getCurrentTime().slice(0, 5); 
+            timeInput.value = getCurrentTime().slice(0, 5); // فقط الساعة والدقيقة للعرض الأولي
         }
     }
-
+    
+    // عند اختيار التاريخ، نفتح حقل الوقت
     function handleDateChange(dateValue) {
-        document.getElementById('time').style.display = 'block'; 
-        document.getElementById('time').value = getCurrentTime().slice(0, 5);
+        document.getElementById('time').style.display = 'block'; // نظهر حقل الوقت
+        document.getElementById('time').value = getCurrentTime().slice(0, 5); // نضع الوقت الحالي (ساعة ودقيقة)
         document.getElementById('time').focus(); 
         updateDisplay();
     }
-
-    // 3. دالة تنسيق الأرقام
+    
+    // دالة مساعدة: الحصول على اليوم فقط للمقارنة (YYYY-MM-DD)
+    function getDatePart(dateTimeStr) {
+        return dateTimeStr.split(' ')[0];
+    }
+    
+    // 3. دالة تنسيق الأرقام (إضافة فاصلة كل 3 أصفار وتقييد الإدخال)
     function formatNumber(input) {
+        // 1. التصفية: إزالة أي حرف ليس رقماً أو فاصلة عشرية (نقطة)
         let rawValue = input.value.replace(/[^0-9.]/g, ''); 
+        
+        // 2. معالجة الفاصلة العشرية لضمان وجود فاصلة واحدة فقط
         const parts = rawValue.split('.');
         if (parts.length > 2) {
+            // إذا كان هناك أكثر من نقطة (فاصلة عشرية)، نأخذ الجزء الأول ونضيف له النقطة والجزء الثاني فقط
             rawValue = parts[0] + '.' + parts.slice(1).join('');
         }
-
+        
+        // إزالة الفواصل القديمة قبل إعادة التنسيق
         const rawDigits = rawValue.replace(/,/g, ''); 
 
         if (isNaN(parseFloat(rawDigits)) || rawDigits.trim() === '') {
+            // إذا كان الحقل هو حقل المبلغ الرئيسي، فقم بتعيين القيمة المخفية إلى 0
             if (input.id === 'amountInput') document.getElementById('amount').value = 0;
-            input.value = rawValue;
+            input.value = rawValue; // نحافظ على الأرقام والنقاط المفلترة
             return;
         }
 
+        // فصل الجزء الصحيح عن الجزء العشري
         const formatParts = rawDigits.split('.');
+        
+        // تنسيق الجزء الصحيح (إضافة الفواصل كل 3 أرقام)
         formatParts[0] = formatParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        
+        // إعادة تجميع الرقم وعرضه
         input.value = formatParts.join('.');
-
+        
+        // حفظ القيمة الرقمية النظيفة (بدون فواصل العرض) في حقل الـ hidden
         if (input.id === 'amountInput') {
              document.getElementById('amount').value = parseFloat(rawDigits);
         }
-
+        
+        // بعد تعديل الإدخال، نتحقق من الحدود والقيم
         validateAmountLogic(input);
     }
-
-    // 4. دالة التحقق من المبلغ
+    
+    // 4. دالة التحقق من المبلغ (حدود القيمة)
     function validateAmountLogic(input) {
         const amount = parseFloat(document.getElementById('amount').value);
         const type = document.getElementById('expenseType').value;
@@ -468,12 +594,12 @@
         alertDiv.style.display = 'none';
         alertDiv.textContent = '';
 
-        if (amount <= 0 && type !== 'emergency') { // استثناء المصروف الطارئ من التحقق > 0 
-            alertDiv.textContent = 'المبلغ يجب أن يكون أكبر من صفر للمصروف العادي.';
+        if (amount <= 0) {
+            alertDiv.textContent = 'المبلغ يجب أن يكون أكبر من صفر.';
             alertDiv.style.display = 'block';
             return;
         }
-
+        
         if (expenseLimits[type] && amount > expenseLimits[type]) {
             alertDiv.textContent = `⚠️ تنبيه: تجاوز الحد الطبيعي. (${expenseLimits[type].toLocaleString()}).`;
             alertDiv.style.display = 'block';
@@ -483,24 +609,44 @@
     // 5. دوال النافذة المنبثقة (Modal)
     function showSuccessModal() {
         const additionalMessageElement = document.getElementById('additionalSuccessMessage');
+        
+        // تصفير الرسالة أولاً
         additionalMessageElement.textContent = ''; 
+        
+        // إضافة رسالة التذكير إذا كان الإدخال طارئًا
         if (lastSubmissionType === 'emergency') {
             additionalMessageElement.textContent = "سيتم تذكيرك لاحقًا لتسجيل التفاصيل";
         }
+
         document.getElementById('successModal').style.display = 'flex';
     }
 
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
-        lastSubmissionType = '';
+        lastSubmissionType = ''; // تصفير النوع بعد الإغلاق
     }
-
+    
     function openEmergencyModal() {
+        // تهيئة النموذج عند الفتح
         document.getElementById('quickAmount').value = '';
         document.getElementById('quickReminder').value = '';
         document.getElementById('quickAmountAlert').style.display = 'none';
         document.getElementById('quickReminderAlert').style.display = 'none';
+
         document.getElementById('emergencyInputModal').style.display = 'flex';
+    }
+
+    // 6. دالة التحقق من التكرار - تم تغييرها لاستخدام Firebase
+    async function checkDuplicate(dateToCompare, type, detail) {
+        // نستخدم الدالة المصدّرة من وسم الـ script type="module"
+        if (window.checkDuplicateInFirestore) {
+             return await window.checkDuplicateInFirestore(dateToCompare, type, detail);
+        }
+        return null; // في حالة فشل التحميل لسبب ما، لا نعتبره مكرراً
+    }
+
+    function showDuplicateDraft(draft) {
+        alert(`تنبيه تكرار: مصروف مشابه في ${getDatePart(draft.fullDateTime)}. \nالنوع: ${draft.type} \nالتفصيل: ${draft.detail} \nالمبلغ: ${draft.amount.toLocaleString()}.`);
     }
 
     // 7. التهيئة عند تحميل الصفحة
@@ -508,13 +654,13 @@
         updateDisplay();
         handleExpenseTypeChange();
     });
-
+    
     // دالة مساعدة: لتحديث وحدة المواد الخام
     function updateRawMaterialDisplay() {
         const materialSelect = document.getElementById('expenseDetailMaterial');
         const unitDisplay = document.getElementById('quantityUnitDisplay');
         const selectedOption = materialSelect.options[materialSelect.selectedIndex];
-
+        
         if (selectedOption && selectedOption.value !== "") {
             unitDisplay.textContent = selectedOption.getAttribute('data-unit');
         } else {
@@ -523,17 +669,19 @@
     }
 
 
-    // 8. دالة التفاعل الذكي لتغيير نوع المصروف (لا تحتاج لتعديل)
+    // 8. دالة التفاعل الذكي لتغيير نوع المصروف
     function handleExpenseTypeChange() {
         const typeSelect = document.getElementById('expenseType');
         const detailContainer = document.getElementById('detailFieldContainer');
         const selectedType = typeSelect.value;
         const options = dynamicOptions[selectedType];
+        
+        detailContainer.innerHTML = ''; // تنظيف الحاوية
 
-        detailContainer.innerHTML = ''; 
-
+        // **منطق خاص للمواد الخام (حقلين)**
         if (selectedType === 'raw_materials') {
-
+            
+            // إضافة حقل القائمة المنسدلة
             const select = document.createElement('select');
             select.id = 'expenseDetailMaterial';
             select.name = 'expenseDetailMaterial';
@@ -557,7 +705,8 @@
                 select.appendChild(option);
             });
             detailContainer.appendChild(select);
-
+            
+            // حاوية لحقل الكمية
             const quantityWrapper = document.createElement('div');
             quantityWrapper.style.display = 'flex';
             quantityWrapper.style.gap = '10px';
@@ -570,7 +719,7 @@
             inputQuantity.required = true;
             inputQuantity.min = '1';
             inputQuantity.style.flexGrow = '1';
-
+            
             const unitSpan = document.createElement('span');
             unitSpan.id = 'quantityUnitDisplay';
             unitSpan.textContent = 'الوحدة';
@@ -583,14 +732,17 @@
 
             quantityWrapper.appendChild(inputQuantity);
             quantityWrapper.appendChild(unitSpan);
-
+            
             detailContainer.appendChild(quantityWrapper);
 
-            return; 
+            return; // إنهاء الدالة بعد بناء حقول المواد الخام
         }
 
+
+        // **منطق بناء الحقول الأخرى**
         if (options) {
              if (Array.isArray(options)) {
+                // إنشاء Dropdown عادي (لـ labor_wages والترحيل)
                 const select = document.createElement('select');
                 select.id = 'expenseDetail';
                 select.name = 'expenseDetail';
@@ -611,8 +763,9 @@
                 });
 
                 detailContainer.appendChild(select);
-
+                
             } else if (options.type === 'select') {
+                 // إنشاء Dropdown (مثل شهور الإيجار)
                 const select = document.createElement('select');
                 select.id = 'expenseDetail';
                 select.name = 'expenseDetail';
@@ -633,8 +786,9 @@
                 });
 
                 detailContainer.appendChild(select);
-
+                
             } else if (options.type === 'text_input') {
+                // إنشاء حقل نص حر (لـ house_expenses، asset_purchase، إلخ)
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.id = 'expenseDetailText';
@@ -648,26 +802,29 @@
     }
 
 
-    // 9. منطق حفظ النموذج الأساسي (المحدث لـ Firestore)
+    // 9. منطق حفظ النموذج الأساسي - تم تحديثه ليصبح async ويستخدم Firebase
     document.getElementById('expenseForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-
+        
+        // التحقق من التاريخ والوقت
         if (!document.getElementById('date').value || !document.getElementById('time').value) {
             alert("يرجى اختيار التاريخ والوقت.");
             return;
         }
 
+        // 1. جمع البيانات وتحديد التفصيل والقيمة الرقمية
         const datePart = document.getElementById('date').value;
-        const timePart = document.getElementById('time').value + ':00';
+        const timePart = document.getElementById('time').value + ':00'; // إضافة الثواني التلقائية
         const fullSaveDateTime = getFullDateTime(datePart, timePart);
 
         const type = document.getElementById('expenseType').value;
         const amount = parseFloat(document.getElementById('amount').value); 
         const paymentMethod = document.getElementById('paymentMethod').value;
         const notes = document.getElementById('notes').value;
-
+        
         let detailValue;
-
+        
+        // **المنطق لتحديد قيمة التفصيل**
         if (type === 'raw_materials') {
             const material = document.getElementById('expenseDetailMaterial').options[document.getElementById('expenseDetailMaterial').selectedIndex].textContent;
             const quantity = document.getElementById('expenseDetailQuantity').value;
@@ -681,54 +838,99 @@
             detailValue = 'غير محدد';
         }
 
-        const expenseData = { 
-            fullDateTime: fullSaveDateTime, 
-            date: datePart,
-            type: type, 
-            detail: detailValue, 
+        // 2. التحقق من التكرار في Firestore
+        document.getElementById('typeAlert').style.display = 'none'; // إخفاء تنبيه التكرار القديم
+        const duplicateDraft = await checkDuplicate(fullSaveDateTime, type, detailValue); 
+
+        if (duplicateDraft) {
+            document.getElementById('typeAlert').innerHTML = `
+                لقد أدخلت مصروفاً مشابهاً في نفس اليوم! 
+                <button type="button" class="btn" style="background-color:#ffc107; color:#333; margin-right: 10px; font-size:0.9em;" onclick="showDuplicateDraft(${JSON.stringify(duplicateDraft).replace(/"/g, `'`)})">عرض المسودة المكررة</button>
+            `;
+            document.getElementById('typeAlert').style.display = 'block';
+            return; 
+        }
+        
+        // 3. بناء بيانات المصروف للحفظ
+        const expenseToSave = {
+            datePart: datePart, // لحاجتنا في البحث عن التكرار
+            fullDateTime: fullSaveDateTime,
+            type: type,
+            detail: detailValue,
             amount: amount,
             paymentMethod: paymentMethod,
-            notes: notes,
-            isEmergency: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            notes: notes
         };
 
-        // **4. الحفظ في Firestore**
-        try {
-            await db.collection(EXPENSES_COLLECTION).add(expenseData);
-            
-            lastSubmissionType = 'normal';
+        // 4. الحفظ في Firestore وإظهار Modal النجاح
+        const saveSuccessful = await window.saveExpenseToFirestore(expenseToSave);
+        
+        if (saveSuccessful) {
+            lastSubmissionType = 'normal'; // تعيين نوع الإرسال
             showSuccessModal(); 
-
-            // 5. إفراغ النموذج وإعادة تعيين
+            
+            // إفراغ النموذج وإعادة تعيين التاريخ والوقت
             this.reset();
             updateDisplay();
-            document.getElementById('time').style.display = 'none';
+            document.getElementById('time').style.display = 'none'; // إخفاء حقل الوقت بعد الإرسال
             document.getElementById('amountInput').value = '';
-            handleExpenseTypeChange();
-
-        } catch (error) {
-            console.error("Error adding document: ", error);
-            alert("❌ فشل في حفظ المصروف. تأكد من قواعد أمان Firestore.");
+            handleExpenseTypeChange(); // لإعادة بناء حقل التفصيل
+        } else {
+             // رسالة الخطأ ستظهر تلقائيًا من دالة saveExpenseToFirestore
         }
     });
 
 
-    // 10. منطق حفظ نموذج المصروف الطارئ السريع (المحدث لـ Firestore)
+    // 10. منطق حفظ نموذج المصروف الطارئ السريع - تم تحديثه ليصبح async ويستخدم Firebase
     document.getElementById('quickEmergencyForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const rawAmount = document.getElementById('quickAmount').value.replace(/,/g, '');
         const amountToSave = (rawAmount === "" || isNaN(parseFloat(rawAmount))) ? 0 : parseFloat(rawAmount);
+        
+        const datePart = new Date().toISOString().split('T')[0];
+        const timePart = getCurrentTime();
+        const fullSaveDateTime = getFullDateTime(datePart, timePart); 
 
+        const type = 'emergency';
         const detailValue = document.getElementById('quickReminder').value.trim();
+        
+        // التحقق من التكرار في Firestore
+        document.getElementById('quickReminderAlert').style.display = 'none';
+        const duplicateDraft = await checkDuplicate(fullSaveDateTime, type, detailValue);
 
-        if (detailValue === "") {
-            document.getElementById('quickReminderAlert').textContent = 'يرجى كتابة ملاحظة/تذكير إجباري.';
+        if (duplicateDraft) {
+             document.getElementById('quickReminderAlert').innerHTML = `
+                لقد أدخلت مصروفاً طارئاً مشابهاً في نفس اليوم! 
+                <button type="button" class="btn" style="background-color:#ffc107; color:#333; margin-right: 10px; font-size:0.9em;" onclick="showDuplicateDraft(${JSON.stringify(duplicateDraft).replace(/"/g, `'`)})">عرض المسودة المكررة</button>
+            `;
             document.getElementById('quickReminderAlert').style.display = 'block';
             return;
         }
-        document.getElementById('quickReminderAlert').style.display = 'none';
 
+        // بناء بيانات المصروف الطارئ
+        const emergencyExpenseToSave = {
+            datePart: datePart,
+            fullDateTime: fullSaveDateTime,
+            type: type,
+            detail: detailValue,
+            amount: amountToSave,
+            paymentMethod: 'undefined', // لنميزه كإدخال سريع
+            notes: 'مصروف طارئ/سريع'
+        };
 
-        const datePart = new Date().toISOString().split('T
+        // الحفظ في Firestore وإظهار Modal النجاح
+        const saveSuccessful = await window.saveExpenseToFirestore(emergencyExpenseToSave);
+
+        if (saveSuccessful) {
+            lastSubmissionType = 'emergency'; // تعيين نوع الإرسال
+            showSuccessModal();
+            closeModal('emergencyInputModal');
+
+            this.reset();
+        }
+    });
+</script>
+
+</body>
+</html>
