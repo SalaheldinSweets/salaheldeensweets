@@ -292,6 +292,7 @@
                 <option value="transfer">🚚 الترحيل</option>
                 <option value="house_expenses">🏡 المنزل (نفقات)</option>
                 <option value="asset_purchase">💎 شراء أصول (إستثمار)</option>
+                <option value="special_expenses">⭐ مصروفات خاصة</option>
             </select>
             <div class="alert-message" id="typeAlert"></div>
         </div>
@@ -464,27 +465,24 @@
             { id: 'konafa', text: 'كنافة:', unit: 'كيلو' }
         ],
         
-        // أجور العمال: تحتوي على العمال فقط
         'labor_wages': WORKERS, 
         
-        // إيجار المصنع: قائمة الشهور
         'factory_rent': { type: 'select', options: MONTHS, placeholder: 'اختر شهر الإيجار' }, 
         
-        // ترحيل: قائمة فرعية
         'transfer': [
             { value: 'fuel', text: 'بنزين' },
             { value: 'maintenance', text: 'صيانة' },
             { value: 'rent', text: 'إيجار ترحيل' }
         ],
         
-        // المنزل (نفقات): حقل نص حر
         'house_expenses': { type: 'text_input', placeholder: 'تفصيل نفقات المنزل (إجباري)' },
         
-        // شراء الأصول (إستثمار): حقل نص حر
         'asset_purchase': { type: 'text_input', placeholder: 'تفصيل عملية شراء الأصل (مثال: شراء خلاط جديد)' },
         
         'general_maintenance': { type: 'text_input', placeholder: 'وصف عمل الصيانة' },
-        'special_expenses': { type: 'text_input', placeholder: 'وصف دقيق للمصروف الخاص' }
+        
+        // **الخيار الجديد والمطلوب:** مصروفات خاصة إجبارية التفاصيل
+        'special_expenses': { type: 'text_input', placeholder: 'وصف دقيق للمصروف الخاص (إجباري)' }
     };
 
     const expenseLimits = { 
@@ -493,10 +491,6 @@
         'marketing': 30000
     };
     
-    // ** ملاحظة: تم إزالة المصفوفة draftExpenses لأن الحفظ سيتم في Firebase **
-    // let draftExpenses = []; 
-
-
     // 2. دوال مساعدة لإدارة التاريخ والوقت
     
     // دالة الحصول على الوقت الحالي (HH:MM:SS)
@@ -545,43 +539,32 @@
         return dateTimeStr.split(' ')[0];
     }
     
-    // 3. دالة تنسيق الأرقام (إضافة فاصلة كل 3 أصفار وتقييد الإدخال)
+    // 3. دالة تنسيق الأرقام
     function formatNumber(input) {
-        // 1. التصفية: إزالة أي حرف ليس رقماً أو فاصلة عشرية (نقطة)
         let rawValue = input.value.replace(/[^0-9.]/g, ''); 
         
-        // 2. معالجة الفاصلة العشرية لضمان وجود فاصلة واحدة فقط
         const parts = rawValue.split('.');
         if (parts.length > 2) {
-            // إذا كان هناك أكثر من نقطة (فاصلة عشرية)، نأخذ الجزء الأول ونضيف له النقطة والجزء الثاني فقط
             rawValue = parts[0] + '.' + parts.slice(1).join('');
         }
         
-        // إزالة الفواصل القديمة قبل إعادة التنسيق
         const rawDigits = rawValue.replace(/,/g, ''); 
 
         if (isNaN(parseFloat(rawDigits)) || rawDigits.trim() === '') {
-            // إذا كان الحقل هو حقل المبلغ الرئيسي، فقم بتعيين القيمة المخفية إلى 0
             if (input.id === 'amountInput') document.getElementById('amount').value = 0;
-            input.value = rawValue; // نحافظ على الأرقام والنقاط المفلترة
+            input.value = rawValue;
             return;
         }
 
-        // فصل الجزء الصحيح عن الجزء العشري
         const formatParts = rawDigits.split('.');
-        
-        // تنسيق الجزء الصحيح (إضافة الفواصل كل 3 أرقام)
         formatParts[0] = formatParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         
-        // إعادة تجميع الرقم وعرضه
         input.value = formatParts.join('.');
         
-        // حفظ القيمة الرقمية النظيفة (بدون فواصل العرض) في حقل الـ hidden
         if (input.id === 'amountInput') {
              document.getElementById('amount').value = parseFloat(rawDigits);
         }
         
-        // بعد تعديل الإدخال، نتحقق من الحدود والقيم
         validateAmountLogic(input);
     }
     
@@ -610,10 +593,8 @@
     function showSuccessModal() {
         const additionalMessageElement = document.getElementById('additionalSuccessMessage');
         
-        // تصفير الرسالة أولاً
         additionalMessageElement.textContent = ''; 
         
-        // إضافة رسالة التذكير إذا كان الإدخال طارئًا
         if (lastSubmissionType === 'emergency') {
             additionalMessageElement.textContent = "سيتم تذكيرك لاحقًا لتسجيل التفاصيل";
         }
@@ -623,7 +604,7 @@
 
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
-        lastSubmissionType = ''; // تصفير النوع بعد الإغلاق
+        lastSubmissionType = ''; 
     }
     
     function openEmergencyModal() {
@@ -636,13 +617,12 @@
         document.getElementById('emergencyInputModal').style.display = 'flex';
     }
 
-    // 6. دالة التحقق من التكرار - تم تغييرها لاستخدام Firebase
+    // 6. دالة التحقق من التكرار
     async function checkDuplicate(dateToCompare, type, detail) {
-        // نستخدم الدالة المصدّرة من وسم الـ script type="module"
         if (window.checkDuplicateInFirestore) {
              return await window.checkDuplicateInFirestore(dateToCompare, type, detail);
         }
-        return null; // في حالة فشل التحميل لسبب ما، لا نعتبره مكرراً
+        return null; 
     }
 
     function showDuplicateDraft(draft) {
@@ -677,6 +657,21 @@
         const options = dynamicOptions[selectedType];
         
         detailContainer.innerHTML = ''; // تنظيف الحاوية
+        
+        // **المنطق لتحديد ما إذا كان الحقل إجباري أم لا**
+        const isDetailRequired = (
+            selectedType === 'raw_materials' || 
+            selectedType === 'labor_wages' ||
+            selectedType === 'factory_rent' ||
+            selectedType === 'house_expenses' ||
+            selectedType === 'asset_purchase' ||
+            selectedType === 'general_maintenance' ||
+            selectedType === 'special_expenses' // **تمت إضافة المصروف الخاص**
+        );
+        
+        // تحديث العلامة النجمية (الإجبارية)
+        document.querySelector('.form-group[data-group="detail"] label span').style.display = isDetailRequired ? 'inline' : 'none';
+
 
         // **منطق خاص للمواد الخام (حقلين)**
         if (selectedType === 'raw_materials') {
@@ -746,7 +741,7 @@
                 const select = document.createElement('select');
                 select.id = 'expenseDetail';
                 select.name = 'expenseDetail';
-                select.required = true;
+                select.required = isDetailRequired;
 
                 const defaultOption = document.createElement('option');
                 defaultOption.value = "";
@@ -769,7 +764,7 @@
                 const select = document.createElement('select');
                 select.id = 'expenseDetail';
                 select.name = 'expenseDetail';
-                select.required = true;
+                select.required = isDetailRequired;
 
                 const defaultOption = document.createElement('option');
                 defaultOption.value = "";
@@ -788,13 +783,13 @@
                 detailContainer.appendChild(select);
                 
             } else if (options.type === 'text_input') {
-                // إنشاء حقل نص حر (لـ house_expenses، asset_purchase، إلخ)
+                // إنشاء حقل نص حر (لـ house_expenses، asset_purchase، special_expenses إلخ)
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.id = 'expenseDetailText';
                 input.name = 'expenseDetailText';
                 input.placeholder = options.placeholder;
-                input.required = true;
+                input.required = isDetailRequired; // **تطبيق الإجبارية هنا**
 
                 detailContainer.appendChild(input);
             }
@@ -802,7 +797,7 @@
     }
 
 
-    // 9. منطق حفظ النموذج الأساسي - تم تحديثه ليصبح async ويستخدم Firebase
+    // 9. منطق حفظ النموذج الأساسي
     document.getElementById('expenseForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -836,6 +831,13 @@
             detailValue = document.getElementById('expenseDetail').options[document.getElementById('expenseDetail').selectedIndex].textContent;
         } else {
             detailValue = 'غير محدد';
+        }
+        
+        // **التحقق من حقل التفصيل الإجباري النهائي**
+        // هذا يغطي الحالات التي يكون فيها الخيار المنسدل هو "اختر تفصيلاً"
+        if (type !== 'raw_materials' && document.querySelector('.form-group[data-group="detail"] label span').style.display !== 'none' && (detailValue === 'غير محدد' || detailValue.trim() === '-- اختر تفصيلاً --' || detailValue.trim() === 'وصف دقيق للمصروف الخاص (إجباري)')) {
+            alert("يرجى إدخال تفصيل المصروف بشكل صحيح.");
+            return;
         }
 
         // 2. التحقق من التكرار في Firestore
@@ -881,7 +883,7 @@
     });
 
 
-    // 10. منطق حفظ نموذج المصروف الطارئ السريع - تم تحديثه ليصبح async ويستخدم Firebase
+    // 10. منطق حفظ نموذج المصروف الطارئ السريع
     document.getElementById('quickEmergencyForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
