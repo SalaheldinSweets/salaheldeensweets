@@ -3,111 +3,949 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحت التطوير - مصنع صلاح الدين</title>
+    <title>نظام إدارة المبيعات - واجهة أمامية خالصة</title>
+    
     <style>
-        /* أنماط أساسية لصفحة Under Construction */
-        body {
-            font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f7f7f7;
-            color: #333;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* لتوزيع العناصر في الأعلى والأسفل */
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+        /* ثوابت الألوان والتصميم */
+        :root {
+            --color-background: #FAFBFD; /* الخلفية */
+            --color-primary: #0F62FE;   /* الأساسي */
+            --color-success: #16A34A;   /* النجاح */
+            --color-danger: #DC3545;    /* التنبيه */
+            --color-text: #333;
+            --color-light-gray: #eee;
+            --color-card-bg: #fff;
+        }
+
+        /* إعادة ضبط أساسية */
+        * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif; 
         }
 
-        /* حاوية الرأس والذيل لتحديد عرضهم الأقصى */
-        .container {
-            width: 100%;
-            max-width: 800px;
-        }
-
-        /* 1. رأس الصفحة (اسم المصنع) */
-        .header-section {
-            text-align: right;
-            margin-bottom: 20px;
-        }
-        .header-section h1 {
-            font-size: 2.5em;
-            color: #4CAF50; /* لون أخضر (للمصنع) */
-            margin-bottom: 0;
-            font-weight: 800;
-        }
-
-        /* 2. قسم المحتوى الرئيسي (تحت التطوير) */
-        .main-content {
-            flex-grow: 1; /* للسماح لها بالتمدد لأخذ المساحة المركزية */
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* لمركزة النص عمودياً */
-            align-items: center;
-            text-align: center;
-            padding: 40px;
-            background-color: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-
-        .main-content h2 {
-            font-size: 2em;
-            color: #ff9800; /* لون برتقالي للتنبيه */
-            margin-bottom: 15px;
-            font-weight: 700;
-        }
-
-        .main-content p {
-            font-size: 1.1em;
-            color: #555;
+        body {
+            background-color: var(--color-background);
+            color: var(--color-text);
             line-height: 1.6;
+            padding: 10px;
         }
 
-        /* 3. ذيل الصفحة (اسم المدير) */
-        .footer-section {
-            text-align: left; /* نضع اسم المدير في الطرف الآخر */
-            margin-top: 40px;
-            font-size: 1.1em;
-            color: #555;
-            font-weight: 600;
+        /* التخطيط العام: شبكة ثنائية (Main Grid) */
+        .container {
+            display: grid;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            grid-template-areas:
+                "header header"
+                "main summary";
+            grid-template-columns: 2fr 1fr; /* 2/3 للمحتوى، 1/3 للملخص */
+        }
+
+        /* تخطيط الهاتف (شاشة صغيرة) */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-areas:
+                    "header"
+                    "summary"
+                    "main";
+                grid-template-columns: 1fr; /* عمود واحد */
+            }
+            .summary-card {
+                position: static !important; /* إلغاء التثبيت في الهاتف */
+            }
+        }
+
+        /* 1. الشريط العلوي (Header) */
+        header {
+            grid-area: header;
+            background-color: var(--color-card-bg);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 1.2rem;
+            color: var(--color-primary);
+        }
+
+        /* 2. قسم الملخص الجانبي (Summary) */
+        .summary-card {
+            grid-area: summary;
+            background-color: var(--color-card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky; /* يثبت في مكانه */
+            top: 20px;
+            height: fit-content;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--color-light-gray);
+            font-size: 0.95rem;
+        }
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        /* تنسيق خاص للعمولة النهائية */
+        #final-commission {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--color-success) !important;
+            padding: 15px 0 !important;
+        }
+
+        /* 3. أقسام العمل الرئيسية (Main Tabs) */
+        main {
+            grid-area: main;
+            background-color: var(--color-card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        /* نظام التبويبات (Tabs) */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--color-light-gray);
+            margin-bottom: 20px;
+            overflow-x: auto; 
+        }
+        .tab-button {
+            padding: 12px 15px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--color-text);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            white-space: nowrap; 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .tab-button:hover:not(.active) {
+            color: var(--color-primary);
+        }
+        .tab-button.active {
+            color: var(--color-primary);
+            border-bottom: 3px solid var(--color-primary);
+            font-weight: bold;
+        }
+
+        /* محتوى التبويب (Tab Content) */
+        .tab-content {
+            display: none;
+            padding-top: 10px;
+            opacity: 0; /* الانتقال الناعم (Fade) */
+            transition: opacity 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* 4. تنسيق حقول الإدخال */
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .input-group input[type="tel"],
+        .input-group input[type="text"],
+        .input-group select {
             width: 100%;
-            max-width: 800px;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            direction: ltr; /* لتسهيل إدخال الأرقام بالهواتف */
+            text-align: right; 
+            transition: border-color 0.2s;
         }
-        
-        .footer-section strong {
-            color: #007bff; /* لون أزرق للإدارة */
-        }
-        
-        /* تعديل للمحاذاة النهائية */
-        .footer-content {
-            float: left; /* لدفع النص إلى اليسار (في تصميم RTL) */
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--color-primary);
         }
 
+        /* تنسيق الأزرار (Buttons) */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s, opacity 0.2s;
+            margin-top: 10px;
+        }
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #0c56d6;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-danger {
+            background-color: var(--color-danger);
+            color: white;
+        }
+        .btn-success {
+            background-color: var(--color-success);
+            color: white;
+        }
+
+        /* مؤشر حالة مطابقة الديون */
+        .debt-status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-mismatch {
+            background-color: #fcebeb; 
+            color: var(--color-danger);
+            border: 1px solid var(--color-danger);
+        }
+        .status-match {
+            background-color: #e6fae8; 
+            color: var(--color-success);
+            border: 1px solid var(--color-success);
+        }
+
+        /* قائمة الديون والسداد */
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--color-light-gray);
+        }
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        .list-item-info {
+            flex-grow: 1;
+        }
+        .list-item-amount {
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--color-danger);
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+
+        /* تنسيق ال Modal (نافذة إنهاء اليوم) */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .modal-content {
+            background-color: var(--color-card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            animation: slideUp 0.3s ease-in-out;
+        }
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: var(--color-primary);
+        }
+
+        /* حركات الانتقال */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container header-section">
-        <h1>مصنع صلاح الدين</h1>
+    <div class="container">
+        <header>
+            <h1>نظام إدارة المبيعات اليومية</h1>
+            <div id="live-time-date"></div>
+        </header>
+
+        <div class="summary-card" id="summary-card">
+            <h3>📊 ملخص اليوم</h3>
+            <div class="summary-item">
+                <span>إجمالي المبيعات:</span>
+                <span id="summary-total-sales" class="list-item-amount">0</span>
+            </div>
+            <div class="summary-item">
+                <span>إجمالي السداد:</span>
+                <span id="summary-total-payments" class="list-item-amount">0</span>
+            </div>
+            <div class="summary-item">
+                <span>عدد الوحدات المكتملة:</span>
+                <span id="summary-units">0</span>
+            </div>
+            <div class="summary-item" id="final-commission">
+                <span>العمولة النهائية:</span>
+                <span id="summary-commission" class="list-item-amount">0</span>
+            </div>
+        </div>
+
+        <main>
+            <div class="tabs">
+                <button class="tab-button active" data-tab="sales">
+                    <span role="img" aria-label="مبيعات">💵</span> 1. إجمالي المبيعات
+                </button>
+                <button class="tab-button" data-tab="debts">
+                    <span role="img" aria-label="ديون">📜</span> 2. تفصيل الديون الجديدة
+                </button>
+                <button class="tab-button" data-tab="payments">
+                    <span role="img" aria-label="سداد">💰</span> 3. سداد الديون القديمة
+                </button>
+                <button class="tab-button" data-tab="summary">
+                    <span role="img" aria-label="ملخص">📝</span> 4. الملخص وإنهاء اليوم
+                </button>
+            </div>
+
+            <div id="sales" class="tab-content active">
+                <div class="input-group">
+                    <label for="cash-input">الكاش 💵</label>
+                    <input type="tel" id="cash-input" value="0" placeholder="0">
+                </div>
+                <div class="input-group">
+                    <label for="bank-input">البنكك 🏦</label>
+                    <input type="tel" id="bank-input" value="0" placeholder="0">
+                </div>
+                <div class="input-group">
+                    <label for="new-debts-input">الديون الجديدة 📜</label>
+                    <input type="tel" id="new-debts-input" value="0" placeholder="0">
+                </div>
+            </div>
+
+            <div id="debts" class="tab-content">
+                <div class="debt-status status-mismatch" id="debt-match-status">
+                    <span role="img">⚠️</span>
+                    <span>الديون المفصلة لا تطابق الإجمالي المدخل (0)</span>
+                </div>
+                <div class="input-group" style="display: flex; gap: 10px;">
+                    <input type="text" id="debt-name-input" placeholder="اسم العميل">
+                    <input type="tel" id="debt-amount-input" placeholder="مبلغ الدين">
+                    <button class="btn btn-primary" id="add-debt-btn" style="min-width: 100px;">إضافة</button>
+                </div>
+                <div id="detailed-debts-list">
+                    <p style="color:#888;">لم يتم إدخال تفاصيل ديون جديدة بعد.</p>
+                </div>
+            </div>
+
+            <div id="payments" class="tab-content">
+                <h3>المدينون النشطون (من أيام سابقة)</h3>
+                <p id="active-debtors-status" style="color:#888; margin-bottom: 15px;">لا يوجد مدينون نشطون حالياً.</p>
+                
+                <div class="input-group">
+                    <label for="debtor-select">اختر العميل</label>
+                    <select id="debtor-select">
+                        <option value="">-- اختر من القائمة --</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="payment-amount-input">مبلغ السداد 💰</label>
+                    <input type="tel" id="payment-amount-input" placeholder="0">
+                </div>
+                <button class="btn btn-success" id="record-payment-btn" disabled>تسجيل السداد</button>
+
+                <h4 style="margin-top: 20px;">سدادات اليوم:</h4>
+                <div id="daily-payments-list">
+                    <p style="color:#888;">لم تُسجَّل أي سدادات اليوم.</p>
+                </div>
+            </div>
+
+            <div id="summary" class="tab-content">
+                <h2>تقرير اليوم الختامي</h2>
+                <div id="final-report-summary" class="summary-card" style="box-shadow: none; border: 1px solid var(--color-light-gray); margin-bottom: 20px; position: static;">
+                    </div>
+                
+                <button class="btn btn-danger" id="end-day-btn" disabled style="width: 100%;">
+                    إنهاء اليوم وتصفير البيانات
+                </button>
+
+                <p id="end-day-warning" class="status-mismatch" style="margin-top: 15px;">
+                    <span role="img">❌</span>
+                    <span>يجب مطابقة إجمالي الديون الجديدة قبل الإنهاء.</span>
+                </p>
+            </div>
+        </main>
     </div>
 
-    <div class="main-content">
-        <h2>🚧  الصفحة تحت التطوير 🚧</h2>
-        <p>
-             
-           يعني الصفحة لسه ما تم الشغل عليها 
-        </p>
+    <div id="end-day-modal" class="modal">
+        <div class="modal-content">
+            <h2>✅ تم إنهاء اليوم بنجاح!</h2>
+            <div id="final-modal-report">
+                </div>
+            <button class="btn btn-primary" id="close-modal-btn" style="width: 100%;">فهمت</button>
+            <p style="font-size: 0.8rem; color: var(--color-danger); margin-top: 10px;">
+                البيانات محفوظة محلياً. يمكنك الآن إغلاق الصفحة.
+            </p>
+        </div>
     </div>
 
-    <div class="container footer-section">
-        <span class="footer-content">
-            إدارة: <strong>أحمد صلاح الدين</strong>
-        </span>
-    </div>
+    <script>
+        // ===============================================
+        // 1. الثوابت ودوال الحساب (Constants and Core Logic)
+        // ===============================================
 
+        // الثوابت من توثيق النظام
+        const UNIT_SALES = 8000;
+        const COMMISSION_PER_UNIT = 600;
+        const MIN_COMMISSION = 15000;
+        const LS_TODAY_KEY = "sales.today"; // مفتاح بيانات اليوم
+        const LS_DEBTORS_KEY = "debtors.active"; // مفتاح المدينين النشطين (الترحيل)
+
+        /**
+         * دالة لتنظيف وتحويل قيمة الإدخال من نص منسق إلى رقم.
+         */
+        function cleanNumber(v) {
+            return Number(String(v).replace(/[^0-9\-]/g, '')) || 0;
+        }
+
+        /**
+         * دالة لتنسيق الرقم بإضافة فواصل الآلاف.
+         */
+        function formatNumber(num) {
+            if (isNaN(num)) return '0';
+            return cleanNumber(num).toLocaleString('en-US'); 
+        }
+
+        /**
+         * حساب عدد وحدات العمولة المكتملة.
+         */
+        function calcUnits(total) {
+            if (total <= 0) return 0;
+            return Math.floor(total / UNIT_SALES);
+        }
+
+        /**
+         * حساب العمولة الخام.
+         */
+        function calcRawCommission(units) {
+            return units * COMMISSION_PER_UNIT;
+        }
+
+        /**
+         * حساب العمولة النهائية المدفوعة.
+         */
+        function calcPaidCommission(raw, total) {
+            if (total <= 0) return 0; 
+            return Math.max(raw, MIN_COMMISSION);
+        }
+
+        // ===============================================
+        // 2. إدارة حالة النظام والتخزين (State & Local Storage)
+        // ===============================================
+
+        // الحالة الافتراضية للبيانات اليومية
+        const defaultTodayData = {
+            date: new Date().toISOString().split('T')[0], 
+            cash: 0,
+            bank: 0,
+            debts: 0, 
+            detailedDebts: [], 
+            payments: [], 
+            totalPayments: 0, 
+            rawCommission: 0,
+            paidCommission: 0,
+            closed: false
+        };
+
+        // وظيفة التحميل من Local Storage مع التحقق من التاريخ
+        function loadData(key) {
+            try {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (key === LS_TODAY_KEY && parsed.date !== defaultTodayData.date) {
+                        return null; 
+                    }
+                    return parsed;
+                }
+            } catch (e) {
+                console.error("Error loading data from Local Storage:", e);
+            }
+            return null;
+        }
+
+        // تحميل البيانات عند بدء التشغيل
+        let todayData = loadData(LS_TODAY_KEY) || defaultTodayData;
+        let activeDebtors = loadData(LS_DEBTORS_KEY) || [];
+
+
+        /**
+         * حفظ البيانات في Local Storage بشكل فوري.
+         */
+        function saveData(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                if (key === LS_TODAY_KEY) {
+                    updateUI(); // تحديث الواجهة بعد حفظ بيانات اليوم
+                }
+            } catch (e) {
+                console.error("Error saving data to Local Storage:", e);
+            }
+        }
+
+
+        // ===============================================
+        // 3. التحديثات وحساب العمولة (UI & Commission Logic)
+        // ===============================================
+
+        /**
+         * دالة لحساب وتحديث كل القيم والحالة.
+         */
+        function calculateAndUpdate() {
+            // 1. إجمالي المبيعات اليومية
+            const totalSales = todayData.cash + todayData.bank + todayData.debts;
+
+            // 2. حساب العمولة
+            const units = calcUnits(totalSales);
+            const rawComm = calcRawCommission(units);
+            const paidComm = calcPaidCommission(rawComm, totalSales);
+
+            // 3. تحديث حالة الذاكرة
+            todayData.totalSales = totalSales; 
+            todayData.rawCommission = rawComm;
+            todayData.paidCommission = paidComm;
+
+            // 4. حساب إجمالي الديون المفصلة ومقارنتها
+            const sumDetailedDebts = todayData.detailedDebts.reduce((sum, debt) => sum + debt.amount, 0);
+            const debtMatch = (sumDetailedDebts === todayData.debts && todayData.debts > 0) || (sumDetailedDebts === 0 && todayData.debts === 0);
+            
+            // 5. تحديث Local Storage لليوم وللمدينين (حفظ تلقائي مستمر)
+            saveData(LS_TODAY_KEY, todayData);
+            saveData(LS_DEBTORS_KEY, activeDebtors); 
+
+            return { totalSales, units, rawComm, paidComm, sumDetailedDebts, debtMatch };
+        }
+
+
+        /**
+         * تحديث عناصر الواجهة.
+         */
+        function updateUI() {
+            const { totalSales, units, paidComm, sumDetailedDebts, debtMatch } = calculateAndUpdate();
+
+            // تحديث الملخص الجانبي
+            document.getElementById('summary-total-sales').textContent = formatNumber(totalSales);
+            document.getElementById('summary-total-payments').textContent = formatNumber(todayData.totalPayments);
+            document.getElementById('summary-units').textContent = units;
+            document.getElementById('summary-commission').textContent = formatNumber(paidComm);
+
+            // تحديث قسم إجمالي المبيعات (لعكس القيم المنسقة)
+            document.getElementById('cash-input').value = formatNumber(todayData.cash);
+            document.getElementById('bank-input').value = formatNumber(todayData.bank);
+            document.getElementById('new-debts-input').value = formatNumber(todayData.debts);
+
+            // تحديث حالة مطابقة الديون
+            const debtStatusEl = document.getElementById('debt-match-status');
+            const endDayBtn = document.getElementById('end-day-btn');
+            const endDayWarning = document.getElementById('end-day-warning');
+            
+            const debtDiff = todayData.debts - sumDetailedDebts;
+
+            debtStatusEl.querySelector('span:last-child').textContent = 
+                debtMatch
+                ? `الديون المفصلة تطابق الإجمالي تماماً (${formatNumber(todayData.debts)})`
+                : `الديون المفصلة لا تطابق الإجمالي المدخل (${formatNumber(todayData.debts)}) - الفرق: ${formatNumber(debtDiff)}`;
+            
+            // تبديل فئة التنسيق والتحقق من زر إنهاء اليوم
+            if (debtMatch && totalSales > 0) {
+                debtStatusEl.className = 'debt-status status-match';
+                endDayBtn.disabled = false;
+                endDayWarning.style.display = 'none';
+            } else {
+                debtStatusEl.className = 'debt-status status-mismatch';
+                endDayBtn.disabled = true;
+                endDayWarning.style.display = 'block';
+            }
+            
+            // تحديث قوائم الديون والسداد
+            renderDetailedDebts();
+            renderActiveDebtorsAndPayments();
+            renderFinalReport();
+        }
+
+
+        // ===============================================
+        // 4. إدارة التفاعل (Event Handlers)
+        // ===============================================
+
+        /**
+         * وظيفة تهيئة النظام والربط بالأحداث.
+         */
+        function initializeSystem() {
+            setupTabs();
+            updateUI();
+            
+            setInterval(updateLiveTime, 1000);
+            updateLiveTime(); 
+
+            // ربط أحداث الإدخال للمبيعات (الحفظ التلقائي)
+            ['cash-input', 'bank-input', 'new-debts-input'].forEach(id => {
+                const input = document.getElementById(id);
+                // استخدام "input" للتحديث الفوري و "blur" للتنسيق
+                input.addEventListener('input', (e) => handleSalesInput(e, id));
+                input.addEventListener('blur', updateUI); 
+            });
+            
+            // ربط زر إضافة الدين الجديد
+            document.getElementById('add-debt-btn').addEventListener('click', addDetailedDebt);
+            
+            // ربط تسجيل السداد
+            document.getElementById('record-payment-btn').addEventListener('click', recordPayment);
+            document.getElementById('debtor-select').addEventListener('change', checkPaymentFeasibility);
+            document.getElementById('payment-amount-input').addEventListener('input', checkPaymentFeasibility);
+
+            // ربط زر إنهاء اليوم
+            document.getElementById('end-day-btn').addEventListener('click', endDay);
+
+            // ربط زر إغلاق نافذة Modal
+            document.getElementById('close-modal-btn').addEventListener('click', () => {
+                document.getElementById('end-day-modal').style.display = 'none';
+            });
+            
+            // في حالة كان اليوم مغلقاً مسبقاً
+            if (todayData.closed) {
+                showClosedDayReport();
+            }
+        }
+
+        /**
+         * معالجة إدخالات المبيعات (كاش، بنك، ديون جديدة).
+         */
+        function handleSalesInput(e, id) {
+            const rawValue = cleanNumber(e.target.value);
+            
+            switch (id) {
+                case 'cash-input': todayData.cash = rawValue; break;
+                case 'bank-input': todayData.bank = rawValue; break;
+                case 'new-debts-input': todayData.debts = rawValue; break;
+            }
+            calculateAndUpdate(); 
+        }
+
+        // ===============================================
+        // 5. وظائف إدارية (Tabs, Time, UI)
+        // ===============================================
+
+        /**
+         * وظيفة تبديل التبويبات.
+         */
+        function setupTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.getAttribute('data-tab');
+
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    button.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        }
+
+        /**
+         * تحديث الوقت والتاريخ في الشريط العلوي.
+         */
+        function updateLiveTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateString = now.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('live-time-date').textContent = `${timeString} - ${dateString}`;
+        }
+
+
+        // ===============================================
+        // 6. إدارة تفصيل الديون الجديدة والسداد
+        // ===============================================
+
+        /**
+         * إضافة دين جديد مفصل.
+         */
+        function addDetailedDebt() {
+            const nameInput = document.getElementById('debt-name-input');
+            const amountInput = document.getElementById('debt-amount-input');
+            
+            const name = nameInput.value.trim();
+            const amount = cleanNumber(amountInput.value);
+
+            if (name && amount > 0) {
+                const existingDebtIndex = todayData.detailedDebts.findIndex(d => d.name === name);
+                
+                if (existingDebtIndex > -1) {
+                    todayData.detailedDebts[existingDebtIndex].amount += amount;
+                } else {
+                    todayData.detailedDebts.push({ name, amount });
+                }
+
+                nameInput.value = '';
+                amountInput.value = '';
+                updateUI(); 
+            }
+        }
+
+        /**
+         * حذف دين مفصل جديد.
+         */
+        window.deleteDetailedDebt = function(index) {
+            if (confirm(`هل أنت متأكد من حذف الدين لـ: ${todayData.detailedDebts[index].name}؟`)) {
+                todayData.detailedDebts.splice(index, 1);
+                updateUI();
+            }
+        }
+
+        /**
+         * عرض قائمة الديون الجديدة المفصلة.
+         */
+        function renderDetailedDebts() {
+            const listEl = document.getElementById('detailed-debts-list');
+            listEl.innerHTML = '';
+            
+            if (todayData.detailedDebts.length === 0 && todayData.debts === 0) {
+                listEl.innerHTML = '<p style="color:#888;">لم يتم إدخال تفاصيل ديون جديدة بعد.</p>';
+                return;
+            }
+
+            todayData.detailedDebts.forEach((debt, index) => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="list-item-info">
+                        <strong>${debt.name}</strong>
+                        <span> (دين جديد)</span>
+                    </div>
+                    <span class="list-item-amount">${formatNumber(debt.amount)}</span>
+                    <button class="delete-btn" onclick="deleteDetailedDebt(${index})">❌</button>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+        
+        /**
+         * فحص تفعيل زر تسجيل السداد
+         */
+        function checkPaymentFeasibility() {
+            const selectEl = document.getElementById('debtor-select');
+            const amountInput = document.getElementById('payment-amount-input');
+            const recordBtn = document.getElementById('record-payment-btn');
+
+            recordBtn.disabled = !(selectEl.value && cleanNumber(amountInput.value) > 0);
+        }
+        
+        /**
+         * تسجيل سداد دين قديم.
+         */
+        function recordPayment() {
+            const selectEl = document.getElementById('debtor-select');
+            const amountInput = document.getElementById('payment-amount-input');
+            
+            const selectedName = selectEl.value;
+            const paymentAmount = cleanNumber(amountInput.value);
+
+            if (!selectedName || paymentAmount <= 0) return;
+
+            const debtor = activeDebtors.find(d => d.name === selectedName);
+            if (!debtor) return;
+
+            let amountPaid = Math.min(paymentAmount, debtor.amount);
+            
+            // تسجيل السداد اليومي
+            todayData.payments.push({ name: selectedName, amount: amountPaid });
+            todayData.totalPayments = todayData.payments.reduce((sum, p) => sum + p.amount, 0);
+
+            // تحديث دين العميل
+            debtor.amount -= amountPaid;
+            
+            // تصفير حقول الإدخال والاختيار
+            selectEl.value = '';
+            amountInput.value = '';
+            checkPaymentFeasibility();
+
+            // تحديث الواجهة والذاكرة
+            updateUI(); 
+        }
+
+        /**
+         * عرض قائمة المدينين النشطين والسدادات اليومية.
+         */
+        function renderActiveDebtorsAndPayments() {
+            const selectEl = document.getElementById('debtor-select');
+            const statusEl = document.getElementById('active-debtors-status');
+            const paymentsListEl = document.getElementById('daily-payments-list');
+
+            // 1. تحديث قائمة الاختيار للمدينين (يتم تصفية الذين صفر دينهم هنا)
+            activeDebtors = activeDebtors.filter(debtor => debtor.amount > 0);
+            selectEl.innerHTML = '<option value="">-- اختر من القائمة --</option>';
+
+            if (activeDebtors.length > 0) {
+                statusEl.style.display = 'none';
+                activeDebtors.forEach(debtor => {
+                    const option = document.createElement('option');
+                    option.value = debtor.name;
+                    option.textContent = `${debtor.name} (المتبقي: ${formatNumber(debtor.amount)})`;
+                    selectEl.appendChild(option);
+                });
+            } else {
+                statusEl.style.display = 'block';
+            }
+            
+            // 2. تحديث قائمة سدادات اليوم
+            paymentsListEl.innerHTML = '';
+            if (todayData.payments.length === 0) {
+                paymentsListEl.innerHTML = '<p style="color:#888;">لم تُسجَّل أي سدادات اليوم.</p>';
+                return;
+            }
+            todayData.payments.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="list-item-info">
+                        <strong>${p.name}</strong>
+                        <span> (سداد)</span>
+                    </div>
+                    <span class="list-item-amount" style="color: var(--color-success);">${formatNumber(p.amount)}</span>
+                `;
+                paymentsListEl.appendChild(item);
+            });
+        }
+
+
+        /**
+         * عرض التقرير النهائي في تبويب الملخص والـ Modal.
+         */
+        function renderFinalReport() {
+            const { totalSales, units, rawComm, paidComm } = calculateAndUpdate();
+            const reportHtml = `
+                <div class="summary-item"><span>إجمالي المبيعات (نقد+بنك+دين جديد):</span> <strong>${formatNumber(totalSales)}</strong></div>
+                <div class="summary-item"><span>عدد الوحدات المكتملة:</span> <strong>${units}</strong></div>
+                <div class="summary-item"><span>العمولة الخام:</span> <strong>${formatNumber(rawComm)}</strong></div>
+                <div class="summary-item" style="color: var(--color-success); font-size: 1.2rem;"><span>العمولة النهائية المدفوعة:</span> <strong>${formatNumber(paidComm)}</strong></div>
+                <div class="summary-item"><span>إجمالي السداد المُحصَّل:</span> <strong>${formatNumber(todayData.totalPayments)}</strong></div>
+                <div class="summary-item" style="border-bottom: none;"><span>ديون اليوم التي رُحِّلت:</span> <strong>${formatNumber(todayData.debts)}</strong></div>
+            `;
+            // الملخص في تبويب الملخص
+            document.getElementById('final-report-summary').innerHTML = reportHtml;
+            // الملخص في نافذة إنهاء اليوم (Modal)
+            document.getElementById('final-modal-report').innerHTML = reportHtml;
+        }
+
+
+        // ===============================================
+        // 7. إنهاء اليوم وتصفير البيانات
+        // ===============================================
+
+        /**
+         * تنفيذ عملية إنهاء اليوم.
+         */
+        function endDay() {
+            if (!confirm("هل أنت متأكد من إنهاء اليوم؟ سيتم ترحيل الديون وتصفير البيانات اليومية لبدء يوم جديد.")) {
+                return;
+            }
+
+            // 1. ترحيل الديون الجديدة إلى قائمة المدينين النشطين
+            todayData.detailedDebts.forEach(newDebt => {
+                const existingDebtor = activeDebtors.find(d => d.name === newDebt.name);
+                if (existingDebtor) {
+                    existingDebtor.amount += newDebt.amount;
+                } else {
+                    activeDebtors.push(newDebt);
+                }
+            });
+
+            // 2. ترحيل البيانات وحفظها قبل التصفير وتعيين حالة الإغلاق
+            const closedDayReport = { ...todayData, closed: true };
+            localStorage.setItem(`sales.closed.${todayData.date}`, JSON.stringify(closedDayReport)); // حفظ نسخة من اليوم المغلق
+            saveData(LS_DEBTORS_KEY, activeDebtors); // حفظ المدينين المحدثين
+
+            // 3. عرض نافذة Modal بالتقرير الختامي
+            document.getElementById('end-day-modal').style.display = 'flex';
+
+            // 4. تصفير البيانات اليومية لبدء يوم جديد
+            todayData = { ...defaultTodayData, date: defaultTodayData.date, closed: false }; 
+            saveData(LS_TODAY_KEY, todayData);
+            
+            // تحديث الواجهة لإظهار حالة اليوم الجديد ومنع الإدخالات
+            setTimeout(() => {
+                updateUI();
+                disableInputs(true);
+            }, 500); 
+        }
+
+        /**
+         * عرض تقرير اليوم المغلق ومنع الإدخالات.
+         */
+        function showClosedDayReport() {
+            document.getElementById('final-report-summary').innerHTML = `
+                <h3 style="color: var(--color-danger);">⚠️ تم إغلاق هذا اليوم مسبقاً!</h3>
+                ${document.getElementById('final-report-summary').innerHTML}
+                <p style="margin-top: 15px; color: var(--color-danger);">لا يمكن تعديل بيانات يوم مغلق.</p>
+            `;
+            disableInputs(true);
+        }
+
+        /**
+         * تعطيل/تفعيل جميع حقول الإدخال (بعد إغلاق اليوم).
+         */
+        function disableInputs(shouldDisable) {
+            document.querySelectorAll('input, select, button').forEach(el => {
+                if (el.id !== 'close-modal-btn' && el.classList.contains('tab-button') === false) {
+                    el.disabled = shouldDisable;
+                }
+            });
+        }
+
+        // ===============================================
+        // 8. تشغيل النظام
+        // ===============================================
+
+        // تشغيل وظيفة التهيئة بعد تحميل الصفحة بالكامل
+        window.onload = initializeSystem;
+    </script>
 </body>
 </html>
