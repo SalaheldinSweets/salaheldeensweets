@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل التقارير اليومية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card {
+            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.08), -6px -6px 12px rgba(255, 255, 255, 0.9);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans p-2">
+
+    <header class="p-4 mb-6 bg-white rounded-xl card flex justify-between items-center shadow-lg">
+        <h1 class="text-2xl font-extrabold text-blue-800">📜 سجل التقارير اليومية</h1>
+        <a href="index.html" class="bg-indigo-500 text-white p-3 rounded-lg font-semibold hover:bg-indigo-600 transition shadow-md flex items-center">
+            العودة لصفحة المبيعات الرئيسية 🏠
+        </a>
+    </header>
+
+    <main class="p-4">
+        <div id="historical-reports-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <p class="text-center text-gray-500 col-span-full">جاري تحميل التقارير...</p>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script>
+        // 🌟 إعدادات Firebase الخاصة بك 🌟
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZCydTHThyMEMv_x261_HhJB_wZNUr7JA",
+            authDomain: "salahsweetgedo.firebaseapp.com",
+            projectId: "salahsweetgedo",
+            storageBucket: "salahsweetgedo.firebasestorage.app",
+            messagingSenderId: "1079672977254",
+            appId: "1:1079672977254:web:71604ac39a85311416baa7"
+        };
+        
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const DAILY_REPORTS_COLLECTION = db.collection('dailyReports');
+        
+        // =======================================================
+        // 🧮 دوال مساعدة
+        // =======================================================
+        function formatNumber(number) {
+            return new Intl.NumberFormat('en-US').format(number);
+        }
+        
+        // =======================================================
+        // 📜 دالة عرض التقرير
+        // =======================================================
+        function renderReportCard(reportData) {
+            const reportDate = reportData.date || '---';
+            const commission = formatNumber(reportData.commission || 0);
+            const totalSales = formatNumber(reportData.totalSales || 0);
+            const netDue = formatNumber(reportData.netDue || 0);
+            const cashBankTotal = formatNumber((reportData.cash || 0) + (reportData.bank || 0));
+            const newDebtorsCount = Object.keys(reportData.newDebts || {}).length;
+
+            return `
+                <div class="p-5 rounded-xl card bg-white border-b-4 border-blue-500 shadow-lg hover:shadow-xl transition duration-200">
+                    <div class="flex justify-between items-center mb-3 border-b pb-2">
+                        <h4 class="text-lg font-bold text-blue-700">📅 تقرير يوم: ${reportDate}</h4>
+                        <span class="text-xs font-medium text-gray-400">#${(reportData.id || '').substring(0, 6)}</span>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <p class="text-gray-600">إجمالي المبيعات:</p>
+                            <span class="text-xl font-extrabold text-indigo-800">${totalSales}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <p class="text-gray-600">المستحق النهائي:</p>
+                            <span class="text-xl font-extrabold text-red-600">${netDue}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-t text-sm">
+                        <ul class="space-y-1 text-gray-600">
+                            <li>💰 الكاش + البنكك: ${cashBankTotal}</li>
+                            <li>🎁 العمولة: ${commission}</li>
+                            <li>📋 ديون جديدة: ${newDebtorsCount} عميل</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * يحمّل التقارير التاريخية من Firestore ويعرضها.
+         */
+        async function loadHistoricalReports() {
+            const container = document.getElementById('historical-reports-container');
+            container.innerHTML = '<p class="text-center text-gray-500 col-span-full p-8">جاري تحميل التقارير...</p>';
+
+            try {
+                const snapshot = await DAILY_REPORTS_COLLECTION
+                                         .orderBy('timestamp', 'desc') 
+                                         .limit(100)
+                                         .get();
+
+                if (snapshot.empty) {
+                    container.innerHTML = '<p class="text-center text-gray-500 col-span-full p-8">لا توجد تقارير مسجلة بعد.</p>';
+                    return;
+                }
+
+                let reportsHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    reportsHTML += renderReportCard(data);
+                });
+
+                container.innerHTML = reportsHTML;
+
+            } catch (error) {
+                console.error("خطأ في تحميل التقارير التاريخية:", error);
+                container.innerHTML = '<p class="text-center text-red-500 col-span-full p-8">فشل في تحميل سجل التقارير من الخادم.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadHistoricalReports);
+    </script>
+</body>
+</html>
