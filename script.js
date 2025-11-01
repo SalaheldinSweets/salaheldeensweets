@@ -1,51 +1,57 @@
-// ملاحظة: تهيئة Firebase (const app, db, auth) تم تعريفها في index.html،
-// لذلك نستخدم المتغيرات المعرفة هناك مباشرة.
+// =======================================================
+// script.js - منطق نظام إدارة المبيعات (النسخة المحسّنة والمرنة)
+// =======================================================
 
-// تحديد مراجع المجموعات الأساسية
-const ACTIVE_DEBTORS_COLLECTION = db.collection('activeDebtors');
-const DAILY_REPORTS_COLLECTION = db.collection('dailyReports');
-const TODAY_DATA_DOC = ACTIVE_DEBTORS_COLLECTION.doc('currentDay'); 
-const DEBTORS_LIST_DOC = ACTIVE_DEBTORS_COLLECTION.doc('list'); 
+// 🧠 1. كائن التخزين والتحميل الأولي والثوابت
+// -------------------------------------------------------
 
+const COMMISSION_CONSTS = {
+    MIN_DAILY: 15000,
+    UNIT_SALES: 8000,
+    COMMISSION_PER_UNIT: 600,
+};
+
+/**
+ * @typedef {Object} DayData
+ * @property {number} cash - إجمالي مبيعات الكاش.
+ * @property {number} bank - إجمالي مبيعات البنكك.
+ * @property {number} newDebtTotal - الإجمالي المعلن للديون الجديدة (في القسم 1).
+ * @property {number} totalSales - المبيعات الكلية.
+ * @property {Object.<string, number>} newDebts - تفصيل الديون الجديدة لليوم.
+ * @property {number} totalNewDetailedDebt - مجموع الديون المفصلة.
+ * @property {number} totalRepaid - إجمالي السدادات المستردة.
+ */
 let todayData = {
     cash: 0,
     bank: 0,
     newDebtTotal: 0,
     totalSales: 0,
-    totalRepaid: 0,
-    newDebts: {},
+    newDebts: {}, 
+    totalNewDetailedDebt: 0, 
+    totalRepaid: 0, 
 };
 
-let activeDebtors = {}; // قائمة المدينين النشطين (الذين لم يسددوا)
+// كائن مستقل لتخزين الديون المستمرة (العملاء المدينون عبر الأيام)
+let activeDebtors = {}; 
 
 // =======================================================
-// 🔑 0. منطق التحكم في الصلاحيات (يتم استدعاؤه في index.html)
-// =======================================================
-// وظيفة checkAuthenticationAndRole() موجودة الآن في وسم <script> داخل index.html
-// للتأكد من أنها أول ما يتم تنفيذه بعد تحميل Firebase SDKs.
+// 🧮 2. الدوال المساعدة للحساب والتنسيق
+// -------------------------------------------------------
 
-// =======================================================
-// 🧮 1. الدوال المساعدة (Formatting and Commission)
-// =======================================================
-
-function formatNumber(number) {
-    if (typeof number !== 'number') return '0';
-    return new Intl.NumberFormat('en-US').format(Math.round(number));
-}
-
-function calculateCommission(sales) {
-    // نسبة العمولة الافتراضية: 5%
-    return sales * 0.05;
-}
-
+/**
+ * يعرض رسالة توست للمستخدم.
+ * @param {string} message - الرسالة المراد عرضها.
+ * @param {'info'|'success'|'error'} [type='info'] - نوع الرسالة لتحديد اللون.
+ */
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
+    
     let bgColor = 'bg-blue-500';
     if (type === 'success') bgColor = 'bg-green-500';
     if (type === 'error') bgColor = 'bg-red-500';
 
-    toast.className = `${bgColor} text-white p-3 rounded-lg shadow-xl transition-all duration-300 transform translate-x-full opacity-0`;
+    toast.className = `${bgColor} text-white p-3 rounded-lg shadow-xl card transition-all duration-300 transform translate-x-full opacity-0`;
     toast.innerHTML = message; 
 
     container.appendChild(toast);
@@ -62,426 +68,574 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// =======================================================
-// 📅 2. تحديث التاريخ والوقت
-// =======================================================
-
-function updateDateTime() {
-    const now = new Date();
-    const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-    const dayOptions = { weekday: 'long' };
-    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-
-    const dateStr = now.toLocaleDateString('ar-EG', dateOptions);
-    const dayStr = now.toLocaleDateString('ar-EG', dayOptions);
-    const timeStr = now.toLocaleTimeString('ar-EG', timeOptions);
-
-    document.getElementById('current-day-name').textContent = dayStr;
-    document.getElementById('current-date').textContent = dateStr;
-    document.getElementById('live-clock').textContent = timeStr;
+/**
+ * ينظف ويحول قيمة الإدخال إلى رقم عشري.
+ * @param {string} value - القيمة النصية من حقل الإدخال.
+ * @returns {number} - القيمة الرقمية النظيفة.
+ */
+function cleanNumber(value) {
+    if (typeof value !== 'string') return 0;
+    const cleaned = value.replace(/[^0-9.]/g, '');
+    return parseFloat(cleaned) || 0;
 }
 
-setInterval(updateDateTime, 1000);
-updateDateTime(); // التشغيل الفوري
+/**
+ * ينسق الرقم مع فاصل الآلاف.
+ * @param {number} number - الرقم المراد تنسيقه.
+ * @returns {string} - الرقم المنسق كنص.
+ */
+function formatNumber(number) {
+    return new Intl.NumberFormat('en-US').format(number);
+}
 
-// =======================================================
-// ⬆️ 3. وظائف جلب وحفظ البيانات (Firebase)
-// =======================================================
+/**
+ * يحسب عمولة المبيعات بناءً على الثوابت.
+ * @param {number} salesTotal - إجمالي المبيعات.
+ * @returns {number} - قيمة العمولة المحسوبة.
+ */
+function calculateCommission(salesTotal) {
+    let commission = Math.floor(salesTotal / COMMISSION_CONSTS.UNIT_SALES) * COMMISSION_CONSTS.COMMISSION_PER_UNIT;
 
-async function loadData() {
-    try {
-        const todayDoc = await TODAY_DATA_DOC.get();
-        if (todayDoc.exists) {
-            todayData = todayDoc.data();
-        } else {
-            // تهيئة بيانات اليوم إذا لم تكن موجودة
-            await TODAY_DATA_DOC.set(todayData);
-        }
-
-        const debtorsDoc = await DEBTORS_LIST_DOC.get();
-        if (debtorsDoc.exists) {
-            activeDebtors = debtorsDoc.data();
-        } else {
-            await DEBTORS_LIST_DOC.set({}); // تهيئة قائمة المدينين
-        }
-        
-        updateMainCalculations();
-        updateInputsFromData();
-        renderActiveDebtors();
-
-    } catch (error) {
-        console.error("Error loading data:", error);
-        showToast("فشل في تحميل البيانات الأولية ❌", 'error');
+    if (commission < COMMISSION_CONSTS.MIN_DAILY) {
+        commission = COMMISSION_CONSTS.MIN_DAILY;
     }
-}
-
-async function updateFirestoreTodayData() {
-    try {
-        // تحديث بيانات اليوم الحالية
-        await TODAY_DATA_DOC.set(todayData);
-        
-        // تحديث قائمة المدينين النشطين
-        await DEBTORS_LIST_DOC.set(activeDebtors);
-    } catch (error) {
-        console.error("Error updating Firestore:", error);
-        showToast("فشل في حفظ البيانات على السحابة ❌", 'error');
-    }
+    return commission;
 }
 
 // =======================================================
-// 🔄 4. وظائف تحديث الواجهة (UI Updates)
-// =======================================================
+// 🔄 3. دوال التخزين (Local Storage)
+// -------------------------------------------------------
 
-function updateInputsFromData() {
-    // تحديث علامة تبويب المبيعات
-    document.getElementById('input-cash').value = todayData.cash || '';
-    document.getElementById('input-bank').value = todayData.bank || '';
-    document.getElementById('input-new-debt-total').value = todayData.newDebtTotal || '';
-
-    // تحديث قائمة الديون الجديدة
-    const debtListContainer = document.getElementById('new-debt-list');
-    const newDebtsTotal = Object.values(todayData.newDebts).reduce((acc, curr) => acc + curr, 0);
-
-    debtListContainer.innerHTML = '';
-    if (Object.keys(todayData.newDebts).length === 0) {
-        debtListContainer.innerHTML = '<p class="text-center text-gray-500">لا توجد ديون مفصلة بعد.</p>';
-    } else {
-        for (const [name, amount] of Object.entries(todayData.newDebts)) {
-            const item = document.createElement('div');
-            item.className = 'flex justify-between items-center p-3 bg-white rounded-lg border shadow-sm';
-            item.innerHTML = `
-                <span class="font-semibold text-gray-800">${name}</span>
-                <div class="flex items-center">
-                    <span class="font-mono text-red-600 ml-4">${formatNumber(amount)}</span>
-                    <button data-name="${name}" class="remove-debt-btn text-red-400 hover:text-red-600 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                </div>
-            `;
-            debtListContainer.appendChild(item);
-        }
+function loadData() {
+    const savedTodayData = localStorage.getItem('todayData');
+    if (savedTodayData) {
+        // نستخدم Object.assign لدمج البيانات المحفوظة مع الهيكل الافتراضي
+        Object.assign(todayData, JSON.parse(savedTodayData));
     }
     
-    // ربط حدث إزالة الدين الجديد
-    document.querySelectorAll('.remove-debt-btn').forEach(button => {
-        button.addEventListener('click', handleRemoveNewDebt);
-    });
-    
-    // تحديث مؤشر مطابقة الديون
-    const requiredDebt = todayData.newDebtTotal;
-    const matchIndicator = document.getElementById('match-indicator');
-    document.getElementById('required-debt-display').textContent = formatNumber(requiredDebt);
-
-    if (requiredDebt === 0 && newDebtsTotal === 0) {
-        matchIndicator.textContent = 'مطابق تماماً';
-        matchIndicator.className = 'text-sm font-normal ml-4 text-green-600';
-        document.getElementById('debt-excess-warning').classList.add('hidden');
-    } else if (requiredDebt === newDebtsTotal) {
-        matchIndicator.textContent = '✅ مطابق تماماً';
-        matchIndicator.className = 'text-sm font-normal ml-4 text-green-600';
-        document.getElementById('debt-excess-warning').classList.add('hidden');
-    } else {
-        const diff = newDebtsTotal - requiredDebt;
-        matchIndicator.textContent = `⚠️ غير مطابق (الفرق: ${formatNumber(diff)})`;
-        matchIndicator.className = 'text-sm font-normal ml-4 text-red-600';
-        document.getElementById('debt-excess-warning').classList.toggle('hidden', diff <= 0);
+    const savedActiveDebtors = localStorage.getItem('activeDebtors');
+    if (savedActiveDebtors) {
+        activeDebtors = JSON.parse(savedActiveDebtors);
     }
 }
 
+function saveTodayData() {
+    localStorage.setItem('todayData', JSON.stringify(todayData));
+}
+
+function saveActiveDebtors() {
+    localStorage.setItem('activeDebtors', JSON.stringify(activeDebtors));
+}
+
+// =======================================================
+// 📈 4. دوال التحديث والحساب الرئيسي
+// -------------------------------------------------------
+
+/**
+ * الدالة الرئيسية لتحديث جميع الحسابات وعناصر الواجهة المرتبطة بها.
+ */
 function updateMainCalculations() {
-    const totalSales = todayData.cash + todayData.bank + todayData.newDebtTotal;
-    todayData.totalSales = totalSales;
+    // 1. حساب المبيعات الكلية
+    todayData.totalSales = todayData.cash + todayData.bank + todayData.newDebtTotal;
 
-    const commission = calculateCommission(totalSales);
-    const netDue = totalSales + todayData.totalRepaid - commission;
-    
-    // تحديث الواجهة
-    document.getElementById('total-sales-display').textContent = formatNumber(totalSales);
+    // 2. الحسابات النهائية
+    const commission = calculateCommission(todayData.totalSales);
+    const netDue = todayData.totalSales + todayData.totalRepaid - commission; 
 
-    // تحديث ملخص إنهاء اليوم
-    document.getElementById('summary-total-sales').textContent = formatNumber(totalSales);
+    // 3. تحديث العرض في قسم 1
+    document.getElementById('total-sales-display').textContent = formatNumber(todayData.totalSales);
+
+    // 4. تحديث العرض في قسم 4 (الملخص)
+    document.getElementById('summary-total-sales').textContent = formatNumber(todayData.totalSales);
     document.getElementById('summary-total-repaid').textContent = formatNumber(todayData.totalRepaid);
     document.getElementById('summary-commission').textContent = formatNumber(commission);
     document.getElementById('summary-net-due').textContent = formatNumber(netDue);
-
-    // تفعيل زر إنهاء اليوم فقط إذا كان هناك مبيعات وكان تفصيل الديون مطابقاً
-    const newDebtsTotal = Object.values(todayData.newDebts).reduce((acc, curr) => acc + curr, 0);
-    const isDebtMatched = todayData.newDebtTotal === newDebtsTotal;
-    const canEndDay = totalSales > 0 && isDebtMatched;
-
-    document.getElementById('end-day-btn').disabled = !canEndDay;
-    document.getElementById('end-day-btn').textContent = canEndDay ? 'إنهاء اليوم وتسجيل التقرير ✅' : 'يجب مطابقة الديون والمبيعات أولاً 🛑';
-
-    updateFirestoreTodayData();
+    
+    // 5. تحديث المؤشرات والقوائم
+    updateDebtMatchIndicator();
+    renderNewDebtList();
+    renderActiveDebtorsList();
+    updateDebtorsDatalist();
+    
+    // 6. حفظ بيانات اليوم
+    saveTodayData();
 }
 
-function renderActiveDebtors() {
-    const listContainer = document.getElementById('active-debtors-list');
-    listContainer.innerHTML = '';
-    const debtorsKeys = Object.keys(activeDebtors).filter(name => activeDebtors[name] > 0);
+/**
+ * يحدد حالة تطابق تفصيل الديون الجديدة مع إجماليها.
+ */
+function updateDebtMatchIndicator() {
+    const totalRequired = todayData.newDebtTotal;
+    const totalDetailed = todayData.totalNewDetailedDebt;
+    const indicator = document.getElementById('match-indicator');
+    const endDayBtn = document.getElementById('end-day-btn');
+    const requiredDebtDisplay = document.getElementById('required-debt-display');
+    const excessWarning = document.getElementById('debt-excess-warning');
+    
+    requiredDebtDisplay.textContent = formatNumber(totalRequired);
+    
+    const difference = totalRequired - totalDetailed; // موجب: نقص، سالب: زيادة
 
-    if (debtorsKeys.length === 0) {
-        listContainer.innerHTML = '<p class="text-center text-gray-500">لا يوجد مدينون حاليون لسداد ديونهم.</p>';
-        return;
+    endDayBtn.classList.remove('bg-blue-500', 'bg-red-400', 'hover:bg-blue-600', 'hover:bg-red-600');
+    indicator.classList.remove('text-green-700', 'text-red-700', 'text-sm', 'text-base');
+
+    // حالة المطابقة التامة (الاختلاف صفر)
+    if (difference === 0) {
+        indicator.innerHTML = '✅ **مطابق**';
+        indicator.classList.add('text-green-700', 'text-base');
+        endDayBtn.disabled = false;
+        endDayBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+        excessWarning.classList.add('hidden');
+
+    // حالة الزيادة (التفصيل أكبر من الإجمالي المعلن)
+    } else if (totalDetailed > totalRequired) {
+        // يسمح بالتجاوز في الإدخال، لكن يعطل الإنهاء
+        indicator.innerHTML = `⚠️ **زيادة في التفصيل** (${formatNumber(Math.abs(difference))})`;
+        indicator.classList.add('text-red-700', 'text-sm');
+        endDayBtn.disabled = true;
+        endDayBtn.classList.add('bg-red-400', 'hover:bg-red-600');
+        
+        excessWarning.textContent = `⚠️ مجموع الديون المفصلة أكبر من الإجمالي بفارق: ${formatNumber(Math.abs(difference))}`;
+        excessWarning.classList.remove('hidden');
+
+    // حالة النقص (التفصيل أقل من الإجمالي المعلن)
+    } else { // difference > 0
+        indicator.innerHTML = `⚠️ **غير مطابق** (ناقص: ${formatNumber(difference)})`;
+        indicator.classList.add('text-red-700', 'text-sm');
+        endDayBtn.disabled = true;
+        endDayBtn.classList.add('bg-red-400', 'hover:bg-red-600');
+        
+        excessWarning.classList.add('hidden');
+    }
+}
+
+// =======================================================
+// 5. دوال الإدخال والتفصيل
+// -------------------------------------------------------
+
+/**
+ * يعالج إدخالات المبيعات (كاش، بنك، ديون جديدة).
+ * @param {Event} e - حدث الإدخال.
+ */
+function handleSalesInput(e) {
+    const inputElement = e.target;
+    const cleanValue = cleanNumber(inputElement.value);
+
+    // التصفير اللحظي (تحسين UX): يتم تصفير الحقل إذا كانت القيمة النظيفة صفراً
+    if (cleanValue === 0) {
+        inputElement.value = ''; 
+    } else {
+        inputElement.value = formatNumber(cleanValue);
     }
 
-    debtorsKeys.forEach(name => {
-        const amount = activeDebtors[name];
-        const item = document.createElement('div');
-        item.className = 'p-4 rounded-xl card bg-white border-b-2 border-green-400';
-        item.innerHTML = `
-            <p class="font-bold text-lg text-gray-800 mb-2">👤 ${name}</p>
-            <p class="text-sm font-medium text-gray-600">المبلغ المتبقي: <span class="font-mono text-xl text-red-600">${formatNumber(amount)}</span></p>
-            <div class="mt-3 flex space-x-2 space-x-reverse">
-                <input type="tel" id="repay-${name.replace(/\s/g, '_')}" inputmode="numeric" placeholder="مبلغ السداد..." class="flex-grow p-2 rounded-lg border focus:ring-green-500 card">
-                <button data-name="${name}" class="repay-btn bg-green-500 text-white p-2 rounded-lg font-semibold hover:bg-green-600 transition">سداد</button>
-            </div>
-        `;
-        listContainer.appendChild(item);
-    });
-
-    // ربط حدث السداد
-    document.querySelectorAll('.repay-btn').forEach(button => {
-        button.addEventListener('click', handleRepayment);
-    });
-
-}
-
-// =======================================================
-// 🤝 5. معالجات الأحداث (Event Handlers)
-// =======================================================
-
-function handleSalesInput(e) {
-    const value = parseFloat(e.target.value) || 0;
-    const field = e.target.id.split('-')[1]; // cash, bank, newDebtTotal
-    
-    // يجب ان تكون القيمة رقم موجب او صفر
-    todayData[field] = Math.max(0, value);
-    e.target.value = todayData[field] || '';
+    if (inputElement.id === 'input-cash') {
+        todayData.cash = cleanValue;
+    } else if (inputElement.id === 'input-bank') {
+        todayData.bank = cleanValue;
+    } else if (inputElement.id === 'input-new-debt-total') {
+        todayData.newDebtTotal = cleanValue;
+    }
     
     updateMainCalculations();
-    updateInputsFromData(); // لتحديث مؤشر مطابقة الديون
 }
 
+/**
+ * يضيف ديناً جديداً مفصلاً.
+ */
 function handleAddNewDebt() {
     const nameInput = document.getElementById('debtor-name');
     const amountInput = document.getElementById('debtor-amount');
     
     const name = nameInput.value.trim();
-    const amount = parseFloat(amountInput.value) || 0;
+    const amount = cleanNumber(amountInput.value);
 
-    if (!name || amount <= 0) {
-        showToast("⚠️ يرجى إدخال اسم صحيح ومبلغ موجب.", 'error');
+    if (!name || name.split(/\s+/).length < 2) {
+        showToast("الرجاء إدخال **الاسم ثنائياً** على الأقل (مثال: محمد علي) 📝", 'error');
         return;
     }
-
-    // يجب التأكد من عدم تجاوز إجمالي الديون الجديدة
-    const currentNewDebtsTotal = Object.values(todayData.newDebts).reduce((acc, curr) => acc + curr, 0);
-    const remainingDebt = todayData.newDebtTotal - currentNewDebtsTotal;
-
-    if (amount > remainingDebt) {
-        showToast(`⚠️ المبلغ يتجاوز المتبقي لتفصيل الديون الجديدة (${formatNumber(remainingDebt)}).`, 'error');
-        return;
-    }
-
-    // إضافة أو تحديث الدين الجديد (في بيانات اليوم فقط)
-    todayData.newDebts[name] = (todayData.newDebts[name] || 0) + amount;
     
+    if (amount <= 0) {
+        showToast("الرجاء إدخال قيمة صحيحة للمبلغ.", 'error');
+        return;
+    }
+    
+    // تمكين الإدخال المرن: لا يوجد شرط منع للتجاوز هنا.
+
+    todayData.totalNewDetailedDebt += amount;
+
+    if (todayData.newDebts[name]) {
+        todayData.newDebts[name] += amount;
+    } else {
+        todayData.newDebts[name] = amount;
+    }
+
     nameInput.value = '';
     amountInput.value = '';
-    
-    updateInputsFromData();
-    updateMainCalculations();
+
+    updateMainCalculations(); 
+    showToast(`تم إضافة ${formatNumber(amount)} لـ **${name}** بنجاح ✅`, 'success');
 }
 
-function handleRemoveNewDebt(e) {
-    const name = e.currentTarget.getAttribute('data-name');
+/**
+ * تحديث قائمة الأسماء المقترحة (datalist) للمدينين (الجدد والنشطين).
+ */
+function updateDebtorsDatalist() {
+    const datalist = document.getElementById('debtors-names-list');
+    datalist.innerHTML = '';
     
-    if (todayData.newDebts[name]) {
-        delete todayData.newDebts[name];
-    }
+    const allDebtors = new Set([
+        ...Object.keys(todayData.newDebts),
+        ...Object.keys(activeDebtors) 
+    ]);
     
-    updateInputsFromData();
-    updateMainCalculations();
+    allDebtors.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        datalist.appendChild(option);
+    });
 }
 
-async function handleRepayment(e) {
-    const name = e.currentTarget.getAttribute('data-name');
-    const inputId = `repay-${name.replace(/\s/g, '_')}`;
-    const amountInput = document.getElementById(inputId);
+/**
+ * يعرض قائمة الديون الجديدة المفصلة.
+ */
+function renderNewDebtList() {
+    const listContainer = document.getElementById('new-debt-list');
+    listContainer.innerHTML = ''; 
     
-    const amount = parseFloat(amountInput.value) || 0;
-
-    if (amount <= 0 || !activeDebtors[name] || activeDebtors[name] === 0) {
-        showToast("⚠️ مبلغ السداد غير صحيح أو لا يوجد دين على هذا العميل.", 'error');
-        return;
-    }
-    
-    // المبلغ المسدد لا يجب أن يتجاوز الدين المتبقي
-    const repaidAmount = Math.min(amount, activeDebtors[name]);
-    
-    // 1. تحديث الدين النشط
-    activeDebtors[name] -= repaidAmount;
-    if (activeDebtors[name] < 0.01) {
-        delete activeDebtors[name]; // إزالة المدين إذا سدد كل دينه
-    }
-
-    // 2. تحديث إجمالي السداد لتقرير اليوم
-    todayData.totalRepaid += repaidAmount;
-    
-    amountInput.value = ''; // تصفير حقل الإدخال
-    
-    renderActiveDebtors(); // إعادة عرض قائمة المدينين
-    updateMainCalculations(); // تحديث الحسابات والواجهة
-    showToast(`✅ تم سداد ${formatNumber(repaidAmount)} من قبل ${name}.`, 'success');
-}
-
-async function handleEndDay() {
-    
-    // 🌟 التحقق من اسم البائع 
-    const sellerName = document.getElementById('seller-name-input').value.trim();
-    if (!sellerName) {
-        showToast("⚠️ يجب إدخال اسم البائع الحالي قبل إنهاء اليوم!", 'error');
-        return;
-    }
-    
-    // تأكيد إنهاء اليوم
-    if (!confirm('هل أنت متأكد من إنهاء يوم العمل وتسجيل التقرير؟')) {
+    const names = Object.keys(todayData.newDebts);
+    if (names.length === 0) {
+        listContainer.innerHTML = '<p class="text-center text-gray-500 p-4">لا توجد ديون مفصلة بعد.</p>';
         return;
     }
 
-    const totalSales = todayData.totalSales;
-    const commission = calculateCommission(totalSales);
+    names.forEach(name => {
+        const amount = todayData.newDebts[name];
+        if (amount <= 0) return; 
+        
+        const item = document.createElement('div');
+        item.className = 'flex justify-between items-center p-3 rounded-lg bg-white card hover:bg-gray-50 transition';
+        item.innerHTML = `
+            <span class="font-medium text-gray-800">${name}</span>
+            <div class="flex items-center">
+                <span class="text-lg font-bold text-red-600 ml-4">${formatNumber(amount)}</span>
+                <button data-name="${name}" class="delete-debt-btn text-red-500 hover:text-red-700 transition mr-1">
+                    ❌
+                </button>
+            </div>
+        `;
+        listContainer.appendChild(item);
+    });
+}
 
-    // 1. بناء التقرير النهائي
-    const finalReport = {
-        reportName: "بيع محل المصنع", // اسم التقرير المطلوب
+/**
+ * يعالج حدث حذف دين جديد مفصل.
+ * @param {Event} e - حدث النقر.
+ */
+function handleDeleteDebt(e) {
+    if (e.target.classList.contains('delete-debt-btn')) {
+        const name = e.target.getAttribute('data-name');
+        const amount = todayData.newDebts[name];
         
-        // 🌟 التاريخ والوقت والدقيقة والثانية واليوم 
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        
-        seller: sellerName, // اسم البائع
-        
-        totalSales: totalSales,
-        cash: todayData.cash,
-        bank: todayData.bank,
-        newDebtTotal: todayData.newDebtTotal, 
-        totalRepaid: todayData.totalRepaid,
-        commission: commission, // عمولة البيع
-        netDue: totalSales + todayData.totalRepaid - commission, // المستحق النهائي
-        
-        // 🌟 الأشخاص المدينون ومبالغ الديون
-        newDebts: todayData.newDebts, 
-        
-        // snapshot للديون النشطة (للسجلات)
-        activeDebtorsSnapshot: activeDebtors, 
-    };
+        if (confirm(`هل أنت متأكد من حذف تفصيل دين العميل ${name} بقيمة ${formatNumber(amount)}؟`)) {
+            todayData.totalNewDetailedDebt -= amount;
+            delete todayData.newDebts[name];
+            
+            updateMainCalculations();
+            showToast(`تم حذف تفصيل دين ${name} 🗑️`, 'info');
+        }
+    }
+}
 
-    try {
-        // 2. تسجيل التقرير في مجموعة dailyReports
-        await DAILY_REPORTS_COLLECTION.add(finalReport);
+// =======================================================
+// 💳 6. دوال السداد
+// -------------------------------------------------------
+
+/**
+ * يعرض قائمة بجميع المدينين النشطين والديون الجديدة غير المسددة في قسم السداد.
+ */
+function renderActiveDebtorsList() {
+    const listContainer = document.getElementById('active-debtors-list');
+    listContainer.innerHTML = '';
+    
+    // دمج الديون النشطة والديون الجديدة (للعرض فقط)
+    const combinedDebts = { ...activeDebtors };
+    Object.entries(todayData.newDebts).forEach(([name, amount]) => {
+        combinedDebts[name] = (combinedDebts[name] || 0) + amount;
+    });
+    
+    const names = Object.keys(combinedDebts).filter(name => combinedDebts[name] > 0);
+
+    if (names.length === 0) {
+        listContainer.innerHTML = '<p class="text-center text-gray-500 p-4">لا يوجد عملاء مدينون حاليًا.</p>';
+        return;
+    }
+
+    names.forEach(name => {
+        const debt = combinedDebts[name];
+
+        const item = document.createElement('div');
+        item.className = 'p-4 rounded-xl card bg-white flex flex-col md:flex-row justify-between items-center';
+        item.innerHTML = `
+            <div class="mb-2 md:mb-0">
+                <span class="text-lg font-bold text-gray-800">${name}</span>
+                <p class="text-sm text-gray-600">الدين المتبقي: <span class="font-bold text-red-500">${formatNumber(debt)}</span></p>
+            </div>
+            <div class="flex items-center w-full md:w-auto">
+                <input type="tel" data-debtor="${name}" inputmode="numeric" placeholder="مبلغ السداد..." class="repay-input w-2/3 md:w-40 p-2 border rounded-lg ml-2 focus:ring-blue-500">
+                <button data-debtor="${name}" class="repay-btn w-1/3 md:w-20 bg-blue-500 text-white p-2 rounded-lg font-semibold hover:bg-blue-600 transition">سداد</button>
+            </div>
+        `;
+        listContainer.appendChild(item);
         
-        // 3. تحديث قائمة المدينين النشطين (بإضافة الديون الجديدة)
-        // دمج الديون الجديدة إلى قائمة activeDebtors
-        for (const [name, amount] of Object.entries(todayData.newDebts)) {
+        // ربط تنسيق المبلغ اللحظي لحقل السداد
+        const inputElement = item.querySelector('.repay-input');
+        inputElement.addEventListener('input', (e) => {
+             const cleanValue = cleanNumber(e.target.value);
+             // التصفير اللحظي (تحسين UX)
+             if (cleanValue === 0) {
+                e.target.value = ''; 
+            } else {
+                e.target.value = formatNumber(cleanValue);
+            }
+        });
+    });
+}
+
+/**
+ * يعالج عملية السداد من قبل العميل.
+ * @param {Event} e - حدث النقر على زر السداد.
+ */
+function handleRepayment(e) {
+    if (e.target.classList.contains('repay-btn')) {
+        const name = e.target.getAttribute('data-debtor');
+        const input = document.querySelector(`.repay-input[data-debtor="${name}"]`);
+        const repayAmount = cleanNumber(input.value);
+        
+        const debtFromNew = todayData.newDebts[name] || 0;
+        const debtFromActive = activeDebtors[name] || 0;
+        const currentTotalDebt = debtFromNew + debtFromActive;
+
+        if (repayAmount <= 0) {
+            showToast("الرجاء إدخال مبلغ سداد صحيح.", 'error');
+            return;
+        }
+
+        if (currentTotalDebt === 0) {
+            showToast(`العميل **${name}** لا يدين بأي مبلغ حالياً. 🚫`, 'error');
+            input.value = ''; 
+            return;
+        } else if (repayAmount > currentTotalDebt) {
+            showToast(`تحذير: المبلغ المدخل (${formatNumber(repayAmount)}) أكبر من الدين المستحق! سيتم تصفير الدين بالكامل.`, 'error');
+        }
+            
+        todayData.totalRepaid += repayAmount;
+
+        let remainingRepay = repayAmount;
+        let totalRepaidFromThisDebt = 0;
+
+        // الخصم من الديون الجديدة أولاً
+        if (debtFromNew > 0 && remainingRepay > 0) {
+            const debtToRepayFromNew = Math.min(remainingRepay, debtFromNew);
+            todayData.newDebts[name] -= debtToRepayFromNew;
+            todayData.totalNewDetailedDebt -= debtToRepayFromNew; // تحديث الإجمالي المفصل
+            remainingRepay -= debtToRepayFromNew;
+            totalRepaidFromThisDebt += debtToRepayFromNew;
+            
+            if (todayData.newDebts[name] <= 0) {
+                delete todayData.newDebts[name];
+            }
+        }
+
+        // الخصم من الديون القديمة ثانياً
+        if (debtFromActive > 0 && remainingRepay > 0) {
+            const debtToRepayFromActive = Math.min(remainingRepay, debtFromActive);
+            activeDebtors[name] -= debtToRepayFromActive;
+            remainingRepay -= debtToRepayFromActive;
+            totalRepaidFromThisDebt += debtToRepayFromActive;
+
+            if (activeDebtors[name] <= 0) {
+                delete activeDebtors[name];
+            }
+        }
+        
+        // رسالة التأكيد
+        const remainingDebt = (todayData.newDebts[name] || 0) + (activeDebtors[name] || 0);
+        if (remainingDebt <= 0) {
+            showToast(`تم تصفير دين **${name}** بالكامل! 🎉`, 'success');
+        } else {
+             showToast(`تم سداد ${formatNumber(totalRepaidFromThisDebt)}. المتبقي لـ **${name}**: ${formatNumber(remainingDebt)} 💳`, 'success');
+        }
+
+        saveActiveDebtors();
+        updateMainCalculations(); 
+        input.value = ''; 
+    }
+}
+
+// =======================================================
+// 🛑 7. دوال إنهاء اليوم
+// -------------------------------------------------------
+
+/**
+ * يعالج منطق إنهاء اليوم.
+ */
+function handleEndDay() {
+    const endDayBtn = document.getElementById('end-day-btn');
+    
+    if (endDayBtn.disabled) {
+        const totalRequired = todayData.newDebtTotal;
+        const totalDetailed = todayData.totalNewDetailedDebt;
+        const difference = totalDetailed - totalRequired; 
+        let errorMessage = `⚠️ لا يمكن إنهاء اليوم: هناك بيانات غير مكتملة أو غير مطابقة.`;
+
+        if (difference > 0) {
+             errorMessage = `⚠️ لا يمكن إنهاء اليوم: مجموع الديون المفصلة (${formatNumber(totalDetailed)}) **أكبر** من إجمالي الديون الجديدة (${formatNumber(totalRequired)}) بفارق ${formatNumber(difference)}. يجب تعديل الإجمالي المعلن.`;
+        } else if (difference < 0) {
+             errorMessage = `⚠️ لا يمكن إنهاء اليوم: لا يوجد تطابق في تفصيل الديون. يجب تفصيل المبلغ المتبقي: ${formatNumber(Math.abs(difference))}.`;
+        }
+        
+        showToast(errorMessage, 'error');
+        return; 
+    }
+    
+    // 1. دمج الديون الجديدة مع الديون النشطة
+    Object.entries(todayData.newDebts).forEach(([name, amount]) => {
+        if (amount > 0) {
             activeDebtors[name] = (activeDebtors[name] || 0) + amount;
         }
-        
-        // 4. تصفير بيانات اليوم الحالي وحفظ قائمة المدينين المحدثة
-        await TODAY_DATA_DOC.delete(); // حذف وثيقة اليوم
-        await DEBTORS_LIST_DOC.set(activeDebtors); // حفظ قائمة المدينين المحدثة
-        
-        // 5. عرض الملخص قبل تصفير الواجهة
-        displayFinalReport(finalReport);
-        document.getElementById('report-modal').classList.remove('hidden');
+    });
 
-    } catch (error) {
-        console.error("خطأ في تسجيل التقرير وإنهاء اليوم:", error);
-        showToast("فشل في تسجيل التقرير وإنهاء اليوم على الخادم ❌", 'error');
-    }
-}
-
-async function startNewDay() {
-    // تصفير المتغيرات المحلية لبدء يوم جديد
-    todayData = {
-        cash: 0,
-        bank: 0,
-        newDebtTotal: 0,
-        totalSales: 0,
-        totalRepaid: 0,
-        newDebts: {},
-    };
-    
-    // إعادة تهيئة في Firestore
-    await TODAY_DATA_DOC.set(todayData); 
-
-    // إغلاق المودال وتحديث الواجهة
-    document.getElementById('report-modal').classList.add('hidden');
-    updateMainCalculations(); 
-    updateInputsFromData();
-    renderActiveDebtors();
-    
-    showToast("بدء يوم عمل جديد بنجاح! 🚀", 'success');
-}
-
-function displayFinalReport(report) {
-    const content = document.getElementById('final-report-content');
-    const { fullDateTime } = formatDateAndDay({ toDate: () => new Date() });
-    
-    content.innerHTML = `
-        <p class="text-sm font-medium text-gray-700">تاريخ التسجيل: ${fullDateTime}</p>
-        <p class="text-lg font-bold text-green-700 mt-2">👤 البائع: ${report.seller}</p>
-        <hr class="my-3">
-        <p class="font-bold text-gray-800">الإجمالي: <span class="text-xl text-indigo-800">${formatNumber(report.totalSales)}</span></p>
-        <p class="text-gray-700">كاش: ${formatNumber(report.cash)}</p>
-        <p class="text-gray-700">بنكك: ${formatNumber(report.bank)}</p>
-        <p class="text-gray-700">ديون جديدة: ${formatNumber(report.newDebtTotal)}</p>
-        <p class="text-gray-700">عمولة البيع: <span class="text-red-600">${formatNumber(report.commission)}</span></p>
-        <hr class="my-3">
-        <p class="font-bold text-gray-800">الصافي المستحق: <span class="text-2xl text-red-700">${formatNumber(report.netDue)}</span></p>
-    `;
-}
-
-// =======================================================
-// 🚀 ربط الأحداث (Event Listeners)
-// =======================================================
-
-// 1. مدخلات المبيعات
-document.getElementById('input-cash').addEventListener('input', handleSalesInput);
-document.getElementById('input-bank').addEventListener('input', handleSalesInput);
-document.getElementById('input-new-debt-total').addEventListener('input', handleSalesInput);
-
-// 2. إدارة الديون الجديدة
-document.getElementById('add-debt-btn').addEventListener('click', handleAddNewDebt);
-
-// 3. إنهاء اليوم
-document.getElementById('end-day-btn').addEventListener('click', handleEndDay);
-document.getElementById('start-new-day-btn').addEventListener('click', startNewDay);
-
-// 4. التحكم في التبويبات (Tabs)
-document.querySelectorAll('.tab-btn').forEach(button => {
-    button.addEventListener('click', (e) => {
-        const targetTab = e.target.getAttribute('data-tab');
-        
-        // إزالة حالة التفعيل من جميع الأزرار والمحتوى
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('bg-blue-500', 'text-white', 'hover:bg-gray-200');
-            btn.classList.add('text-gray-700', 'hover:bg-gray-200');
-        });
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-
-        // تفعيل الزر والمحتوى المطلوب
-        e.target.classList.add('bg-blue-500', 'text-white');
-        e.target.classList.remove('text-gray-700', 'hover:bg-gray-200');
-        document.getElementById(targetTab).classList.add('active');
-        
-        // تحديث قائمة المدينين عند فتح علامة تبويب السداد
-        if (targetTab === 'tab3') {
-            renderActiveDebtors();
+    // 2. تنظيف قائمة المدينين النشطين
+    Object.keys(activeDebtors).forEach(name => {
+        if (activeDebtors[name] <= 0) {
+            delete activeDebtors[name];
         }
     });
-});
 
-// يتم استدعاء loadData() من دالة checkAuthenticationAndRole() في index.html
+    saveActiveDebtors(); 
+    showFinalReport();
+}
+
+/**
+ * يعرض النافذة المنبثقة للتقرير النهائي.
+ */
+function showFinalReport() {
+    const totalSales = todayData.totalSales;
+    const totalRepaid = todayData.totalRepaid;
+    const commission = calculateCommission(totalSales);
+    const netDue = totalSales + totalRepaid - commission;
+    const newDebtorsCount = Object.keys(todayData.newDebts).length;
+    
+    const repaidCount = todayData.totalRepaid > 0 ? 'نعم' : 'لا'; 
+
+    const reportContent = `
+        <p><strong>إجمالي المبيعات الكلي:</strong> ${formatNumber(totalSales)}</p>
+        <p><strong>إجمالي السداد المسترد:</strong> ${formatNumber(totalRepaid)}</p>
+        <p><strong>العمولة المحسوبة:</strong> ${formatNumber(commission)}</p>
+        <p><strong>النسبة النهائية المستحقة:</strong> <span class="text-red-600 font-bold">${formatNumber(netDue)}</span></p>
+        <hr class="my-2">
+        <p><strong>عدد العملاء الجدد (ديون):</strong> ${newDebtorsCount}</p>
+        <p><strong>تم تسجيل عمليات سداد:</strong> ${repaidCount}</p>
+    `;
+
+    document.getElementById('final-report-content').innerHTML = reportContent;
+    document.getElementById('report-modal').classList.remove('hidden');
+}
+
+/**
+ * يعيد تهيئة بيانات اليوم لبدء يوم عمل جديد.
+ */
+function startNewDay() {
+    // تصفير بيانات اليوم فقط
+    todayData.cash = 0;
+    todayData.bank = 0;
+    todayData.newDebtTotal = 0;
+    todayData.newDebts = {};
+    todayData.totalNewDetailedDebt = 0;
+    todayData.totalRepaid = 0;
+
+    // حذف بيانات اليوم من التخزين المحلي (نحتفظ بقائمة المدينين النشطين)
+    localStorage.removeItem('todayData');
+
+    document.getElementById('report-modal').classList.add('hidden');
+
+    // إعادة تحميل الصفحة
+    window.location.reload(); 
+}
+
+
+// =======================================================
+// 🌟 8. التهيئة والـ Listeners
+// -------------------------------------------------------
+
+function initialize() {
+    loadData();
+
+    // تحديث وعرض التاريخ والوقت
+    const updateTime = () => {
+        const now = new Date();
+        // تنسيق الوقت والتاريخ باللغة العربية
+        document.getElementById('current-day-name').textContent = now.toLocaleDateString('ar-EG', { weekday: 'long' });
+        document.getElementById('current-date').textContent = now.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        document.getElementById('live-clock').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    };
+    updateTime();
+    setInterval(updateTime, 1000); 
+
+    // تهيئة حقول المبيعات بالبيانات المحملة
+    document.getElementById('input-cash').value = todayData.cash > 0 ? formatNumber(todayData.cash) : '';
+    document.getElementById('input-bank').value = todayData.bank > 0 ? formatNumber(todayData.bank) : '';
+    document.getElementById('input-new-debt-total').value = todayData.newDebtTotal > 0 ? formatNumber(todayData.newDebtTotal) : '';
+    
+    // ربط الـ Listeners للإدخال (قسم 1)
+    document.getElementById('input-cash').addEventListener('input', handleSalesInput);
+    document.getElementById('input-bank').addEventListener('input', handleSalesInput);
+    document.getElementById('input-new-debt-total').addEventListener('input', handleSalesInput);
+    
+    // ربط تنسيق المبلغ لحقل الدين الجديد
+    document.getElementById('debtor-amount').addEventListener('input', (e) => {
+        const cleanValue = cleanNumber(e.target.value);
+        // التصفير اللحظي (تحسين UX)
+        if (cleanValue === 0) {
+            e.target.value = ''; 
+        } else {
+            e.target.value = formatNumber(cleanValue);
+        }
+    });
+
+    // ربط الـ Listeners لقسم تفصيل الديون (قسم 2)
+    document.getElementById('add-debt-btn').addEventListener('click', handleAddNewDebt);
+    document.getElementById('new-debt-list').addEventListener('click', handleDeleteDebt);
+
+    // ربط الـ Listeners لقسم السداد (قسم 3)
+    document.getElementById('active-debtors-list').addEventListener('click', handleRepayment);
+
+    // ربط الـ Listeners لإنهاء اليوم (قسم 4)
+    document.getElementById('end-day-btn').addEventListener('click', handleEndDay);
+    document.getElementById('start-new-day-btn').addEventListener('click', startNewDay);
+    
+    // ربط الـ Listeners للتبويبات
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const tabId = e.target.getAttribute('data-tab');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('text-gray-700', 'hover:bg-gray-200');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            e.target.classList.add('bg-blue-500', 'text-white');
+            e.target.classList.remove('text-gray-700', 'hover:bg-gray-200');
+            
+            // تحديث قوائم العرض عند التبديل
+            updateMainCalculations(); 
+        });
+    });
+
+    // الاستدعاء الأولي للوظائف
+    updateMainCalculations(); 
+}
+
+// البدء
+initialize();
