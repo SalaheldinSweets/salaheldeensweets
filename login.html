@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول للنظام</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card {
+            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.08), -6px -6px 12px rgba(255, 255, 255, 0.9);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans p-4 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-md bg-white p-8 rounded-xl card shadow-2xl">
+        <h2 class="text-3xl font-bold text-center mb-6 text-blue-700">🔐 تسجيل الدخول</h2>
+        
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني:</label>
+                <input type="email" id="email" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="example@domain.com">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">كلمة المرور:</label>
+                <input type="password" id="password" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="**********">
+            </div>
+            
+            <button type="submit" id="login-btn" class="w-full bg-blue-500 text-white p-3 rounded-lg font-bold text-lg hover:bg-blue-600 transition duration-200">
+                تسجيل الدخول
+            </button>
+            
+            <p id="error-message" class="text-red-600 text-center font-medium mt-3 hidden"></p>
+        </form>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // 🚨 هام جداً: يجب وضع إعدادات Firebase الخاصة بمشروعك هنا 🚨
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZCydTHThyMEMv_x261_HhJB_wZNUr7JA",
+            authDomain: "salahsweetgedo.firebaseapp.com",
+            projectId: "salahsweetgedo",
+            storageBucket: "salahsweetgedo.firebasestorage.app",
+            messagingSenderId: "1079672977254",
+            appId: "1:1079672977254:web:71604ac39a85311416baa7"
+        };
+        
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorElement = document.getElementById('error-message');
+            errorElement.classList.add('hidden');
+            
+            try {
+                // 1. تسجيل الدخول عبر Firebase Authentication
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // 2. جلب دور المستخدم من Firestore (مجموعة users)
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                const role = userDoc.exists ? userDoc.data().role : null;
+
+                if (role === 'manager' || role === 'seller') {
+                    // 3. التحويل لصفحة المبيعات بعد التأكد من الدور الصحيح
+                    window.location.href = 'index.html'; 
+                } else {
+                    // إذا لم يتم تحديد الدور أو كان غير صحيح
+                    await auth.signOut(); // تسجيل خروج فوري لأسباب أمنية
+                    errorElement.textContent = 'دور المستخدم غير مُعرَّف أو غير مصرح له بالدخول.';
+                    errorElement.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error("Login error:", error);
+                // عرض رسالة خطأ للمستخدم
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorElement.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorElement.textContent = 'صيغة البريد الإلكتروني غير صحيحة.';
+                } else {
+                    errorElement.textContent = 'حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.';
+                }
+                errorElement.classList.remove('hidden');
+            }
+        });
+        
+        // التحقق عند تحميل الصفحة: إذا كان المستخدم مسجلاً دخوله بالفعل، يتم تحويله فوراً
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // محاولة التحقق من الدور والتحويل إلى index.html
+                try {
+                     const userDoc = await db.collection('users').doc(user.uid).get();
+                     const role = userDoc.exists ? userDoc.data().role : null;
+                     if (role === 'manager' || role === 'seller') {
+                        window.location.href = 'index.html';
+                     }
+                } catch (e) {
+                    console.error("Failed to check role during auth check:", e);
+                    // لا يتم عمل شيء، سيبقى في صفحة الدخول
+                }
+            }
+        });
+    </script>
+</body>
+</html>
