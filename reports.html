@@ -3,24 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سجل التقارير اليومية</title>
+    <title>سجل التقارير التاريخية | بيع محل المصنع</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .card {
             box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.08), -6px -6px 12px rgba(255, 255, 255, 0.9);
         }
+        .report-details { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; }
+        .report-details.open { max-height: 500px; } /* قيمة كبيرة لفتح التفاصيل */
     </style>
 </head>
 <body class="bg-gray-100 font-sans p-2">
 
     <header class="p-4 mb-6 bg-white rounded-xl card flex justify-between items-center shadow-lg">
-        <h1 class="text-2xl font-extrabold text-blue-800">📜 سجل التقارير اليومية</h1>
+        <h1 class="text-2xl font-extrabold text-blue-800">📜 سجل تقارير بيع محل المصنع</h1>
         <a href="index.html" class="bg-indigo-500 text-white p-3 rounded-lg font-semibold hover:bg-indigo-600 transition shadow-md flex items-center">
-            العودة لصفحة المبيعات الرئيسية 🏠
+            العودة لصفحة المبيعات 🏠
         </a>
     </header>
 
     <main class="p-4">
+        
+        <div class="bg-white p-5 rounded-xl card mb-6">
+            <h3 class="text-xl font-bold mb-4 text-gray-700 border-b pb-2">🔍 أدوات البحث والفرز</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <div>
+                    <label for="sort-by" class="block text-sm font-medium text-gray-700">فرز حسب:</label>
+                    <select id="sort-by" class="w-full p-2 border rounded-lg focus:ring-blue-500">
+                        <option value="timestamp_desc">التاريخ (الأحدث أولاً)</option>
+                        <option value="timestamp_asc">التاريخ (الأقدم أولاً)</option>
+                        <option value="seller_asc">اسم البائع (أ-ي)</option>
+                        <option value="sales_desc">إجمالي المبيعات (الأعلى)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="search-seller" class="block text-sm font-medium text-gray-700">البحث باسم البائع:</label>
+                    <input type="text" id="search-seller" placeholder="اسم البائع..." class="w-full p-2 border rounded-lg focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label for="filter-day" class="block text-sm font-medium text-gray-700">التصفية باليوم:</label>
+                    <select id="filter-day" class="w-full p-2 border rounded-lg focus:ring-blue-500">
+                        <option value="">جميع الأيام</option>
+                        <option value="الأحد">الأحد</option>
+                        <option value="الإثنين">الإثنين</option>
+                        <option value="الثلاثاء">الثلاثاء</option>
+                        <option value="الأربعاء">الأربعاء</option>
+                        <option value="الخميس">الخميس</option>
+                        <option value="الجمعة">الجمعة</option>
+                        <option value="السبت">السبت</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <div id="historical-reports-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <p class="text-center text-gray-500 col-span-full">جاري تحميل التقارير...</p>
         </div>
@@ -29,7 +67,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script>
-        // 🌟 إعدادات Firebase الخاصة بك 🌟
+        // 🌟 إعدادات Firebase الخاصة بك 🌟 (يجب أن تكون نفس إعدادات index.html)
         const firebaseConfig = {
             apiKey: "AIzaSyDZCydTHThyMEMv_x261_HhJB_wZNUr7JA",
             authDomain: "salahsweetgedo.firebaseapp.com",
@@ -43,48 +81,80 @@
         const db = firebase.firestore();
         const DAILY_REPORTS_COLLECTION = db.collection('dailyReports');
         
+        let allReportsData = []; // لتخزين جميع البيانات المحملة مرة واحدة
+        
         // =======================================================
         // 🧮 دوال مساعدة
         // =======================================================
         function formatNumber(number) {
             return new Intl.NumberFormat('en-US').format(number);
         }
+
+        function formatDateAndDay(timestamp) {
+            if (!timestamp || !timestamp.toDate) return '---';
+            const date = timestamp.toDate();
+            const dateStr = date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+            const dayStr = date.toLocaleDateString('ar-EG', { weekday: 'long' });
+            const timeStr = date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            return { date: dateStr, day: dayStr, time: timeStr, fullDateTime: `${dayStr}, ${dateStr} - ${timeStr}` };
+        }
         
         // =======================================================
         // 📜 دالة عرض التقرير
         // =======================================================
         function renderReportCard(reportData) {
-            const reportDate = reportData.date || '---';
-            const commission = formatNumber(reportData.commission || 0);
+            const id = reportData.id || 'N/A';
+            const { fullDateTime, day } = formatDateAndDay(reportData.timestamp);
+            const seller = reportData.seller || 'بائع غير محدد';
+            
             const totalSales = formatNumber(reportData.totalSales || 0);
+            const cash = formatNumber(reportData.cash || 0);
+            const bank = formatNumber(reportData.bank || 0);
+            const newDebtTotal = formatNumber(reportData.newDebtTotal || 0);
+            const commission = formatNumber(reportData.commission || 0);
             const netDue = formatNumber(reportData.netDue || 0);
-            const cashBankTotal = formatNumber((reportData.cash || 0) + (reportData.bank || 0));
-            const newDebtorsCount = Object.keys(reportData.newDebts || {}).length;
+            
+            const newDebts = reportData.newDebts || {};
+            const debtorsList = Object.keys(newDebts).map(name => 
+                `<li class="text-sm font-medium text-red-600">${name}: ${formatNumber(newDebts[name])}</li>`
+            ).join('');
 
             return `
-                <div class="p-5 rounded-xl card bg-white border-b-4 border-blue-500 shadow-lg hover:shadow-xl transition duration-200">
-                    <div class="flex justify-between items-center mb-3 border-b pb-2">
-                        <h4 class="text-lg font-bold text-blue-700">📅 تقرير يوم: ${reportDate}</h4>
-                        <span class="text-xs font-medium text-gray-400">#${(reportData.id || '').substring(0, 6)}</span>
+                <div class="report-card p-5 rounded-xl card bg-white border-b-4 border-blue-500 shadow-lg hover:shadow-xl transition duration-200" data-day="${day}" data-seller="${seller}">
+                    <div class="mb-3 border-b pb-2">
+                        <h4 class="text-lg font-bold text-blue-700">🧾 بيع محل المصنع</h4>
+                        <p class="text-xs font-medium text-gray-500">${fullDateTime}</p>
+                        <p class="text-sm font-semibold text-green-700 mt-1">👤 البائع: ${seller}</p>
                     </div>
                     
                     <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <p class="text-gray-600">إجمالي المبيعات:</p>
-                            <span class="text-xl font-extrabold text-indigo-800">${totalSales}</span>
+                        <div class="flex justify-between font-bold">
+                            <p class="text-gray-600">الإجمالي الكلي:</p>
+                            <span class="text-2xl text-indigo-800">${totalSales}</span>
                         </div>
-                        <div class="flex justify-between">
+                        <div class="flex justify-between font-bold">
                             <p class="text-gray-600">المستحق النهائي:</p>
-                            <span class="text-xl font-extrabold text-red-600">${netDue}</span>
+                            <span class="text-2xl text-red-600">${netDue}</span>
                         </div>
                     </div>
+
+                    <button class="toggle-details-btn mt-3 w-full bg-gray-200 text-gray-700 p-2 rounded-lg font-semibold hover:bg-gray-300 transition">
+                        عرض التفاصيل ▼
+                    </button>
                     
-                    <div class="mt-4 pt-3 border-t text-sm">
-                        <ul class="space-y-1 text-gray-600">
-                            <li>💰 الكاش + البنكك: ${cashBankTotal}</li>
-                            <li>🎁 العمولة: ${commission}</li>
-                            <li>📋 ديون جديدة: ${newDebtorsCount} عميل</li>
-                        </ul>
+                    <div class="report-details" id="details-${id}">
+                        <div class="mt-4 pt-3 border-t text-sm space-y-2">
+                            <p class="font-bold text-gray-800">تفاصيل المبيعات:</p>
+                            <ul class="space-y-1 text-gray-600">
+                                <li>💵 الكاش: ${cash}</li>
+                                <li>🏦 البنكك: ${bank}</li>
+                                <li>💰 عمولة البيع: ${commission}</li>
+                                <li>📋 إجمالي الديون الجديدة: ${newDebtTotal}</li>
+                            </ul>
+                            
+                            <p class="font-bold text-gray-800 mt-3">المدينون (${Object.keys(newDebts).length} عميل):</p>
+                            <ul class="list-disc pr-5">${debtorsList || '<li>لا يوجد مدينون جدد لهذا اليوم</li>'}</ul>
+                        </div>
                     </div>
                 </div>
             `;
@@ -98,6 +168,7 @@
             container.innerHTML = '<p class="text-center text-gray-500 col-span-full p-8">جاري تحميل التقارير...</p>';
 
             try {
+                // نستخدم طلب أساسي بدون فرز في Firestore لتحميل الكل
                 const snapshot = await DAILY_REPORTS_COLLECTION
                                          .orderBy('timestamp', 'desc') 
                                          .limit(100)
@@ -105,25 +176,112 @@
 
                 if (snapshot.empty) {
                     container.innerHTML = '<p class="text-center text-gray-500 col-span-full p-8">لا توجد تقارير مسجلة بعد.</p>';
+                    allReportsData = [];
                     return;
                 }
 
-                let reportsHTML = '';
+                allReportsData = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     data.id = doc.id;
-                    reportsHTML += renderReportCard(data);
+                    data.dayName = formatDateAndDay(data.timestamp).day; // إضافة اسم اليوم للفرز
+                    allReportsData.push(data);
                 });
 
-                container.innerHTML = reportsHTML;
+                filterAndRenderReports();
 
             } catch (error) {
                 console.error("خطأ في تحميل التقارير التاريخية:", error);
                 container.innerHTML = '<p class="text-center text-red-500 col-span-full p-8">فشل في تحميل سجل التقارير من الخادم.</p>';
             }
         }
+        
+        // =======================================================
+        // 🔄 دوال البحث والفرز (Local Sorting and Filtering)
+        // =======================================================
+        
+        function filterAndRenderReports() {
+            let filtered = [...allReportsData];
+            
+            // 1. التصفية باسم البائع
+            const searchSeller = document.getElementById('search-seller').value.trim().toLowerCase();
+            if (searchSeller) {
+                filtered = filtered.filter(report => 
+                    (report.seller || '').toLowerCase().includes(searchSeller)
+                );
+            }
+            
+            // 2. التصفية باليوم
+            const filterDay = document.getElementById('filter-day').value;
+            if (filterDay) {
+                filtered = filtered.filter(report => report.dayName === filterDay);
+            }
+            
+            // 3. الفرز
+            const sortBy = document.getElementById('sort-by').value;
+            filtered.sort((a, b) => {
+                if (sortBy === 'timestamp_asc') {
+                    return a.timestamp.toDate() - b.timestamp.toDate();
+                } else if (sortBy === 'timestamp_desc') {
+                    return b.timestamp.toDate() - a.timestamp.toDate();
+                } else if (sortBy === 'seller_asc') {
+                    return (a.seller || '').localeCompare(b.seller || '');
+                } else if (sortBy === 'sales_desc') {
+                    return (b.totalSales || 0) - (a.totalSales || 0);
+                }
+                return 0;
+            });
 
-        document.addEventListener('DOMContentLoaded', loadHistoricalReports);
+            // 4. العرض
+            const container = document.getElementById('historical-reports-container');
+            if (filtered.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 col-span-full p-8">لا توجد تقارير مطابقة للمعايير المحددة.</p>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(renderReportCard).join('');
+            
+            // إعادة ربط حدث عرض التفاصيل
+            document.querySelectorAll('.toggle-details-btn').forEach(btn => {
+                btn.addEventListener('click', toggleReportDetails);
+            });
+        }
+        
+        function toggleReportDetails(e) {
+            const button = e.target;
+            const detailsId = 'details-' + button.closest('.report-card').getAttribute('data-id') || button.nextElementSibling.id;
+            const detailsElement = document.getElementById(detailsId);
+            
+            if (detailsElement) {
+                detailsElement.classList.toggle('open');
+                button.textContent = detailsElement.classList.contains('open') ? 'إخفاء التفاصيل ▲' : 'عرض التفاصيل ▼';
+            }
+        }
+        
+        // =======================================================
+        // 🚀 تهيئة الأحداث
+        // =======================================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistoricalReports();
+            
+            // ربط أحداث البحث والفرز بالدالة الرئيسية
+            document.getElementById('sort-by').addEventListener('change', filterAndRenderReports);
+            document.getElementById('search-seller').addEventListener('input', filterAndRenderReports);
+            document.getElementById('filter-day').addEventListener('change', filterAndRenderReports);
+        });
+
+        // ربط حدث التفاصيل بعد التحميل الأولي (يتم تكراره في filterAndRenderReports)
+        document.getElementById('historical-reports-container').addEventListener('click', (e) => {
+            if (e.target.classList.contains('toggle-details-btn')) {
+                 const detailsElement = e.target.nextElementSibling;
+                 if (detailsElement && detailsElement.classList.contains('report-details')) {
+                    detailsElement.classList.toggle('open');
+                    e.target.textContent = detailsElement.classList.contains('open') ? 'إخفاء التفاصيل ▲' : 'عرض التفاصيل ▼';
+                }
+            }
+        });
+
     </script>
 </body>
 </html>
