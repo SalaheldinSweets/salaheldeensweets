@@ -128,5 +128,3 @@ function saveActiveDebtors() {
 }
 
 // ======
-
-// ... (بقية منطقك في ملف script.js)
