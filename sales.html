@@ -24,14 +24,12 @@
 <body class="bg-gray-100 font-sans p-2">
 
     <div class="p-2 bg-yellow-100 border-b border-yellow-300 z-30 sticky top-0">
-        <label for="seller-name-input" class="block text-sm font-bold text-yellow-800 mb-1">👋 مرحباً بك! البائع الحالي:</label>
-        <input 
-            type="text" 
-            id="seller-name-input" 
-            placeholder="البريد الإلكتروني يملأ تلقائياً..." 
-            class="w-full p-2 rounded-lg border-yellow-500 focus:ring-yellow-600 focus:ring-2 font-semibold bg-yellow-50 text-yellow-800"
-            readonly >
+        <p id="welcome-message" class="text-lg font-extrabold text-blue-700 mb-2">جاري التحميل...</p> 
+
+        <label for="seller-name-input" class="block text-sm font-bold text-yellow-800 mb-1">👤 اسم البائع الحالي (للتسجيل في التقارير):</label>
+        <input type="text" id="seller-name-input" placeholder="اكتب اسمك الثنائي هنا..." class="w-full p-2 rounded-lg border-yellow-500 focus:ring-yellow-600 focus:ring-2 font-semibold" **readonly**>
     </div>
+
     <header id="status-bar" class="sticky top-16 z-20 p-3 mb-4 bg-white rounded-xl card flex justify-between items-center shadow-lg">
         <div class="flex items-center">
             <span id="current-day-name" class="text-blue-600 font-extrabold text-xl ml-4"></span>
@@ -201,7 +199,7 @@
         let currentUserRole = null; // لتخزين دور المستخدم الحالي
 
         // =======================================================
-        // 🔑 منطق الصلاحيات والتحويل (تم تعديل هذه الدالة)
+        // 🔑 منطق الصلاحيات والتحويل (تم التعديل هنا)
         // =======================================================
 
         document.getElementById('logout-btn').addEventListener('click', () => {
@@ -225,12 +223,19 @@
                     window.location.href = 'login.html';
                     return;
                 }
-                
-                // 💡 التعديل رقم 2: ملء حقل الإدخال الأصلي (seller-name-input) بالبريد الإلكتروني 
-                const userEmail = user.email || "بريد غير متوفر";
-                document.getElementById('seller-name-input').value = userEmail;
-                // ------------------------------------------------------------------
 
+                // 🆕 منطق تعبئة اسم البائع ورسالة الترحيب
+                const sellerNameInput = document.getElementById('seller-name-input');
+                const welcomeMessage = document.getElementById('welcome-message');
+                const sellerEmail = user.email || "بائع غير معروف"; // الحصول على البريد الإلكتروني
+
+                // 1. تعبئة حقل اسم البائع بالبريد الإلكتروني
+                sellerNameInput.value = sellerEmail;
+                // 2. عرض رسالة الترحيب
+                welcomeMessage.textContent = `👋 مرحباً بك، ${sellerEmail}!`;
+                
+                // ------------------------------------------
+                
                 try {
                     const userDoc = await db.collection('users').doc(user.uid).get();
                     const role = userDoc.exists ? userDoc.data().role : null;
