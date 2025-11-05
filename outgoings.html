@@ -124,6 +124,15 @@
         .datetime-input-wrapper:hover {
             background-color: #eeeeee;
         }
+        
+        /* 🌟 نمط جديد: لجعل الساعة الحية بالثواني ظاهرة بشكل جيد 🌟 */
+        #displayDateTime {
+            font-family: 'Courier New', Courier, monospace; /* خط أحادي ليكون الزمن مرتباً */
+            font-weight: 600;
+            color: #333;
+        }
+        /* ----------------------------------------------------------- */
+
 
         .datetime-input-wrapper input {
             position: absolute; /* إخفاء حقول الإدخال الأساسية خلف الحقل التفاعلي */
@@ -385,6 +394,7 @@
             </div>
             <input type="hidden" id="paymentMethod" name="paymentMethod" value="cash">
         </div>
+
         <div class="form-group" data-group="notes">
             <label for="notes">ملاحظات (اختياري):</label>
             <textarea id="notes" name="notes" rows="3" placeholder="ملاحظات إضافية حول المصروف"></textarea>
@@ -409,7 +419,7 @@
     import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-    // Your web app's Firebase configuration
+    // Your web app's Firebase configuration - (يرجى التأكد من أن مفاتيحك هنا صحيحة)
     const firebaseConfig = {
       apiKey: "AIzaSyDZCydTHThyMEMv_x261_HhJB_wZNUr7JA",
       authDomain: "salahsweetgedo.firebaseapp.com",
@@ -426,7 +436,7 @@
     getAnalytics(app); // تشغيل تحليلات Firebase
 
     // ------------------------------------------------------------------
-    // الدوال الخاصة بقاعدة البيانات (تم نقلها إلى داخل هذا الوسم)
+    // الدوال الخاصة بقاعدة البيانات
     // ------------------------------------------------------------------
 
     // دالة جديدة: حفظ المصروف في Firestore
@@ -558,6 +568,9 @@
     };
 
     // 2. دوال مساعدة لإدارة التاريخ والوقت
+    
+    // متغير لتتبع ما إذا كان المستخدم قد اختار تاريخًا/وقتًا يدوياً
+    let isManualDateTimeSet = false;
 
     // دالة الحصول على الوقت الحالي (HH:MM:SS)
     function getCurrentTime() {
@@ -573,32 +586,54 @@
         return `${datePart} ${timePart}`; 
     }
 
-    // تحديث العرض النصي للتاريخ والوقت
+    // 🌟 التعديل هنا: تحديث العرض النصي للساعة الحية 🌟
     function updateDisplay() {
         const dateInput = document.getElementById('date');
         const timeInput = document.getElementById('time');
         const display = document.getElementById('displayDateTime');
 
-        if (dateInput.value && timeInput.value) {
-            display.textContent = `${dateInput.value} - ${timeInput.value}`;
-        } else if (dateInput.value) {
-            display.textContent = `${dateInput.value} - اختر الوقت...`;
+        if (isManualDateTimeSet && dateInput.value && timeInput.value) {
+            // إذا كان المستخدم قد أدخل قيمة يدوياً، نعرضها ونوقف تحديث الساعة الحية
+            display.textContent = `${dateInput.value} ${timeInput.value}`;
         } else {
-            // القيمة الافتراضية
-            const today = new Date().toISOString().split('T')[0];
-            display.textContent = `${today} ${getCurrentTime().slice(0, 5)}`;
+            // عرض الساعة الحية وتحديث حقول الإدخال المخفية
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = getCurrentTime();
+
+            display.textContent = `${today} ${currentTime}`;
             dateInput.value = today;
-            timeInput.value = getCurrentTime().slice(0, 5); // فقط الساعة والدقيقة للعرض الأولي
+            timeInput.value = currentTime; // تحديث حقل الوقت بالثواني
         }
     }
+    // -------------------------------------------------------------
 
     // عند اختيار التاريخ، نفتح حقل الوقت
     function handleDateChange(dateValue) {
+        // إذا تم اختيار تاريخ يدوياً، نعتبر أن الإدخال يدوي
+        isManualDateTimeSet = true; 
+        
         document.getElementById('time').style.display = 'block'; // نظهر حقل الوقت
-        document.getElementById('time').value = getCurrentTime().slice(0, 5); // نضع الوقت الحالي (ساعة ودقيقة)
+        
+        // إذا لم يكن الوقت محدداً مسبقاً، نضع الوقت الحالي بالثواني
+        if (!document.getElementById('time').value) {
+            document.getElementById('time').value = getCurrentTime(); 
+        }
+        
         document.getElementById('time').focus(); 
         updateDisplay();
     }
+
+    // 🌟 دالة جديدة: بدء الساعة الحية 🌟
+    function startLiveClock() {
+        // تحديث العرض كل ثانية
+        setInterval(() => {
+            if (!isManualDateTimeSet) {
+                updateDisplay();
+            }
+        }, 1000); 
+    }
+    // -----------------------------------
 
     // دالة مساعدة: الحصول على اليوم فقط للمقارنة (YYYY-MM-DD)
     function getDatePart(dateTimeStr) {
@@ -697,7 +732,7 @@
 
     // 7. التهيئة عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', () => {
-        updateDisplay();
+        startLiveClock(); // 🌟 بدأ تشغيل الساعة الحية 🌟
         handleExpenseTypeChange();
         // تعيين الخيار الافتراضي لزر التبديل (كاش) عند التحميل
         selectPaymentMethod('cash', true); 
@@ -869,15 +904,11 @@
     document.getElementById('expenseForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // التحقق من التاريخ والوقت
-        if (!document.getElementById('date').value || !document.getElementById('time').value) {
-            alert("يرجى اختيار التاريخ والوقت.");
-            return;
-        }
-
         // 1. جمع البيانات وتحديد التفصيل والقيمة الرقمية
+        
+        // **مهم: إذا كان الإدخال غير يدوي، نستخدم القيم الحالية من الساعة الحية**
         const datePart = document.getElementById('date').value;
-        const timePart = document.getElementById('time').value + ':00'; // إضافة الثواني التلقائية
+        const timePart = document.getElementById('time').value; // الآن القيمة تتضمن الثواني
         const fullSaveDateTime = getFullDateTime(datePart, timePart);
 
         const type = document.getElementById('expenseType').value;
@@ -887,7 +918,7 @@
 
         let detailValue;
 
-        // **المنطق لتحديد قيمة التفصيل**
+        // **المنطق لتحديد قيمة التفصيل (لم يتغير)**
         if (type === 'raw_materials') {
             const material = document.getElementById('expenseDetailMaterial').options[document.getElementById('expenseDetailMaterial').selectedIndex].textContent;
             const quantity = document.getElementById('expenseDetailQuantity').value;
@@ -941,6 +972,8 @@
 
             // إفراغ النموذج وإعادة تعيين التاريخ والوقت
             this.reset();
+            // 🌟 إعادة تعيين حالة الساعة اليدوية والبدء من جديد 🌟
+            isManualDateTimeSet = false; 
             updateDisplay();
             document.getElementById('time').style.display = 'none'; // إخفاء حقل الوقت بعد الإرسال
             document.getElementById('amountInput').value = '';
@@ -959,7 +992,7 @@
         const amountToSave = (rawAmount === "" || isNaN(parseFloat(rawAmount))) ? 0 : parseFloat(rawAmount);
 
         const datePart = new Date().toISOString().split('T')[0];
-        const timePart = getCurrentTime();
+        const timePart = getCurrentTime(); // استخدام الوقت الحالي مع الثواني
         const fullSaveDateTime = getFullDateTime(datePart, timePart); 
 
         const type = 'emergency';
@@ -1002,7 +1035,7 @@
     });
 
     // ------------------------------------------------------------------
-    // 🌟 دالة تبديل طريقة الدفع الجديدة 🌟
+    // 🌟 دالة تبديل طريقة الدفع (مهمة) 🌟
     // ------------------------------------------------------------------
     function selectPaymentMethod(method, isInitialLoad = false) {
         const bankakOption = document.getElementById('bankakOption');
@@ -1020,11 +1053,6 @@
         } else if (method === 'cash') {
             cashOption.classList.add('active');
             hiddenField.value = 'cash';
-        }
-
-        // إذا لم يكن تحميل أولي، نقوم بإخفاء رسالة التنبيه المتعلقة بطريقة الدفع القديمة (إذا وجدت)
-        if (!isInitialLoad) {
-             document.getElementById('typeAlert').style.display = 'none';
         }
     }
 </script>
