@@ -212,7 +212,63 @@
             text-align: center;
             display: none;
         }
+        
+        /* ----------------------------------------------------------------- */
+        /* 🌟 أنماط زر تبديل طريقة الدفع الجديدة 🌟 */
+        /* ----------------------------------------------------------------- */
+        .payment-toggle-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
 
+        .payment-option {
+            flex: 1;
+            padding: 15px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--input-radius);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .payment-option:hover {
+            border-color: var(--primary-color);
+        }
+
+        /* حالة التحديد النشط */
+        .payment-option.active {
+            border-color: var(--danger-color); /* حد أحمر عند التحديد */
+            background-color: #fff7f7; /* خلفية فاتحة جداً */
+            box-shadow: 0 0 10px rgba(217, 83, 79, 0.3);
+        }
+
+        /* تنسيق "بنكك" */
+        .bank-label {
+            font-size: 1.1em;
+            font-weight: bold;
+            display: block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            color: white;
+            background-color: var(--danger-color); /* خلفية حمراء */
+        }
+        /* تنسيق "كاش" */
+        .cash-label {
+            font-size: 0.8em;
+            display: block;
+            margin-top: 5px;
+            color: #777; /* لون رمادي للنص الصغير */
+        }
+        /* أيقونة الكاش (لتكون ظاهرة في النص الصغير) */
+        .cash-icon {
+            font-size: 1.2em;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
@@ -254,7 +310,7 @@
                 <textarea id="quickReminder" name="quickReminder" rows="2" placeholder="سبب المصروف (إجباري)" required></textarea>
                 <div class="alert-message" id="quickReminderAlert"></div>
             </div>
-            
+
             <div class="actions" style="justify-content: flex-end;">
                 <button type="submit" class="btn" style="background-color: var(--danger-color);">💾 حفظ سريع</button>
             </div>
@@ -272,7 +328,7 @@
             <label>التاريخ والوقت:</label>
             <div class="datetime-input-wrapper" onclick="document.getElementById('date').click()">
                 <span id="displayDateTime">التاريخ والساعة التلقائيين</span>
-                
+
                 <input type="date" id="date" name="date" required onchange="handleDateChange(this.value)" style="display:none;">
                 <input type="time" id="time" name="time" step="1" required style="display:none;" onchange="updateDisplay()">
             </div>
@@ -313,12 +369,22 @@
 
         <div class="form-group" data-group="payment">
             <label for="paymentMethod">طريقة الدفع:</label>
-            <select id="paymentMethod" name="paymentMethod">
-                <option value="cash" selected>نقد (كاش)</option>
-                <option value="bankak">بنكك</option>
-            </select>
+            <div class="payment-toggle-container">
+                <div class="payment-option" id="bankakOption" data-value="bankak" onclick="selectPaymentMethod('bankak')">
+                    <span class="bank-label">بنكك</span>
+                    <span class="cash-label">
+                        <span class="cash-icon">🏦</span> الدفع عبر بنكك
+                    </span>
+                </div>
+                <div class="payment-option" id="cashOption" data-value="cash" onclick="selectPaymentMethod('cash')">
+                    <span class="bank-label" style="background-color: #6c757d; color: white; font-size: 1em;">كاش</span>
+                    <span class="cash-label">
+                        <span class="cash-icon">💵</span> نقداً
+                    </span>
+                </div>
+            </div>
+            <input type="hidden" id="paymentMethod" name="paymentMethod" value="cash">
         </div>
-
         <div class="form-group" data-group="notes">
             <label for="notes">ملاحظات (اختياري):</label>
             <textarea id="notes" name="notes" rows="3" placeholder="ملاحظات إضافية حول المصروف"></textarea>
@@ -327,7 +393,7 @@
         <div class="actions" style="justify-content: flex-end;">
             <button type="submit" class="btn btn-save">💾 حفظ المصروف</button>
         </div>
-        
+
         <div id="firebaseError" class="error-message">
             <p>حدث خطأ في عملية الحفظ. يرجى التأكد من اتصالك بالإنترنت ومن أذونات قاعدة البيانات.</p>
         </div>
@@ -362,17 +428,17 @@
     // ------------------------------------------------------------------
     // الدوال الخاصة بقاعدة البيانات (تم نقلها إلى داخل هذا الوسم)
     // ------------------------------------------------------------------
-    
+
     // دالة جديدة: حفظ المصروف في Firestore
     async function saveExpenseToFirestore(expenseData) {
         document.getElementById('firebaseError').style.display = 'none'; // إخفاء أي أخطاء سابقة
-        
+
         // إضافة حقل الطابع الزمني في وقت الحفظ الفعلي
         const fullData = { 
             ...expenseData, 
             createdAt: new Date().toISOString()
         };
-        
+
         try {
             // تخزين البيانات في مجموعة 'expenses'
             const docRef = await addDoc(collection(db, "expenses"), fullData);
@@ -384,11 +450,11 @@
             return false;
         }
     }
-    
+
     // دالة جديدة: التحقق من التكرار في Firestore
     async function checkDuplicateInFirestore(dateToCompare, type, detail) {
         const dayToCompare = getDatePart(dateToCompare);
-        
+
         // إنشاء استعلام للبحث عن مصروفات في نفس اليوم، بنفس النوع، ونفس التفصيل
         const expensesRef = collection(db, "expenses");
         const q = query(expensesRef, 
@@ -398,7 +464,7 @@
         );
 
         const querySnapshot = await getDocs(q);
-        
+
         if (querySnapshot.docs.length > 0) {
             // وجدنا مستند مكرر. نعيد بيانات المستند الأول.
             const duplicateDoc = querySnapshot.docs[0].data();
@@ -411,10 +477,10 @@
                 id: querySnapshot.docs[0].id 
             };
         }
-        
+
         return null; // لا يوجد تكرار
     }
-    
+
     // تصدير الدوال ليتم استخدامها في باقي الـ Script
     window.saveExpenseToFirestore = saveExpenseToFirestore;
     window.checkDuplicateInFirestore = checkDuplicateInFirestore;
@@ -430,14 +496,14 @@
     let lastSubmissionType = ''; 
 
     // 1. البيانات الثابتة والقوائم الديناميكية
-    
+
     // قائمة العمال
     const WORKERS = [
         { value: 'muayyad', text: 'مؤيد' },
         { value: 'mohammad', text: 'محمد أبو سريعة' },
         { value: 'krom', text: 'كروم' }
     ];
-    
+
     // قائمة الشهور (جديدة للإيجار)
     const MONTHS = [
         { value: 'january', text: 'يناير' },
@@ -453,7 +519,7 @@
         { value: 'november', text: 'نوفمبر' },
         { value: 'december', text: 'ديسمبر' }
     ];
-    
+
     // تفاصيل الحقول الديناميكية حسب نوع المصروف
     const dynamicOptions = {
         'raw_materials': [
@@ -464,23 +530,23 @@
             { id: 'baking_powder', text: 'باكنج بودر:', unit: 'كيلو' },
             { id: 'konafa', text: 'كنافة:', unit: 'كيلو' }
         ],
-        
+
         'labor_wages': WORKERS, 
-        
+
         'factory_rent': { type: 'select', options: MONTHS, placeholder: 'اختر شهر الإيجار' }, 
-        
+
         'transfer': [
             { value: 'fuel', text: 'بنزين' },
             { value: 'maintenance', text: 'صيانة' },
             { value: 'rent', text: 'إيجار ترحيل' }
         ],
-        
+
         'house_expenses': { type: 'text_input', placeholder: 'تفصيل نفقات المنزل (إجباري)' },
-        
+
         'asset_purchase': { type: 'text_input', placeholder: 'تفصيل عملية شراء الأصل (مثال: شراء خلاط جديد)' },
-        
+
         'general_maintenance': { type: 'text_input', placeholder: 'وصف عمل الصيانة' },
-        
+
         // **الخيار الجديد والمطلوب:** مصروفات خاصة إجبارية التفاصيل
         'special_expenses': { type: 'text_input', placeholder: 'وصف دقيق للمصروف الخاص (إجباري)' }
     };
@@ -490,9 +556,9 @@
         'electricity_water': 50000,
         'marketing': 30000
     };
-    
+
     // 2. دوال مساعدة لإدارة التاريخ والوقت
-    
+
     // دالة الحصول على الوقت الحالي (HH:MM:SS)
     function getCurrentTime() {
         const now = new Date();
@@ -525,7 +591,7 @@
             timeInput.value = getCurrentTime().slice(0, 5); // فقط الساعة والدقيقة للعرض الأولي
         }
     }
-    
+
     // عند اختيار التاريخ، نفتح حقل الوقت
     function handleDateChange(dateValue) {
         document.getElementById('time').style.display = 'block'; // نظهر حقل الوقت
@@ -533,21 +599,21 @@
         document.getElementById('time').focus(); 
         updateDisplay();
     }
-    
+
     // دالة مساعدة: الحصول على اليوم فقط للمقارنة (YYYY-MM-DD)
     function getDatePart(dateTimeStr) {
         return dateTimeStr.split(' ')[0];
     }
-    
+
     // 3. دالة تنسيق الأرقام
     function formatNumber(input) {
         let rawValue = input.value.replace(/[^0-9.]/g, ''); 
-        
+
         const parts = rawValue.split('.');
         if (parts.length > 2) {
             rawValue = parts[0] + '.' + parts.slice(1).join('');
         }
-        
+
         const rawDigits = rawValue.replace(/,/g, ''); 
 
         if (isNaN(parseFloat(rawDigits)) || rawDigits.trim() === '') {
@@ -558,16 +624,16 @@
 
         const formatParts = rawDigits.split('.');
         formatParts[0] = formatParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        
+
         input.value = formatParts.join('.');
-        
+
         if (input.id === 'amountInput') {
              document.getElementById('amount').value = parseFloat(rawDigits);
         }
-        
+
         validateAmountLogic(input);
     }
-    
+
     // 4. دالة التحقق من المبلغ (حدود القيمة)
     function validateAmountLogic(input) {
         const amount = parseFloat(document.getElementById('amount').value);
@@ -582,7 +648,7 @@
             alertDiv.style.display = 'block';
             return;
         }
-        
+
         if (expenseLimits[type] && amount > expenseLimits[type]) {
             alertDiv.textContent = `⚠️ تنبيه: تجاوز الحد الطبيعي. (${expenseLimits[type].toLocaleString()}).`;
             alertDiv.style.display = 'block';
@@ -592,9 +658,9 @@
     // 5. دوال النافذة المنبثقة (Modal)
     function showSuccessModal() {
         const additionalMessageElement = document.getElementById('additionalSuccessMessage');
-        
+
         additionalMessageElement.textContent = ''; 
-        
+
         if (lastSubmissionType === 'emergency') {
             additionalMessageElement.textContent = "سيتم تذكيرك لاحقًا لتسجيل التفاصيل";
         }
@@ -606,7 +672,7 @@
         document.getElementById(modalId).style.display = 'none';
         lastSubmissionType = ''; 
     }
-    
+
     function openEmergencyModal() {
         // تهيئة النموذج عند الفتح
         document.getElementById('quickAmount').value = '';
@@ -633,14 +699,16 @@
     document.addEventListener('DOMContentLoaded', () => {
         updateDisplay();
         handleExpenseTypeChange();
+        // تعيين الخيار الافتراضي لزر التبديل (كاش) عند التحميل
+        selectPaymentMethod('cash', true); 
     });
-    
+
     // دالة مساعدة: لتحديث وحدة المواد الخام
     function updateRawMaterialDisplay() {
         const materialSelect = document.getElementById('expenseDetailMaterial');
         const unitDisplay = document.getElementById('quantityUnitDisplay');
         const selectedOption = materialSelect.options[materialSelect.selectedIndex];
-        
+
         if (selectedOption && selectedOption.value !== "") {
             unitDisplay.textContent = selectedOption.getAttribute('data-unit');
         } else {
@@ -655,9 +723,9 @@
         const detailContainer = document.getElementById('detailFieldContainer');
         const selectedType = typeSelect.value;
         const options = dynamicOptions[selectedType];
-        
+
         detailContainer.innerHTML = ''; // تنظيف الحاوية
-        
+
         // **المنطق لتحديد ما إذا كان الحقل إجباري أم لا**
         const isDetailRequired = (
             selectedType === 'raw_materials' || 
@@ -668,14 +736,14 @@
             selectedType === 'general_maintenance' ||
             selectedType === 'special_expenses' // **تمت إضافة المصروف الخاص**
         );
-        
+
         // تحديث العلامة النجمية (الإجبارية)
         document.querySelector('.form-group[data-group="detail"] label span').style.display = isDetailRequired ? 'inline' : 'none';
 
 
         // **منطق خاص للمواد الخام (حقلين)**
         if (selectedType === 'raw_materials') {
-            
+
             // إضافة حقل القائمة المنسدلة
             const select = document.createElement('select');
             select.id = 'expenseDetailMaterial';
@@ -700,7 +768,7 @@
                 select.appendChild(option);
             });
             detailContainer.appendChild(select);
-            
+
             // حاوية لحقل الكمية
             const quantityWrapper = document.createElement('div');
             quantityWrapper.style.display = 'flex';
@@ -714,7 +782,7 @@
             inputQuantity.required = true;
             inputQuantity.min = '1';
             inputQuantity.style.flexGrow = '1';
-            
+
             const unitSpan = document.createElement('span');
             unitSpan.id = 'quantityUnitDisplay';
             unitSpan.textContent = 'الوحدة';
@@ -727,7 +795,7 @@
 
             quantityWrapper.appendChild(inputQuantity);
             quantityWrapper.appendChild(unitSpan);
-            
+
             detailContainer.appendChild(quantityWrapper);
 
             return; // إنهاء الدالة بعد بناء حقول المواد الخام
@@ -758,7 +826,7 @@
                 });
 
                 detailContainer.appendChild(select);
-                
+
             } else if (options.type === 'select') {
                  // إنشاء Dropdown (مثل شهور الإيجار)
                 const select = document.createElement('select');
@@ -781,7 +849,7 @@
                 });
 
                 detailContainer.appendChild(select);
-                
+
             } else if (options.type === 'text_input') {
                 // إنشاء حقل نص حر (لـ house_expenses، asset_purchase، special_expenses إلخ)
                 const input = document.createElement('input');
@@ -800,7 +868,7 @@
     // 9. منطق حفظ النموذج الأساسي
     document.getElementById('expenseForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
+
         // التحقق من التاريخ والوقت
         if (!document.getElementById('date').value || !document.getElementById('time').value) {
             alert("يرجى اختيار التاريخ والوقت.");
@@ -814,11 +882,11 @@
 
         const type = document.getElementById('expenseType').value;
         const amount = parseFloat(document.getElementById('amount').value); 
-        const paymentMethod = document.getElementById('paymentMethod').value;
+        const paymentMethod = document.getElementById('paymentMethod').value; // القيمة من الحقل المخفي
         const notes = document.getElementById('notes').value;
-        
+
         let detailValue;
-        
+
         // **المنطق لتحديد قيمة التفصيل**
         if (type === 'raw_materials') {
             const material = document.getElementById('expenseDetailMaterial').options[document.getElementById('expenseDetailMaterial').selectedIndex].textContent;
@@ -832,7 +900,7 @@
         } else {
             detailValue = 'غير محدد';
         }
-        
+
         // **التحقق من حقل التفصيل الإجباري النهائي**
         // هذا يغطي الحالات التي يكون فيها الخيار المنسدل هو "اختر تفصيلاً"
         if (type !== 'raw_materials' && document.querySelector('.form-group[data-group="detail"] label span').style.display !== 'none' && (detailValue === 'غير محدد' || detailValue.trim() === '-- اختر تفصيلاً --' || detailValue.trim() === 'وصف دقيق للمصروف الخاص (إجباري)')) {
@@ -852,7 +920,7 @@
             document.getElementById('typeAlert').style.display = 'block';
             return; 
         }
-        
+
         // 3. بناء بيانات المصروف للحفظ
         const expenseToSave = {
             datePart: datePart, // لحاجتنا في البحث عن التكرار
@@ -866,11 +934,11 @@
 
         // 4. الحفظ في Firestore وإظهار Modal النجاح
         const saveSuccessful = await window.saveExpenseToFirestore(expenseToSave);
-        
+
         if (saveSuccessful) {
             lastSubmissionType = 'normal'; // تعيين نوع الإرسال
             showSuccessModal(); 
-            
+
             // إفراغ النموذج وإعادة تعيين التاريخ والوقت
             this.reset();
             updateDisplay();
@@ -889,14 +957,14 @@
 
         const rawAmount = document.getElementById('quickAmount').value.replace(/,/g, '');
         const amountToSave = (rawAmount === "" || isNaN(parseFloat(rawAmount))) ? 0 : parseFloat(rawAmount);
-        
+
         const datePart = new Date().toISOString().split('T')[0];
         const timePart = getCurrentTime();
         const fullSaveDateTime = getFullDateTime(datePart, timePart); 
 
         const type = 'emergency';
         const detailValue = document.getElementById('quickReminder').value.trim();
-        
+
         // التحقق من التكرار في Firestore
         document.getElementById('quickReminderAlert').style.display = 'none';
         const duplicateDraft = await checkDuplicate(fullSaveDateTime, type, detailValue);
@@ -932,6 +1000,33 @@
             this.reset();
         }
     });
+
+    // ------------------------------------------------------------------
+    // 🌟 دالة تبديل طريقة الدفع الجديدة 🌟
+    // ------------------------------------------------------------------
+    function selectPaymentMethod(method, isInitialLoad = false) {
+        const bankakOption = document.getElementById('bankakOption');
+        const cashOption = document.getElementById('cashOption');
+        const hiddenField = document.getElementById('paymentMethod');
+
+        // إزالة التحديد من الكل
+        bankakOption.classList.remove('active');
+        cashOption.classList.remove('active');
+        
+        // تحديد الخيار المطلوب وتحديث الحقل المخفي
+        if (method === 'bankak') {
+            bankakOption.classList.add('active');
+            hiddenField.value = 'bankak';
+        } else if (method === 'cash') {
+            cashOption.classList.add('active');
+            hiddenField.value = 'cash';
+        }
+
+        // إذا لم يكن تحميل أولي، نقوم بإخفاء رسالة التنبيه المتعلقة بطريقة الدفع القديمة (إذا وجدت)
+        if (!isInitialLoad) {
+             document.getElementById('typeAlert').style.display = 'none';
+        }
+    }
 </script>
 
 </body>
