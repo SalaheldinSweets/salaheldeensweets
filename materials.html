@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المواد الخام | مصنع صلاح الدين</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #fbbf24;
+            --success: #10b981;
+            --bg: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* رأس الصفحة */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .btn-back {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* نموذج الإدخال */
+        .input-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        input, select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Cairo';
+        }
+
+        .btn-add {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        /* الجدول */
+        .table-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <a href="index.html" class="btn-back"> ⬅️ العودة للرئيسية</a>
+            <h2>إدارة توريد المواد الخام 🌾</h2>
+        </div>
+
+        <div class="input-card">
+            <h3>تسجيل شحنة واردة</h3>
+            <div class="grid-inputs">
+                <div class="input-group">
+                    <label>المادة</label>
+                    <select id="materialName">
+                        <option value="دقيق">دقيق</option>
+                        <option value="سكر">سكر</option>
+                        <option value="زيت">زيت</option>
+                        <option value="سمن">سمن</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>الكمية (كجم/لتر)</label>
+                    <input type="number" id="quantity" placeholder="0">
+                </div>
+                <div class="input-group">
+                    <label>السعر الإجمالي</label>
+                    <input type="number" id="price" placeholder="0.00">
+                </div>
+            </div>
+            <button class="btn-add" onclick="addRow()">إضافة للمخزن +</button>
+        </div>
+
+        <div class="table-card">
+            <table id="materialsTable">
+                <thead>
+                    <tr>
+                        <th>المادة</th>
+                        <th>الكمية</th>
+                        <th>التكلفة</th>
+                        <th>التاريخ</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>دقيق (نموذج)</td>
+                        <td>500 كجم</td>
+                        <td>2500 ج.م</td>
+                        <td>2026/01/25</td>
+                        <td><span class="badge">متوفر</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function addRow() {
+            const name = document.getElementById('materialName').value;
+            const qty = document.getElementById('quantity').value;
+            const price = document.getElementById('price').value;
+            const date = new Date().toLocaleDateString('ar-EG');
+
+            if(qty && price) {
+                const table = document.getElementById('materialsTable').getElementsByTagName('tbody')[0];
+                const newRow = table.insertRow(0);
+
+                newRow.innerHTML = `
+                    <td>${name}</td>
+                    <td>${qty} كجم/لتر</td>
+                    <td>${price} ج.م</td>
+                    <td>${date}</td>
+                    <td><span class="badge">حديث</span></td>
+                `;
+
+                // مسح الحقول بعد الإضافة
+                document.getElementById('quantity').value = "";
+                document.getElementById('price').value = "";
+            } else {
+                alert("يرجى ملء جميع البيانات");
+            }
+        }
+    </script>
+</body>
+</html>
