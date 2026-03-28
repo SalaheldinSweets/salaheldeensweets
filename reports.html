@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>التقارير والعمليات - مدير حسابات صلاح الدين</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: #f8fafc;
+            min-height: 100vh;
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .transaction-row:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .period-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .period-morning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .period-evening {
+            background: #e0e7ff;
+            color: #4f46e5;
+        }
+        
+        .uid-badge {
+            font-family: monospace;
+            font-size: 10px;
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #475569;
+        }
+        
+        .filter-btn {
+            transition: all 0.2s;
+        }
+        
+        .filter-btn.active {
+            background: #10b981;
+            color: white;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- الهيدر -->
+        <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="p-2 rounded-lg hover:bg-slate-700 transition">
+                    <span class="text-2xl">→</span>
+                </a>
+                <h1 class="text-lg font-bold">📊 التقارير والعمليات</h1>
+                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">
+                    خروج
+                </button>
+            </div>
+        </header>
+
+        <!-- المحتوى -->
+        <main class="p-4 space-y-4 pb-24">
+            
+            <!-- بطاقات الإحصائيات السريعة -->
+            <div class="grid grid-cols-2 gap-3 fade-in">
+                <div class="stats-card rounded-2xl p-4 text-white shadow-lg">
+                    <div class="text-xs opacity-75 mb-1">إجمالي المبيعات</div>
+                    <div class="text-2xl font-bold" id="totalSales">0</div>
+                    <div class="text-xs opacity-75 mt-1">جنية</div>
+                </div>
+                <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-4 text-white shadow-lg">
+                    <div class="text-xs opacity-75 mb-1">إجمالي المصروفات</div>
+                    <div class="text-2xl font-bold" id="totalExpenses">0</div>
+                    <div class="text-xs opacity-75 mt-1">جنية</div>
+                </div>
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg">
+                    <div class="text-xs opacity-75 mb-1">الصافي</div>
+                    <div class="text-2xl font-bold" id="netProfit">0</div>
+                    <div class="text-xs opacity-75 mt-1">جنية</div>
+                </div>
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white shadow-lg">
+                    <div class="text-xs opacity-75 mb-1">عدد العمليات</div>
+                    <div class="text-2xl font-bold" id="totalTransactions">0</div>
+                    <div class="text-xs opacity-75 mt-1">عملية</div>
+                </div>
+            </div>
+
+            <!-- الرسم البياني -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700">📈 تحليل المبيعات والمصروفات</h3>
+                    <select id="chartPeriod" onchange="updateChart()" class="text-sm border border-slate-200 rounded-lg px-3 py-1">
+                        <option value="today">اليوم</option>
+                        <option value="week">آخر 7 أيام</option>
+                        <option value="month">آخر 30 يوم</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="mainChart"></canvas>
+                </div>
+                <div class="flex justify-center gap-4 mt-4 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                        <span class="text-slate-600">المبيعات</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span class="text-slate-600">المصروفات</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- فلاتر الفترات -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <h3 class="font-bold text-slate-700 mb-3">🔍 فلترة العمليات</h3>
+                
+                <!-- فلتر التاريخ -->
+                <div class="mb-3">
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ</label>
+                    <input type="date" id="filterDate" onchange="applyFilters()" 
+                        class="w-full border border-slate-200 rounded-xl p-2 text-sm">
+                </div>
+
+                <!-- فلتر الفترة -->
+                <div class="flex gap-2 mb-3">
+                    <button onclick="setPeriodFilter('all')" class="filter-btn active flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="all">
+                        الكل
+                    </button>
+                    <button onclick="setPeriodFilter('morning')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="morning">
+                        ☀️ صباحي
+                    </button>
+                    <button onclick="setPeriodFilter('evening')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="evening">
+                        🌙 مسائي
+                    </button>
+                </div>
+
+                <!-- فلتر النوع -->
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleTypeFilter('sales')" class="type-filter active px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200" data-type="sales">
+                        🟢 مبيعات
+                    </button>
+                    <button onclick="toggleTypeFilter('expenses')" class="type-filter active px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200" data-type="expenses">
+                        🔴 مصروفات
+                    </button>
+                    <button onclick="toggleTypeFilter('transfer')" class="type-filter active px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200" data-type="transfer">
+                        🟡 تبديل
+                    </button>
+                    <button onclick="toggleTypeFilter('safe')" class="type-filter active px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200" data-type="safe">
+                        🟣 خزنة
+                    </button>
+                </div>
+            </div>
+
+            <!-- جدول العمليات -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700">📝 سجل العمليات</h3>
+                    <button onclick="exportToCSV()" class="text-sm text-emerald-600 font-semibold hover:text-emerald-700">
+                        📥 تصدير CSV
+                    </button>
+                </div>
+
+                <!-- رأس الجدول -->
+                <div class="grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 mb-2 px-2">
+                    <div class="col-span-2">الوقت</div>
+                    <div class="col-span-2">الرقم</div>
+                    <div class="col-span-3">النوع</div>
+                    <div class="col-span-2">الفترة</div>
+                    <div class="col-span-3 text-left">المبلغ</div>
+                </div>
+
+                <!-- قائمة العمليات -->
+                <div id="transactionsList" class="space-y-2 max-h-96 overflow-y-auto hide-scrollbar">
+                    <div class="text-center text-slate-400 py-8">
+                        جاري تحميل العمليات...
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- شريط التنقل السفلي -->
+        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
+            <div class="flex justify-around items-center">
+                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏠</span>
+                    <span class="text-xs mt-1">الرئيسية</span>
+                </a>
+                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏦</span>
+                    <span class="text-xs mt-1">الجانبي</span>
+                </a>
+                <a href="reports.html" class="flex flex-col items-center p-2 text-emerald-600">
+                    <span class="text-xl">📊</span>
+                    <span class="text-xs mt-1 font-semibold">التقارير</span>
+                </a>
+                <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🧮</span>
+                    <span class="text-xs mt-1">الوردية</span>
+                </a>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- Firebase & Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged,
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getDatabase, 
+            ref, 
+            onValue 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+            authDomain: "salahsweetmanage.firebaseapp.com",
+            databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+            projectId: "salahsweetmanage",
+            storageBucket: "salahsweetmanage.firebasestorage.app",
+            messagingSenderId: "126049780562",
+            appId: "1:126049780562:web:147daa036e56273263308b",
+            measurementId: "G-E7FLGBQ397"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        // ==========================================
+        // STATE
+        // ==========================================
+        
+        let allTransactions = [];
+        let filteredTransactions = [];
+        let chartInstance = null;
+        let currentFilters = {
+            date: null,
+            period: 'all', // 'all', 'morning', 'evening'
+            types: ['sales', 'expenses', 'transfer', 'safe']
+        };
+
+        // ==========================================
+        // AUTH
+        // ==========================================
+        
+        onAuthStateChanged(auth, (user) => {
+            if (!user || !user.emailVerified) {
+                window.location.href = 'login.html';
+                return;
+            }
+            initApp();
+        });
+
+        window.logout = async function() {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        };
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        
+        function initApp() {
+            // Set today's date in filter
+            document.getElementById('filterDate').valueAsDate = new Date();
+            
+            // Listen to transactions
+            onValue(ref(database, 'transactions'), (snap) => {
+                const txs = [];
+                snap.forEach((child) => {
+                    txs.push({ 
+                        id: child.key, 
+                        ...child.val(),
+                        // تحديد الفترة تلقائياً إذا لم تكن محددة
+                        calculatedPeriod: child.val().period || calculatePeriod(child.val().timestamp)
+                    });
+                });
+                allTransactions = txs.reverse(); // الأحدث أولاً
+                applyFilters();
+            });
+
+            // Listen to stats
+            onValue(ref(database, 'stats/today'), (snap) => {
+                const stats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                updateStatsCards(stats);
+            });
+        }
+
+        // ==========================================
+        // PERIOD CALCULATION (6 AM - 3 PM = Morning, 3 PM - 6 AM = Evening)
+        // ==========================================
+        
+        function calculatePeriod(timestamp) {
+            if (!timestamp) return 'غير محدد';
+            
+            const date = new Date(timestamp);
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const timeValue = hours + (minutes / 60);
+            
+            // الفترة الصباحية: 6:00 - 15:00 (6 صباحاً - 3 عصراً)
+            // الفترة المسائية: 15:00 - 6:00 (3 عصراً - 6 صباحاً)
+            
+            if (timeValue >= 6 && timeValue < 15) {
+                return 'صباحية';
+            } else {
+                return 'مسائية';
+            }
+        }
+
+        function getPeriodIcon(period) {
+            return period === 'صباحية' ? '☀️' : '🌙';
+        }
+
+        function getPeriodClass(period) {
+            return period === 'صباحية' ? 'period-morning' : 'period-evening';
+        }
+
+        // ==========================================
+        // STATS CARDS
+        // ==========================================
+        
+        function updateStatsCards(stats) {
+            const totalSales = stats.sales || 0;
+            const totalExpenses = (stats.shopExpenses || 0) + (stats.personalExpenses || 0);
+            const netProfit = totalSales - totalExpenses;
+            
+            document.getElementById('totalSales').textContent = totalSales.toLocaleString();
+            document.getElementById('totalExpenses').textContent = totalExpenses.toLocaleString();
+            document.getElementById('netProfit').textContent = netProfit.toLocaleString();
+            document.getElementById('netProfit').className = `text-2xl font-bold ${netProfit >= 0 ? 'text-white' : 'text-red-200'}`;
+        }
+
+        // ==========================================
+        // FILTERING
+        // ==========================================
+        
+        window.setPeriodFilter = function(period) {
+            currentFilters.period = period;
+            
+            // Update UI
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === period) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            applyFilters();
+        };
+
+        window.toggleTypeFilter = function(type) {
+            const index = currentFilters.types.indexOf(type);
+            if (index > -1) {
+                currentFilters.types.splice(index, 1);
+            } else {
+                currentFilters.types.push(type);
+            }
+            
+            // Update UI
+            document.querySelectorAll('.type-filter').forEach(btn => {
+                if (btn.dataset.type === type) {
+                    btn.classList.toggle('active');
+                    btn.classList.toggle('opacity-50');
+                }
+            });
+            
+            applyFilters();
+        };
+
+        window.applyFilters = function() {
+            const dateInput = document.getElementById('filterDate').value;
+            currentFilters.date = dateInput ? new Date(dateInput) : null;
+            
+            filteredTransactions = allTransactions.filter(tx => {
+                // Filter by date
+                if (currentFilters.date) {
+                    const txDate = new Date(tx.timestamp);
+                    const filterDate = new Date(currentFilters.date);
+                    if (txDate.toDateString() !== filterDate.toDateString()) {
+                        return false;
+                    }
+                }
+                
+                // Filter by period
+                if (currentFilters.period !== 'all') {
+                    const txPeriod = tx.calculatedPeriod;
+                    if (currentFilters.period === 'morning' && txPeriod !== 'صباحية') return false;
+                    if (currentFilters.period === 'evening' && txPeriod !== 'مسائية') return false;
+                }
+                
+                // Filter by type
+                let type = tx.type;
+                if (type === 'shopExpense' || type === 'personalExpense') type = 'expenses';
+                if (!currentFilters.types.includes(type)) return false;
+                
+                return true;
+            });
+            
+            renderTransactions();
+            updateChart();
+            document.getElementById('totalTransactions').textContent = filteredTransactions.length;
+        };
+
+        // ==========================================
+        // RENDER TRANSACTIONS
+        // ==========================================
+        
+        function renderTransactions() {
+            const container = document.getElementById('transactionsList');
+            
+            if (filteredTransactions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-slate-400 py-8">
+                        <div class="text-4xl mb-2">📭</div>
+                        <div>لا توجد عمليات مطابقة للفلتر</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const typeLabels = {
+                sales: { label: 'مبيعات', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                shopExpense: { label: 'مصروف محل', color: 'text-red-600', bg: 'bg-red-50' },
+                personalExpense: { label: 'مصروف شخصي', color: 'text-blue-600', bg: 'bg-blue-50' },
+                transfer: { label: 'تبديل', color: 'text-amber-600', bg: 'bg-amber-50' },
+                safe: { label: 'خزنة', color: 'text-purple-600', bg: 'bg-purple-50' }
+            };
+            
+            container.innerHTML = filteredTransactions.map(tx => {
+                const typeInfo = typeLabels[tx.type] || { label: tx.type, color: 'text-slate-600', bg: 'bg-slate-50' };
+                const time = tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                const date = tx.timestamp ? new Date(tx.timestamp).toLocaleDateString('ar-SA', {month: 'short', day: 'numeric'}) : '--';
+                const period = tx.calculatedPeriod;
+                const amount = tx.type === 'transfer' ? '-' : Math.abs(tx.amount).toLocaleString();
+                const amountClass = tx.amount > 0 ? 'text-emerald-600' : (tx.amount < 0 ? 'text-red-600' : 'text-slate-400');
+                
+                return `
+                    <div class="transaction-row grid grid-cols-12 gap-2 items-center p-3 rounded-xl border border-slate-100 transition cursor-pointer" onclick="showTransactionDetails('${tx.id}')">
+                        <div class="col-span-2 text-xs">
+                            <div class="font-semibold">${time}</div>
+                            <div class="text-slate-400 scale-75 origin-right">${date}</div>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="uid-badge">${tx.uid || tx.id.slice(-6)}</span>
+                        </div>
+                        <div class="col-span-3">
+                            <span class="inline-block px-2 py-1 rounded-lg text-xs font-semibold ${typeInfo.bg} ${typeInfo.color}">
+                                ${typeInfo.label}
+                            </span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="period-badge ${getPeriodClass(period)}">
+                                ${getPeriodIcon(period)} ${period}
+                            </span>
+                        </div>
+                        <div class="col-span-3 text-left font-bold ${amountClass}">
+                            ${amount}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // CHART
+        // ==========================================
+        
+        window.updateChart = function() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            const period = document.getElementById('chartPeriod').value;
+            
+            // Prepare data based on period
+            let labels = [];
+            let salesData = [];
+            let expensesData = [];
+            
+            if (period === 'today') {
+                // Hourly data for today
+                labels = ['6ص', '7ص', '8ص', '9ص', '10ص', '11ص', '12ظ', '1م', '2م', '3م', '4م', '5م', '6م', '7م', '8م', '9م', '10م', '11م', '12ص', '1ص', '2ص', '3ص', '4ص', '5ص'];
+                salesData = new Array(24).fill(0);
+                expensesData = new Array(24).fill(0);
+                
+                filteredTransactions.forEach(tx => {
+                    if (!tx.timestamp) return;
+                    const hour = new Date(tx.timestamp).getHours();
+                    
+                    if (tx.type === 'sales') {
+                        salesData[hour] += tx.amount;
+                    } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
+                        expensesData[hour] += Math.abs(tx.amount);
+                    }
+                });
+            } else {
+                // Daily data for week/month
+                const days = period === 'week' ? 7 : 30;
+                for (let i = days - 1; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    labels.push(d.toLocaleDateString('ar-SA', { weekday: 'short' }));
+                    salesData.push(0);
+                    expensesData.push(0);
+                }
+                
+                filteredTransactions.forEach(tx => {
+                    if (!tx.timestamp) return;
+                    const txDate = new Date(tx.timestamp);
+                    const today = new Date();
+                    const diffDays = Math.floor((today - txDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays < days) {
+                        const index = days - 1 - diffDays;
+                        if (tx.type === 'sales') {
+                            salesData[index] += tx.amount;
+                        } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
+                            expensesData[index] += Math.abs(tx.amount);
+                        }
+                    }
+                });
+            }
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'المبيعات',
+                            data: salesData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#10b981'
+                        },
+                        {
+                            label: 'المصروفات',
+                            data: expensesData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#ef4444'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleFont: { family: 'Cairo' },
+                            bodyFont: { family: 'Cairo' },
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' ج';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            },
+                            ticks: {
+                                font: { family: 'Cairo', size: 10 },
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { family: 'Cairo', size: 10 }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        };
+
+        // ==========================================
+        // EXPORT
+        // ==========================================
+        
+        window.exportToCSV = function() {
+            const headers = ['الرقم', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل'];
+            const rows = filteredTransactions.map(tx => [
+                tx.uid || tx.id.slice(-6),
+                tx.timestamp ? new Date(tx.timestamp).toLocaleDateString('ar-SA') : '',
+                tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString('ar-SA') : '',
+                tx.type,
+                tx.calculatedPeriod,
+                tx.dept || '-',
+                tx.payment || '-',
+                tx.amount,
+                tx.title || ''
+            ]);
+            
+            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `تقرير_العمليات_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        };
+
+        // ==========================================
+        // TRANSACTION DETAILS (Modal)
+        // ==========================================
+        
+        window.showTransactionDetails = function(id) {
+            const tx = allTransactions.find(t => t.id === id);
+            if (!tx) return;
+            
+            const details = `
+                الرقم: ${tx.uid || tx.id}
+                التاريخ: ${tx.timestamp ? new Date(tx.timestamp).toLocaleString('ar-SA') : '-'}
+                النوع: ${tx.type}
+                الفترة: ${tx.calculatedPeriod}
+                المبلغ: ${tx.amount}
+                ${tx.dept ? 'القسم: ' + tx.dept : ''}
+                ${tx.payment ? 'الطريقة: ' + tx.payment : ''}
+                ${tx.vendor ? 'المورد: ' + tx.vendor : ''}
+            `;
+            
+            alert(details);
+        };
+
+    </script>
+</body>
+</html>
