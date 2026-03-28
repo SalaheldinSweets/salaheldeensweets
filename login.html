@@ -16,145 +16,112 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
         }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .shake { animation: shake 0.5s ease-in-out; }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
     
-    <!-- شاشة التحميل -->
-    <div id="checkingScreen" class="fixed inset-0 bg-gradient-to-br from-slate-800 to-slate-900 z-50 flex flex-col items-center justify-center">
-        <div class="spinner mb-4"></div>
-        <p class="text-white font-semibold">جاري التحقق...</p>
-    </div>
-
-    <!-- بطاقة تسجيل الدخول -->
-    <div id="loginCard" class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl text-center hidden">
+    <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl">
+        <!-- Logo -->
         <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
             <span class="text-5xl">💰</span>
         </div>
         
-        <h1 class="text-2xl font-bold text-slate-800 mb-2">مدير حسابات صلاح الدين</h1>
-        <p class="text-slate-500 text-sm mb-8">نظام إدارة مالي متكامل</p>
+        <h1 class="text-2xl font-bold text-slate-800 mb-2 text-center">مدير حسابات صلاح الدين</h1>
+        <p class="text-slate-500 text-sm mb-8 text-center">نظام إدارة مالي متكامل</p>
         
-        <button onclick="signIn()" id="signInBtn" class="w-full bg-white border-2 border-slate-200 hover:border-emerald-500 hover:shadow-lg rounded-xl p-4 flex items-center justify-center gap-3 transition-all">
-            <svg class="w-6 h-6" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            <span class="font-bold text-slate-700">تسجيل الدخول بـ Google</span>
-        </button>
+        <!-- نموذج تسجيل الدخول -->
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm text-slate-600 mb-1 font-semibold">البريد الإلكتروني</label>
+                <input type="email" id="email" 
+                    class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none transition"
+                    placeholder="nohesapnooo@gmail.com" required>
+            </div>
+            
+            <div>
+                <label class="block text-sm text-slate-600 mb-1 font-semibold">كلمة المرور</label>
+                <input type="password" id="password" 
+                    class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none transition"
+                    placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" id="loginBtn"
+                class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl p-4 font-bold text-lg shadow-lg hover:shadow-xl transition transform hover:scale-[1.02]">
+                تسجيل الدخول
+            </button>
+        </form>
         
-        <div id="errorMsg" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm"></div>
-        <div id="successMsg" class="hidden mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-600 text-sm"></div>
+        <!-- رسالة خطأ -->
+        <div id="errorMsg" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm text-center shake"></div>
         
-        <div class="mt-8 pt-6 border-t border-slate-100">
+        <!-- رسالة نجاح -->
+        <div id="successMsg" class="hidden mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-600 text-sm text-center">
+            ✓ تم تسجيل الدخول، جاري التحويل...
+        </div>
+        
+        <!-- معلومات -->
+        <div class="mt-8 pt-6 border-t border-slate-100 text-center">
             <p class="text-xs text-slate-400">
-                الحساب المصرح: 
+                الحساب الافتراضي:
                 <span class="font-mono text-emerald-600 font-bold block mt-1">nohesapnooo@gmail.com</span>
+                <span class="font-mono text-slate-500">123456</span>
             </p>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
-            authDomain: "salahsweetmanage.firebaseapp.com",
-            projectId: "salahsweetmanage",
-            storageBucket: "salahsweetmanage.firebasestorage.app",
-            messagingSenderId: "126049780562",
-            appId: "1:126049780562:web:147daa036e56273263308b"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+    <script>
+        // بيانات تسجيل الدخول (ثابتة - يمكنك تغييرها)
+        const VALID_EMAIL = 'nohesapnooo@gmail.com';
+        const VALID_PASSWORD = '123456';
         
-        const ALLOWED_EMAIL = 'nohesapnooo@gmail.com';
-
-        // التحقق من نتيجة Redirect عند التحميل
-        getRedirectResult(auth).then((result) => {
-            if (result && result.user) {
-                console.log('Redirect result:', result.user.email);
-                if (result.user.email === ALLOWED_EMAIL) {
-                    showSuccess('✓ تم الدخول، جاري التحويل...');
-                    setTimeout(() => window.location.replace('index.html'), 1000);
-                } else {
-                    signOut(auth).then(() => {
-                        hideChecking();
-                        showError(`⛔ الحساب ${result.user.email} غير مصرح`);
-                    });
-                }
-            }
-        }).catch((error) => {
-            console.error('Redirect error:', error);
-            hideChecking();
-            if (error.code !== 'auth/null-user') {
-                showError('خطأ: ' + error.message);
-            }
-        });
-
-        // التحقق من الجلسة الحالية
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log('Current user:', user.email);
-                if (user.email === ALLOWED_EMAIL) {
+        // التحقق إذا كان مسجل مسبقاً
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            window.location.replace('index.html');
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMsg');
+            const successDiv = document.getElementById('successMsg');
+            const btn = document.getElementById('loginBtn');
+            
+            // إخفاء الرسائل السابقة
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            
+            // التحقق من البيانات
+            if (email === VALID_EMAIL && password === VALID_PASSWORD) {
+                // نجاح
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userEmail', email);
+                
+                successDiv.classList.remove('hidden');
+                btn.disabled = true;
+                btn.textContent = 'جاري الدخول...';
+                
+                setTimeout(() => {
                     window.location.replace('index.html');
-                } else {
-                    signOut(auth);
-                }
+                }, 1000);
+                
             } else {
-                hideChecking();
+                // فشل
+                errorDiv.textContent = '❌ البريد الإلكتروني أو كلمة المرور غير صحيحة';
+                errorDiv.classList.remove('hidden');
+                
+                // إفراغ كلمة المرور
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
             }
         });
-
-        function hideChecking() {
-            document.getElementById('checkingScreen').classList.add('hidden');
-            document.getElementById('loginCard').classList.remove('hidden');
-        }
-
-        window.signIn = async function() {
-            const btn = document.getElementById('signInBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="spinner w-6 h-6 border-2"></div><span>جاري الاتصال...</span>';
-
-            try {
-                // استخدام Redirect بدلاً من Popup
-                await signInWithRedirect(auth, provider);
-            } catch (error) {
-                console.error('Sign in error:', error);
-                btn.disabled = false;
-                btn.innerHTML = `
-                    <svg class="w-6 h-6" viewBox="0 0 24 24">...</svg>
-                    <span class="font-bold text-slate-700">تسجيل الدخول بـ Google</span>
-                `;
-                showError('فشل: ' + error.message);
-            }
-        };
-
-        function showError(msg) {
-            const el = document.getElementById('errorMsg');
-            el.textContent = msg;
-            el.classList.remove('hidden');
-        }
-
-        function showSuccess(msg) {
-            const el = document.getElementById('successMsg');
-            el.textContent = msg;
-            el.classList.remove('hidden');
-        }
     </script>
 </body>
 </html>
