@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - مدير حسابات صلاح الدين</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .shake { animation: shake 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    
+    <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
+        <!-- Logo -->
+        <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <span class="text-5xl">💰</span>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-slate-800 mb-2">مدير حسابات صلاح الدين</h1>
+        <p class="text-slate-500 text-sm mb-8">نظام إدارة مالي متكامل</p>
+        
+        <!-- زر Google -->
+        <button onclick="signIn()" class="w-full bg-white border-2 border-slate-200 hover:border-emerald-500 hover:shadow-lg rounded-xl p-4 flex items-center justify-center gap-3 transition-all duration-200 group">
+            <svg class="w-6 h-6 group-hover:scale-110 transition" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span class="font-bold text-slate-700">تسجيل الدخول بـ Google</span>
+        </button>
+        
+        <!-- رسالة خطأ -->
+        <div id="errorMsg" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm shake"></div>
+        
+        <!-- رسالة نجاح -->
+        <div id="successMsg" class="hidden mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-600 text-sm">
+            ✓ تم تسجيل الدخول، جاري التحويل...
+        </div>
+        
+        <!-- معلومات -->
+        <div class="mt-8 pt-6 border-t border-slate-100">
+            <p class="text-xs text-slate-400">
+                مسموح فقط للمستخدم: 
+                <span class="font-mono text-emerald-600 font-bold">nohesapnooo@gmail.com</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+            authDomain: "salahsweetmanage.firebaseapp.com",
+            projectId: "salahsweetmanage",
+            appId: "1:126049780562:web:147daa036e56273263308b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const ALLOWED_EMAIL = 'nohesapnooo@gmail.com';
+
+        // التحقق إذا كان مسجل مسبقاً
+        onAuthStateChanged(auth, (user) => {
+            if (user?.email === ALLOWED_EMAIL) {
+                window.location.href = 'index.html';
+            }
+        });
+
+        window.signIn = async () => {
+            try {
+                const result = await signInWithPopup(auth, new GoogleAuthProvider());
+                
+                if (result.user.email !== ALLOWED_EMAIL) {
+                    await signOut(auth);
+                    showError('⛔ هذا الحساب غير مصرح له بالدخول');
+                    return;
+                }
+                
+                showSuccess();
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+                
+            } catch (err) {
+                showError('فشل تسجيل الدخول: ' + err.message);
+            }
+        };
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            document.getElementById('successMsg').classList.add('hidden');
+        }
+
+        function showSuccess() {
+            document.getElementById('errorMsg').classList.add('hidden');
+            document.getElementById('successMsg').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
