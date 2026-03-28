@@ -67,14 +67,6 @@
             transform: translateY(0);
         }
         
-        .transfer-strikethrough {
-            position: relative;
-            text-decoration: line-through;
-            text-decoration-color: #9ca3af;
-            text-decoration-thickness: 2px;
-            opacity: 0.6;
-        }
-        
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -824,6 +816,9 @@
             document.getElementById('currentUID').textContent = 'UID: ' + Date.now().toString(36).toUpperCase().slice(-6);
         }
 
+        // ==========================================
+        // ✅ تعديل: عرض مبلغ التبديل في التقارير
+        // ==========================================
         function updateTransactionsList() {
             const container = document.getElementById('recentTransactions');
             
@@ -837,7 +832,7 @@
                 shopExpense: 'bg-red-100 text-red-700 border-red-200',
                 personalExpense: 'bg-blue-100 text-blue-700 border-blue-200',
                 safe: 'bg-purple-100 text-purple-700 border-purple-200',
-                transfer: 'bg-slate-100 text-slate-500 border-slate-200 transfer-strikethrough'
+                transfer: 'bg-amber-100 text-amber-700 border-amber-200' // ✅ تغيير اللون ليكون أوضح
             };
             
             const emojis = {
@@ -850,7 +845,20 @@
             
             container.innerHTML = transactions.map(t => {
                 const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
-                const amount = t.type === 'transfer' ? '<span class="text-xs">(محايد)</span>' : formatNumber(Math.abs(t.amount));
+                
+                // ✅ تعديل: عرض مبلغ التبديل بشكل واضح
+                let amountDisplay = '';
+                if (t.type === 'transfer') {
+                    // عرض مبلغ التبديل مع اتجاه التحويل
+                    const transferAmount = formatNumber(t.transferAmount || 0);
+                    amountDisplay = `<div class="text-left">
+                        <div class="font-bold text-amber-700">${transferAmount}</div>
+                        <div class="text-xs text-amber-600">${t.from} → ${t.to}</div>
+                    </div>`;
+                } else {
+                    amountDisplay = `<div class="text-left font-bold">${formatNumber(Math.abs(t.amount))}</div>`;
+                }
+                
                 // عرض رقم العملية المتسلسل
                 const opNum = t.operationNumber ? `<span class="operation-number bg-slate-200 px-2 py-1 rounded text-xs">#${t.operationNumber}</span>` : '';
                 
@@ -865,7 +873,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="text-left font-bold">${amount}</div>
+                        ${amountDisplay}
                     </div>
                 `;
             }).join('');
@@ -1171,14 +1179,14 @@
                 update(ref(database, 'balances'), balanceUpdate),
                 push(ref(database, 'transactions'), {
                     type: 'transfer',
-                    title: `⇄ تبديل: ${from} → ${to} (محايد)`,
+                    title: `⇄ تبديل: ${from} → ${to}`,
                     amount: 0,
                     timestamp,
                     uid,
                     operationNumber, // ✅ رقم العملية المتسلسل
                     from,
                     to,
-                    transferAmount: amount
+                    transferAmount: amount // ✅ حفظ مبلغ التحويل لعرضه في التقارير
                 })
             ]);
 
