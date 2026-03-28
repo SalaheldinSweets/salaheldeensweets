@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مدير حسابات صلاح الدين</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        // Import Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, update, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+            authDomain: "salahsweetmanage.firebaseapp.com",
+            databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+            projectId: "salahsweetmanage",
+            storageBucket: "salahsweetmanage.firebasestorage.app",
+            messagingSenderId: "126049780562",
+            appId: "1:126049780562:web:147daa036e56273263308b",
+            measurementId: "G-E7FLGBQ397"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
+        
+        // Make Firebase available globally
+        window.firebaseDB = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebasePush = push;
+        window.firebaseOnValue = onValue;
+        window.firebaseUpdate = update;
+        window.firebaseGet = get;
+        window.firebaseChild = child;
+        
+        console.log('✅ Firebase initialized successfully!');
+    </script>
+    
+    <style>
+        * {
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: #f8fafc;
+            min-height: 100vh;
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+        }
+        
+        .btn-press:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .transfer-strikethrough {
+            position: relative;
+            text-decoration: line-through;
+            text-decoration-color: #9ca3af;
+            text-decoration-thickness: 2px;
+            opacity: 0.6;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        .sync-indicator {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .sync-online {
+            background: #10b981;
+            color: white;
+        }
+        
+        .sync-offline {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .sync-syncing {
+            background: #f59e0b;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- مؤشر حالة الاتصال -->
+    <div id="syncIndicator" class="sync-indicator sync-online">
+        🟢 متصل
+    </div>
+
+    <div class="app-container">
+        <!-- الهيدر -->
+        <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg">
+            <div class="flex justify-between items-center mb-2">
+                <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-slate-700 transition">
+                    <span class="text-2xl">☰</span>
+                </button>
+                <h1 class="text-lg font-bold">مدير حسابات صلاح الدين</h1>
+                <div class="w-10"></div>
+            </div>
+            
+            <!-- الساعة الحية + UID -->
+            <div class="text-center mt-4">
+                <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg pulse">
+                    00:00:00
+                </div>
+                <div id="date" class="text-slate-300 text-sm mt-1">
+                    الجمعة، 28 مارس 2026
+                </div>
+                <div class="text-xs text-slate-400 mt-1 font-mono" id="currentUID">
+                    UID: --
+                </div>
+            </div>
+        </header>
+
+        <!-- القائمة الجانبية -->
+        <div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50">
+            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent">
+                <div class="p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-lg">القائمة</h2>
+                        <button onclick="toggleSidebar()" class="text-2xl">&times;</button>
+                    </div>
+                </div>
+                <div class="p-4 space-y-2">
+                    <a href="index.html" class="w-full text-right p-3 rounded-xl bg-emerald-50 text-emerald-700 font-semibold flex items-center gap-3">
+                        <span>🏠</span>
+                        <span>الرئيسية</span>
+                    </a>
+                    <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
+                        <span>🏦</span>
+                        <span>الصندوق الجانبي</span>
+                    </a>
+                    <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
+                        <span>📊</span>
+                        <span>التقارير</span>
+                    </a>
+                    <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
+                        <span>🧮</span>
+                        <span>تصفية الوردية</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="p-4 space-y-4 pb-24">
+            
+            <!-- بطاقات الأرصدة (متزامنة مع Firebase) -->
+            <div class="grid grid-cols-2 gap-3 fade-in">
+                <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg btn-press relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">💵</span>
+                        <span class="text-xs bg-white/20 px-2 py-1 rounded-full">كاش</span>
+                    </div>
+                    <div class="text-2xl font-bold" id="cashBalance">جاري التحميل...</div>
+                    <div class="text-xs text-emerald-100 mt-1">رصيد نقدي</div>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg btn-press relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">💳</span>
+                        <span class="text-xs bg-white/20 px-2 py-1 rounded-full">بنكك</span>
+                    </div>
+                    <div class="text-2xl font-bold" id="bankBalance">جاري التحميل...</div>
+                    <div class="text-xs text-blue-100 mt-1">رصيد بنكي</div>
+                </div>
+            </div>
+
+            <!-- ملخص سريع -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-700">📊 ملخص اليوم</h3>
+                    <span class="text-xs text-slate-400" id="lastSync">آخر تحديث: الآن</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-emerald-50 rounded-xl p-2">
+                        <div class="text-xl mb-1">🟢</div>
+                        <div class="text-xs text-slate-600">المبيعات</div>
+                        <div class="font-bold text-emerald-600 text-sm" id="todaySales">0</div>
+                    </div>
+                    <div class="bg-red-50 rounded-xl p-2">
+                        <div class="text-xl mb-1">🔴</div>
+                        <div class="text-xs text-slate-600">المحل</div>
+                        <div class="font-bold text-red-600 text-sm" id="todayExpenses">0</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-2">
+                        <div class="text-xl mb-1">🔵</div>
+                        <div class="text-xs text-slate-600">شخصي</div>
+                        <div class="font-bold text-blue-600 text-sm" id="todayPersonal">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- أزرار الفعل السريع -->
+            <div class="grid grid-cols-2 gap-3 fade-in">
+                <button onclick="openModal('sales')" class="btn-press bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl p-4 text-white shadow-lg transform hover:scale-105 transition">
+                    <div class="text-3xl mb-2">➕</div>
+                    <div class="font-bold">مبيعات</div>
+                    <div class="text-xs text-emerald-100">تسجيل دخل جديد</div>
+                </button>
+
+                <button onclick="openModal('expenses')" class="btn-press bg-gradient-to-br from-red-400 to-red-600 rounded-2xl p-4 text-white shadow-lg transform hover:scale-105 transition">
+                    <div class="text-3xl mb-2">➖</div>
+                    <div class="font-bold">مصروفات</div>
+                    <div class="text-xs text-red-100">تسجيل صرف جديد</div>
+                </button>
+
+                <button onclick="openModal('transfer')" class="btn-press bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl p-4 text-white shadow-lg transform hover:scale-105 transition">
+                    <div class="text-3xl mb-2">⇄</div>
+                    <div class="font-bold">تبديل</div>
+                    <div class="text-xs text-amber-100">Zero-Impact</div>
+                </button>
+
+                <button onclick="openModal('safe')" class="btn-press bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl p-4 text-white shadow-lg transform hover:scale-105 transition">
+                    <div class="text-3xl mb-2">💰</div>
+                    <div class="font-bold">الخزنة</div>
+                    <div class="text-xs text-purple-100">الفائض المالي</div>
+                </button>
+            </div>
+
+            <!-- روابط سريعة -->
+            <div class="grid grid-cols-3 gap-2 fade-in">
+                <a href="external.html" class="btn-press bg-orange-100 rounded-xl p-3 text-center text-orange-700 shadow-sm">
+                    <div class="text-2xl mb-1">🏦</div>
+                    <div class="text-xs font-bold">الجانبي</div>
+                </a>
+                <a href="reports.html" class="btn-press bg-blue-100 rounded-xl p-3 text-center text-blue-700 shadow-sm">
+                    <div class="text-2xl mb-1">📊</div>
+                    <div class="text-xs font-bold">التقارير</div>
+                </a>
+                <a href="shift.html" class="btn-press bg-purple-100 rounded-xl p-3 text-center text-purple-700 shadow-sm">
+                    <div class="text-2xl mb-1">🧮</div>
+                    <div class="text-xs font-bold">الوردية</div>
+                </a>
+            </div>
+
+            <!-- آخر العمليات (من Firebase) -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-700">📝 آخر العمليات</h3>
+                    <span class="text-xs text-emerald-600 font-semibold" id="liveIndicator">● مباشر</span>
+                </div>
+                <div id="recentTransactions" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar">
+                    <div class="text-center text-slate-400 py-4 text-sm">
+                        جاري التحميل من السحابة...
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- شريط التنقل السفلي -->
+        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
+            <div class="flex justify-around items-center">
+                <a href="index.html" class="flex flex-col items-center p-2 text-emerald-600">
+                    <span class="text-xl">🏠</span>
+                    <span class="text-xs mt-1 font-semibold">الرئيسية</span>
+                </a>
+                <a href="external.html" class="flex flex-col items-center p-2 text-orange-500">
+                    <span class="text-xl">🏦</span>
+                    <span class="text-xs mt-1">الجانبي</span>
+                </a>
+                <a href="reports.html" class="flex flex-col items-center p-2 text-blue-600">
+                    <span class="text-xl">📊</span>
+                    <span class="text-xs mt-1">التقارير</span>
+                </a>
+                <a href="shift.html" class="flex flex-col items-center p-2 text-purple-600">
+                    <span class="text-xl">🧮</span>
+                    <span class="text-xs mt-1">الوردية</span>
+                </a>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- المودالات -->
+    
+    <!-- مودال المبيعات -->
+    <div id="salesModal" class="fixed inset-0 bg-black/50 hidden items-end z-50">
+        <div class="bg-white rounded-t-3xl w-full max-w-md mx-auto p-6 transform transition-transform translate-y-full" id="salesModalContent">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-slate-800">🟢 تسجيل مبيعات</h2>
+                <button onclick="closeModal('sales')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <form id="salesForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">القسم</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="dept-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="طعمية">
+                            <span class="text-2xl">🥙</span>
+                            <div class="text-sm mt-1">طعمية وعصائر</div>
+                        </button>
+                        <button type="button" class="dept-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="حلويات">
+                            <span class="text-2xl">🍰</span>
+                            <div class="text-sm mt-1">حلويات</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="salesDept" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">الفترة</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="period-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="صباحية">
+                            <span class="text-2xl">☀️</span>
+                            <div class="text-sm mt-1">صباحية</div>
+                        </button>
+                        <button type="button" class="period-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="مسائية">
+                            <span class="text-2xl">🌙</span>
+                            <div class="text-sm mt-1">مسائية</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="salesPeriod" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="payment-btn border-2 border-slate-200 rounded-xl p-3 text-center transition bg-emerald-50 border-emerald-500" data-value="كاش">
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1">كاش</div>
+                        </button>
+                        <button type="button" class="payment-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك">
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1">بنكك</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="salesPayment" value="كاش">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ الإجمالي</label>
+                    <input type="number" id="salesAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center font-bold focus:border-emerald-500 focus:outline-none" placeholder="0" required>
+                    <div class="text-xs text-slate-400 mt-1">⚠️ أدخل المبلغ الكلي (وليس الصافي)</div>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">
+                    ✅ تأكيد المبيعات
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال المصروفات -->
+    <div id="expensesModal" class="fixed inset-0 bg-black/50 hidden items-end z-50">
+        <div class="bg-white rounded-t-3xl w-full max-w-md mx-auto p-6 transform transition-transform translate-y-full" id="expensesModalContent">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-slate-800">🔴 تسجيل مصروفات</h2>
+                <button onclick="closeModal('expenses')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <form id="expensesForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">نوع الصرف</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="type-btn border-2 border-red-200 bg-red-50 rounded-xl p-3 text-center transition" data-value="محل" data-color="red">
+                            <span class="text-2xl">🏪</span>
+                            <div class="text-sm mt-1 text-red-700 font-semibold">مصروفات محل</div>
+                            <div class="text-xs text-red-500">تؤثر على الأرباح</div>
+                        </button>
+                        <button type="button" class="type-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="شخصي" data-color="blue">
+                            <span class="text-2xl">👤</span>
+                            <div class="text-sm mt-1">نفقات شخصية</div>
+                            <div class="text-xs text-slate-400">مسحوبات من الأرباح</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="expenseType" value="محل">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="exp-payment-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="كاش">
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
+                        </button>
+                        <button type="button" class="exp-payment-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك">
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1">بنكك</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="expensePayment" value="كاش">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المورد / الطرف</label>
+                    <input type="text" id="expenseVendor" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-red-500 focus:outline-none" placeholder="مثال: أمجد، الكهرباء، السوق..." list="vendorList">
+                    <datalist id="vendorList">
+                        <option value="أمجد">
+                        <option value="الكهرباء">
+                        <option value="السوق">
+                        <option value="قرفة">
+                        <option value="قرفه">
+                        <option value="سكر">
+                    </datalist>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">البيان / التفصيل</label>
+                    <input type="text" id="expenseName" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-red-500 focus:outline-none" placeholder="مثال: قرفة، فاتورة كهرباء..." required list="expenseList">
+                    <datalist id="expenseList">
+                        <option value="قرفة">
+                        <option value="قرفه">
+                        <option value="سكر">
+                        <option value="زيت">
+                        <option value="كهرباء">
+                        <option value="ماء">
+                        <option value="إيجار">
+                    </datalist>
+                    <div class="text-xs text-slate-400 mt-1">💡 يتوحّد تلقائياً: "قرفة" = "قرفه"</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ</label>
+                    <input type="number" id="expenseAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center font-bold focus:border-red-500 focus:outline-none" placeholder="0" required>
+                </div>
+
+                <!-- تحذير التكرار -->
+                <div id="duplicateWarning" class="hidden bg-red-50 border border-red-300 rounded-xl p-3 text-red-800 text-sm shake">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span>⚠️</span>
+                        <span class="font-bold">تنبيه: عملية مكررة محتملة!</span>
+                    </div>
+                    <div class="text-xs mb-2">تم تسجيل "<span id="dupName"></span>" بمبلغ <span id="dupAmount"></span> منذ أقل من دقيقة</div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="confirmDuplicate()" class="flex-1 bg-red-500 text-white rounded-lg py-2 text-xs font-bold">تأكيد التسجيل</button>
+                        <button type="button" onclick="cancelDuplicate()" class="flex-1 bg-slate-200 text-slate-700 rounded-lg py-2 text-xs font-bold">إلغاء</button>
+                    </div>
+                </div>
+
+                <button type="submit" id="expenseSubmitBtn" class="w-full bg-red-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-red-600 transition">
+                    ✅ تأكيد المصروف
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال التبديل - Zero Impact -->
+    <div id="transferModal" class="fixed inset-0 bg-black/50 hidden items-end z-50">
+        <div class="bg-white rounded-t-3xl w-full max-w-md mx-auto p-6 transform transition-transform translate-y-full" id="transferModalContent">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-slate-800">🟡 تبديل السيولة</h2>
+                <button onclick="closeModal('transfer')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <div class="bg-slate-100 rounded-xl p-3 mb-4 text-sm text-slate-600">
+                <div class="flex items-start gap-2">
+                    <span class="text-lg">💡</span>
+                    <div>
+                        <div class="font-semibold mb-1">Zero-Impact Transaction</div>
+                        <div class="text-xs">لا تؤثر على الأرباح. مجرد نقل بين الحسابات.</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="transferForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">من</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="from-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="كاش">
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
+                        </button>
+                        <button type="button" class="from-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك">
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1">بنكك</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="transferFrom" value="كاش">
+                </div>
+
+                <div class="flex justify-center">
+                    <div class="text-2xl text-amber-500 animate-bounce">⇅</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">إلى</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="to-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="كاش">
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1">كاش</div>
+                        </button>
+                        <button type="button" class="to-btn border-2 border-blue-500 bg-blue-50 rounded-xl p-3 text-center transition" data-value="بنكك">
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1 font-semibold text-blue-700">بنكك</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="transferTo" value="بنكك">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ</label>
+                    <input type="number" id="transferAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center font-bold focus:border-amber-500 focus:outline-none" placeholder="0" required>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1 text-xs text-amber-800">
+                    <div>✓ لن تظهر في تقارير الأرباح</div>
+                    <div>✓ ستظهر بخط مشطوب في السجل</div>
+                    <div>✓ تُطرح من حساب المتوقع في الدرج</div>
+                </div>
+
+                <button type="submit" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
+                    ✅ تأكيد التبديل المحايد
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال الخزنة -->
+    <div id="safeModal" class="fixed inset-0 bg-black/50 hidden items-end z-50">
+        <div class="bg-white rounded-t-3xl w-full max-w-md mx-auto p-6 transform transition-transform translate-y-full" id="safeModalContent">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-slate-800">🟣 الخزنة</h2>
+                <button onclick="closeModal('safe')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <div class="text-center mb-6">
+                <div class="text-6xl mb-4">🏦</div>
+                <div class="text-3xl font-bold text-purple-600" id="safeBalanceModal">جاري التحميل...</div>
+                <div class="text-slate-500 text-sm">الفائض المحفوظ</div>
+            </div>
+
+            <form id="safeForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">العملية</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="safe-op-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="add">
+                            <span class="text-2xl">➕</span>
+                            <div class="text-sm mt-1 font-semibold text-emerald-700">إيداع</div>
+                        </button>
+                        <button type="button" class="safe-op-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="remove">
+                            <span class="text-2xl">➖</span>
+                            <div class="text-sm mt-1">سحب</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="safeOperation" value="add">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ</label>
+                    <input type="number" id="safeAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center font-bold focus:border-purple-500 focus:outline-none" placeholder="0" required>
+                </div>
+
+                <button type="submit" class="w-full bg-purple-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-purple-600 transition">
+                    ✅ تأكيد العملية
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        // ==========================================
+        // FIREBASE INITIALIZATION & CONFIGURATION
+        // ==========================================
+        
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getDatabase, 
+            ref, 
+            set, 
+            push, 
+            onValue, 
+            update, 
+            serverTimestamp,
+            onDisconnect,
+            get
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+            authDomain: "salahsweetmanage.firebaseapp.com",
+            databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+            projectId: "salahsweetmanage",
+            storageBucket: "salahsweetmanage.firebasestorage.app",
+            messagingSenderId: "126049780562",
+            appId: "1:126049780562:web:147daa036e56273263308b",
+            measurementId: "G-E7FLGBQ397"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
+
+        // ==========================================
+        // GLOBAL STATE & REFERENCES
+        // ==========================================
+        
+        const dbRefs = {
+            balances: ref(database, 'balances'),
+            transactions: ref(database, 'transactions'),
+            stats: ref(database, 'stats/today'),
+            safe: ref(database, 'safe'),
+            lastTransaction: ref(database, 'lastTransaction')
+        };
+
+        let localData = {
+            cash: 0,
+            bank: 0,
+            safe: 0,
+            lastTransaction: { time: 0, type: '', amount: 0, name: '' }
+        };
+
+        // ==========================================
+        // REALTIME LISTENERS
+        // ==========================================
+        
+        // Listen to balances
+        onValue(dbRefs.balances, (snapshot) => {
+            const data = snapshot.val() || { cash: 0, bank: 0 };
+            localData.cash = data.cash || 0;
+            localData.bank = data.bank || 0;
+            updateBalanceDisplay();
+        });
+
+        // Listen to safe
+        onValue(dbRefs.safe, (snapshot) => {
+            const data = snapshot.val() || { amount: 0 };
+            localData.safe = data.amount || 0;
+            document.getElementById('safeBalanceModal').textContent = localData.safe.toLocaleString();
+        });
+
+        // Listen to today's stats
+        onValue(dbRefs.stats, (snapshot) => {
+            const stats = snapshot.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+            document.getElementById('todaySales').textContent = (stats.sales || 0).toLocaleString();
+            document.getElementById('todayExpenses').textContent = (stats.shopExpenses || 0).toLocaleString();
+            document.getElementById('todayPersonal').textContent = (stats.personalExpenses || 0).toLocaleString();
+        });
+
+        // Listen to transactions (last 5)
+        onValue(dbRefs.transactions, (snapshot) => {
+            const transactions = [];
+            snapshot.forEach((childSnapshot) => {
+                transactions.push({
+                    id: childSnapshot.key,
+                    ...childSnapshot.val()
+                });
+            });
+            updateTransactionsList(transactions.slice(-5).reverse());
+        });
+
+        // Listen to last transaction (for duplicate prevention)
+        onValue(dbRefs.lastTransaction, (snapshot) => {
+            localData.lastTransaction = snapshot.val() || { time: 0, type: '', amount: 0, name: '' };
+        });
+
+        // ==========================================
+        // CONNECTION STATUS MONITORING
+        // ==========================================
+        
+        const connectedRef = ref(database, '.info/connected');
+        onValue(connectedRef, (snap) => {
+            const indicator = document.getElementById('syncIndicator');
+            if (snap.val() === true) {
+                indicator.className = 'sync-indicator sync-online';
+                indicator.textContent = '🟢 متصل';
+                document.getElementById('liveIndicator').textContent = '● مباشر';
+                document.getElementById('liveIndicator').className = 'text-xs text-emerald-600 font-semibold';
+            } else {
+                indicator.className = 'sync-indicator sync-offline';
+                indicator.textContent = '🔴 غير متصل';
+                document.getElementById('liveIndicator').textContent = '○ غير متصل';
+                document.getElementById('liveIndicator').className = 'text-xs text-slate-400 font-semibold';
+            }
+        });
+
+        // ==========================================
+        // UI UPDATE FUNCTIONS
+        // ==========================================
+        
+        function updateBalanceDisplay() {
+            document.getElementById('cashBalance').textContent = localData.cash.toLocaleString();
+            document.getElementById('bankBalance').textContent = localData.bank.toLocaleString();
+            document.getElementById('lastSync').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function updateTransactionsList(transactions) {
+            const container = document.getElementById('recentTransactions');
+            
+            if (transactions.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">لا توجد عمليات حتى الآن</div>';
+                return;
+            }
+            
+            container.innerHTML = transactions.map(t => {
+                const styles = {
+                    sales: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                    shopExpense: 'bg-red-100 text-red-700 border-red-200',
+                    personalExpense: 'bg-blue-100 text-blue-700 border-blue-200',
+                    safe: 'bg-purple-100 text-purple-700 border-purple-200',
+                    transfer: 'bg-slate-100 text-slate-500 border-slate-200 transfer-strikethrough',
+                    externalIn: 'bg-orange-100 text-orange-700 border-orange-200',
+                    externalOut: 'bg-amber-100 text-amber-800 border-amber-200'
+                };
+                
+                const emojis = {
+                    sales: '🟢',
+                    shopExpense: '🔴',
+                    personalExpense: '🔵',
+                    safe: '🟣',
+                    transfer: '⇄',
+                    externalIn: '⬅️',
+                    externalOut: '➡️'
+                };
+                
+                const amountDisplay = t.type === 'transfer' ? 
+                    `<span class="text-xs">(محايد)</span>` : 
+                    `<span class="font-bold ${t.amount < 0 ? 'text-red-600' : 'text-emerald-600'}">${Math.abs(t.amount).toLocaleString()}</span>`;
+                
+                const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                
+                return `
+                    <div class="flex justify-between items-center p-3 rounded-xl border ${styles[t.type] || styles.sales}">
+                        <div class="flex items-center gap-2">
+                            <span>${emojis[t.type] || '⚪'}</span>
+                            <div>
+                                <div class="font-semibold text-sm ${t.type === 'transfer' ? 'line-through decoration-slate-400' : ''}">${t.title}</div>
+                                <div class="text-xs opacity-75">${time} • ${t.uid || ''}</div>
+                            </div>
+                        </div>
+                        <div class="text-left">${amountDisplay}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // CLOCK & UID
+        // ==========================================
+        
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('ar-SA', { hour12: false });
+            document.getElementById('clock').textContent = timeStr;
+            
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', dateOptions);
+            
+            const uid = Date.now().toString(36).toUpperCase();
+            document.getElementById('currentUID').textContent = 'UID: ' + uid.slice(-6);
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ==========================================
+        // MODAL FUNCTIONS
+        // ==========================================
+        
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('sidebarContent');
+            
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('translate-x-full'), 10);
+            } else {
+                content.classList.add('translate-x-full');
+                setTimeout(() => sidebar.classList.add('hidden'), 300);
+            }
+        };
+
+        window.openModal = function(type) {
+            const modal = document.getElementById(type + 'Modal');
+            const content = document.getElementById(type + 'ModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => content.classList.remove('translate-y-full'), 10);
+        };
+
+        window.closeModal = function(type) {
+            const modal = document.getElementById(type + 'Modal');
+            const content = document.getElementById(type + 'ModalContent');
+            content.classList.add('translate-y-full');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        };
+
+        // ==========================================
+        // EVENT LISTENERS SETUP
+        // ==========================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sales - Department
+            document.querySelectorAll('.dept-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.dept-btn').forEach(b => {
+                        b.classList.remove('border-emerald-500', 'bg-emerald-50');
+                        b.classList.add('border-slate-200');
+                    });
+                    this.classList.remove('border-slate-200');
+                    this.classList.add('border-emerald-500', 'bg-emerald-50');
+                    document.getElementById('salesDept').value = this.dataset.value;
+                });
+            });
+
+            // Sales - Period
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.period-btn').forEach(b => {
+                        b.classList.remove('border-emerald-500', 'bg-emerald-50');
+                        b.classList.add('border-slate-200');
+                    });
+                    this.classList.remove('border-slate-200');
+                    this.classList.add('border-emerald-500', 'bg-emerald-50');
+                    document.getElementById('salesPeriod').value = this.dataset.value;
+                });
+            });
+
+            // Sales - Payment
+            document.querySelectorAll('.payment-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.payment-btn').forEach(b => {
+                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                        b.classList.add('border-slate-200');
+                    });
+                    const isCash = this.dataset.value === 'كاش';
+                    this.classList.remove('border-slate-200');
+                    this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+                    document.getElementById('salesPayment').value = this.dataset.value;
+                });
+            });
+
+            // Expenses - Type
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.type-btn').forEach(b => {
+                        b.classList.remove('border-red-500', 'bg-red-50', 'border-blue-500', 'bg-blue-50');
+                        b.classList.add('border-slate-200');
+                        b.querySelector('div').classList.remove('text-red-700', 'text-blue-700', 'font-semibold');
+                    });
+                    
+                    const color = this.dataset.color;
+                    this.classList.remove('border-slate-200');
+                    this.classList.add(`border-${color}-500`, `bg-${color}-50`);
+                    this.querySelector('div').classList.add(`text-${color}-700`, 'font-semibold');
+                    document.getElementById('expenseType').value = this.dataset.value;
+                });
+            });
+
+            // Expenses - Payment
+            document.querySelectorAll('.exp-payment-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.exp-payment-btn').forEach(b => {
+                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                        b.classList.add('border-slate-200');
+                    });
+                    const isCash = this.dataset.value === 'كاش';
+                    this.classList.remove('border-slate-200');
+                    this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+                    document.getElementById('expensePayment').value = this.dataset.value;
+                });
+            });
+
+            // Transfer - From
+            document.querySelectorAll('.from-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.from-btn').forEach(b => {
+                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                        b.classList.add('border-slate-200');
+                    });
+                    const isCash = this.dataset.value === 'كاش';
+                    this.classList.remove('border-slate-200');
+                    this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+                    document.getElementById('transferFrom').value = this.dataset.value;
+                    updateTransferTo();
+                });
+            });
+
+            // Transfer - To
+            document.querySelectorAll('.to-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.to-btn').forEach(b => {
+                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                        b.classList.add('border-slate-200');
+                    });
+                    const isCash = this.dataset.value === 'كاش';
+                    this.classList.remove('border-slate-200');
+                    this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+                    document.getElementById('transferTo').value = this.dataset.value;
+                });
+            });
+
+            // Safe - Operation
+            document.querySelectorAll('.safe-op-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.safe-op-btn').forEach(b => {
+                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-red-500', 'bg-red-50');
+                        b.classList.add('border-slate-200');
+                    });
+                    const isAdd = this.dataset.value === 'add';
+                    this.classList.remove('border-slate-200');
+                    this.classList.add(isAdd ? 'border-emerald-500' : 'border-red-500', isAdd ? 'bg-emerald-50' : 'bg-red-50');
+                    document.getElementById('safeOperation').value = this.dataset.value;
+                });
+            });
+
+            // Close modals on outside click
+            document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        const type = this.id.replace('Modal', '');
+                        closeModal(type);
+                    }
+                });
+            });
+        });
+
+        function updateTransferTo() {
+            const from = document.getElementById('transferFrom').value;
+            const toBtn = document.querySelector(`.to-btn[data-value="${from === 'كاش' ? 'بنكك' : 'كاش'}"]`);
+            if (toBtn) toBtn.click();
+        }
+
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+        
+        function normalizeText(text) {
+            return text.replace(/ة$/, 'ه').replace(/ه$/, 'ه').toLowerCase().trim();
+        }
+
+        function checkDuplicate(type, name, amount) {
+            const now = Date.now();
+            const last = localData.lastTransaction;
+            
+            if (last && last.type === type && 
+                normalizeText(last.name) === normalizeText(name) && 
+                last.amount == amount && 
+                (now - last.time) < 60000) {
+                return true;
+            }
+            return false;
+        }
+
+        window.confirmDuplicate = function() {
+            document.getElementById('duplicateWarning').classList.add('hidden');
+            document.getElementById('expenseSubmitBtn').classList.remove('hidden');
+        };
+
+        window.cancelDuplicate = function() {
+            document.getElementById('expenseName').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('duplicateWarning').classList.add('hidden');
+            document.getElementById('expenseSubmitBtn').classList.remove('hidden');
+        };
+
+        // ==========================================
+        // FORM SUBMISSIONS (FIREBASE)
+        // ==========================================
+        
+        // Sales Form
+        document.getElementById('salesForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const amount = parseFloat(document.getElementById('salesAmount').value);
+            const payment = document.getElementById('salesPayment').value;
+            const dept = document.getElementById('salesDept').value;
+            const period = document.getElementById('salesPeriod').value;
+            
+            if (!dept || !period) {
+                alert('الرجاء اختيار القسم والفترة');
+                return;
+            }
+
+            const uid = Date.now().toString(36).toUpperCase().slice(-6);
+            const timestamp = Date.now();
+            
+            // Update balances
+            const balanceUpdate = {};
+            if (payment === 'كاش') {
+                balanceUpdate['cash'] = localData.cash + amount;
+            } else {
+                balanceUpdate['bank'] = localData.bank + amount;
+            }
+            
+            // Update stats
+            const statsUpdate = {};
+            const currentStats = (await get(dbRefs.stats)).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+            statsUpdate['sales'] = (currentStats.sales || 0) + amount;
+
+            // Create transaction
+            const newTxRef = push(dbRefs.transactions);
+            const transaction = {
+                type: 'sales',
+                title: `مبيعات ${dept} - ${period} (${payment})`,
+                amount: amount,
+                timestamp: timestamp,
+                uid: uid,
+                payment: payment,
+                dept: dept,
+                period: period
+            };
+
+            try {
+                // Execute all updates atomically
+                await Promise.all([
+                    update(dbRefs.balances, balanceUpdate),
+                    update(dbRefs.stats, statsUpdate),
+                    set(newTxRef, transaction),
+                    set(dbRefs.lastTransaction, {
+                        time: timestamp,
+                        type: 'sales',
+                        amount: amount,
+                        name: dept
+                    })
+                ]);
+
+                closeModal('sales');
+                this.reset();
+            } catch (error) {
+                console.error('Error saving sale:', error);
+                alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+            }
+        });
+
+        // Expenses Form
+        document.getElementById('expensesForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const name = document.getElementById('expenseName').value;
+            const type = document.getElementById('expenseType').value;
+            const payment = document.getElementById('expensePayment').value;
+            const vendor = document.getElementById('expenseVendor').value;
+            
+            // Check for duplicates
+            if (checkDuplicate(type, name, amount)) {
+                document.getElementById('dupName').textContent = name;
+                document.getElementById('dupAmount').textContent = amount;
+                document.getElementById('duplicateWarning').classList.remove('hidden');
+                document.getElementById('expenseSubmitBtn').classList.add('hidden');
+                return;
+            }
+
+            const uid = Date.now().toString(36).toUpperCase().slice(-6);
+            const timestamp = Date.now();
+            
+            // Update balances
+            const balanceUpdate = {};
+            if (payment === 'كاش') {
+                balanceUpdate['cash'] = localData.cash - amount;
+            } else {
+                balanceUpdate['bank'] = localData.bank - amount;
+            }
+            
+            // Update stats
+            const statsUpdate = {};
+            const currentStats = (await get(dbRefs.stats)).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+            if (type === 'محل') {
+                statsUpdate['shopExpenses'] = (currentStats.shopExpenses || 0) + amount;
+            } else {
+                statsUpdate['personalExpenses'] = (currentStats.personalExpenses || 0) + amount;
+            }
+
+            // Create transaction
+            const newTxRef = push(dbRefs.transactions);
+            const transaction = {
+                type: type === 'محل' ? 'shopExpense' : 'personalExpense',
+                title: `${type === 'محل' ? '🔴' : '🔵'} ${name} ${vendor ? '(' + vendor + ')' : ''}`,
+                amount: -amount,
+                timestamp: timestamp,
+                uid: uid,
+                payment: payment,
+                expenseType: type,
+                vendor: vendor || ''
+            };
+
+            try {
+                await Promise.all([
+                    update(dbRefs.balances, balanceUpdate),
+                    update(dbRefs.stats, statsUpdate),
+                    set(newTxRef, transaction),
+                    set(dbRefs.lastTransaction, {
+                        time: timestamp,
+                        type: type,
+                        amount: amount,
+                        name: name
+                    })
+                ]);
+
+                closeModal('expenses');
+                this.reset();
+                document.getElementById('duplicateWarning').classList.add('hidden');
+                document.getElementById('expenseSubmitBtn').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error saving expense:', error);
+                alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+            }
+        });
+
+        // Transfer Form (Zero-Impact)
+        document.getElementById('transferForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const amount = parseFloat(document.getElementById('transferAmount').value);
+            const from = document.getElementById('transferFrom').value;
+            const to = document.getElementById('transferTo').value;
+            
+            if (from === to) {
+                alert('لا يمكن التحويل لنفس الحساب!');
+                return;
+            }
+            
+            const uid = Date.now().toString(36).toUpperCase().slice(-6);
+            const timestamp = Date.now();
+            
+            // Update balances (Zero-Impact on profits)
+            const balanceUpdate = {};
+            if (from === 'كاش') {
+                balanceUpdate['cash'] = localData.cash - amount;
+                balanceUpdate['bank'] = localData.bank + amount;
+            } else {
+                balanceUpdate['bank'] = localData.bank - amount;
+                balanceUpdate['cash'] = localData.cash + amount;
+            }
+
+            // Create transaction (Zero-Impact)
+            const newTxRef = push(dbRefs.transactions);
+            const transaction = {
+                type: 'transfer',
+                title: `⇄ تبديل: ${from} → ${to} (محايد)`,
+                amount: 0, // Zero impact
+                timestamp: timestamp,
+                uid: uid,
+                from: from,
+                to: to,
+                transferAmount: amount
+            };
+
+            try {
+                await Promise.all([
+                    update(dbRefs.balances, balanceUpdate),
+                    set(newTxRef, transaction)
+                ]);
+
+                closeModal('transfer');
+                this.reset();
+            } catch (error) {
+                console.error('Error saving transfer:', error);
+                alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+            }
+        });
+
+        // Safe Form
+        document.getElementById('safeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const amount = parseFloat(document.getElementById('safeAmount').value);
+            const operation = document.getElementById('safeOperation').value;
+            
+            if (operation === 'add') {
+                if (localData.cash < amount) {
+                    alert('⚠️ رصيد الكاش غير كافٍ!');
+                    return;
+                }
+            } else {
+                if (localData.safe < amount) {
+                    alert('⚠️ رصيد الخزنة غير كافٍ!');
+                    return;
+                }
+            }
+            
+            const uid = Date.now().toString(36).toUpperCase().slice(-6);
+            const timestamp = Date.now();
+            
+            // Update balances
+            const balanceUpdate = {};
+            const safeUpdate = {};
+            
+            if (operation === 'add') {
+                balanceUpdate['cash'] = localData.cash - amount;
+                safeUpdate['amount'] = localData.safe + amount;
+            } else {
+                balanceUpdate['cash'] = localData.cash + amount;
+                safeUpdate['amount'] = localData.safe - amount;
+            }
+
+            // Create transaction
+            const newTxRef = push(dbRefs.transactions);
+            const transaction = {
+                type: 'safe',
+                title: `🏦 ${operation === 'add' ? 'إيداع' : 'سحب'} من الخزنة`,
+                amount: operation === 'add' ? amount : -amount,
+                timestamp: timestamp,
+                uid: uid,
+                operation: operation
+            };
+
+            try {
+                await Promise.all([
+                    update(dbRefs.balances, balanceUpdate),
+                    set(dbRefs.safe, safeUpdate),
+                    set(newTxRef, transaction)
+                ]);
+
+                closeModal('safe');
+                this.reset();
+            } catch (error) {
+                console.error('Error saving safe operation:', error);
+                alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+            }
+        });
+    </script>
+</body>
+</html>
