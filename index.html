@@ -116,15 +116,57 @@
             color: white;
             animation: pulse 1s infinite;
         }
+        
+        /* شاشة التحميل */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <!-- شاشة التحميل والتحقق -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="spinner mb-4"></div>
+        <p class="text-white font-semibold">جاري التحقق...</p>
+    </div>
+
+    <!-- شريط المستخدم -->
+    <div id="userBadge" class="fixed top-14 left-4 z-50 hidden">
+        <div class="bg-emerald-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-3">
+            <span>✓</span>
+            <span id="userEmailDisplay">--</span>
+            <button onclick="signOutUser()" class="hover:text-emerald-200 transition" title="تسجيل خروج">
+                ↪ خروج
+            </button>
+        </div>
+    </div>
+
     <!-- مؤشر حالة الاتصال -->
-    <div id="syncIndicator" class="sync-indicator sync-online">
+    <div id="syncIndicator" class="sync-indicator sync-online hidden">
         🟢 متصل
     </div>
 
-    <div class="app-container">
+    <div class="app-container hidden" id="mainApp">
         <!-- الهيدر -->
         <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg">
             <div class="flex justify-between items-center mb-2">
@@ -175,6 +217,10 @@
                         <span>🧮</span>
                         <span>تصفية الوردية</span>
                     </a>
+                    <button onclick="signOutUser()" class="w-full text-right p-3 rounded-xl hover:bg-red-50 flex items-center gap-3 text-red-700 mt-4">
+                        <span>↪</span>
+                        <span>تسجيل خروج</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -182,7 +228,7 @@
         <!-- المحتوى الرئيسي -->
         <main class="p-4 space-y-4 pb-24">
             
-            <!-- بطاقات الأرصدة (متزامنة مع Firebase) -->
+            <!-- بطاقات الأرصدة -->
             <div class="grid grid-cols-2 gap-3 fade-in">
                 <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg btn-press relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-20 h-20 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
@@ -190,7 +236,7 @@
                         <span class="text-2xl">💵</span>
                         <span class="text-xs bg-white/20 px-2 py-1 rounded-full">كاش</span>
                     </div>
-                    <div class="text-2xl font-bold" id="cashBalance">جاري التحميل...</div>
+                    <div class="text-2xl font-bold" id="cashBalance">0</div>
                     <div class="text-xs text-emerald-100 mt-1">رصيد نقدي</div>
                 </div>
 
@@ -200,7 +246,7 @@
                         <span class="text-2xl">💳</span>
                         <span class="text-xs bg-white/20 px-2 py-1 rounded-full">بنكك</span>
                     </div>
-                    <div class="text-2xl font-bold" id="bankBalance">جاري التحميل...</div>
+                    <div class="text-2xl font-bold" id="bankBalance">0</div>
                     <div class="text-xs text-blue-100 mt-1">رصيد بنكي</div>
                 </div>
             </div>
@@ -209,7 +255,7 @@
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-slate-700">📊 ملخص اليوم</h3>
-                    <span class="text-xs text-slate-400" id="lastSync">آخر تحديث: الآن</span>
+                    <span class="text-xs text-slate-400" id="lastSync">آخر تحديث: --</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="bg-emerald-50 rounded-xl p-2">
@@ -273,7 +319,7 @@
                 </a>
             </div>
 
-            <!-- آخر العمليات (من Firebase) -->
+            <!-- آخر العمليات -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-slate-700">📝 آخر العمليات</h3>
@@ -281,7 +327,7 @@
                 </div>
                 <div id="recentTransactions" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar">
                     <div class="text-center text-slate-400 py-4 text-sm">
-                        جاري التحميل من السحابة...
+                        جاري التحميل...
                     </div>
                 </div>
             </div>
@@ -479,7 +525,7 @@
         </div>
     </div>
 
-    <!-- مودال التبديل - Zero Impact -->
+    <!-- مودال التبديل -->
     <div id="transferModal" class="fixed inset-0 bg-black/50 hidden items-end z-50">
         <div class="bg-white rounded-t-3xl w-full max-w-md mx-auto p-6 transform transition-transform translate-y-full" id="transferModalContent">
             <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
@@ -564,7 +610,7 @@
 
             <div class="text-center mb-6">
                 <div class="text-6xl mb-4">🏦</div>
-                <div class="text-3xl font-bold text-purple-600" id="safeBalanceModal">جاري التحميل...</div>
+                <div class="text-3xl font-bold text-purple-600" id="safeBalanceModal">0</div>
                 <div class="text-slate-500 text-sm">الفائض المحفوظ</div>
             </div>
 
@@ -598,7 +644,7 @@
 
     <script type="module">
         // ==========================================
-        // FIREBASE INITIALIZATION & CONFIGURATION
+        // FIREBASE INITIALIZATION
         // ==========================================
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -611,7 +657,11 @@
             update, 
             get
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
@@ -625,725 +675,755 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
         const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        const ALLOWED_EMAIL = 'nohesapnooo@gmail.com';
 
         // ==========================================
-        // GLOBAL STATE & REFERENCES
+        // AUTHENTICATION PROTECTION
         // ==========================================
-        
-        const dbRefs = {
-            balances: ref(database, 'balances'),
-            transactions: ref(database, 'transactions'),
-            stats: ref(database, 'stats/today'),
-            safe: ref(database, 'safe'),
-            lastTransaction: ref(database, 'lastTransaction')
-        };
 
-        let localData = {
-            cash: 0,
-            bank: 0,
-            safe: 0,
-            lastTransaction: { time: 0, type: '', amount: 0, name: '' }
-        };
-
-        // ==========================================
-        // REALTIME LISTENERS
-        // ==========================================
-        
-        // Listen to balances
-        onValue(dbRefs.balances, (snapshot) => {
-            const data = snapshot.val() || { cash: 0, bank: 0 };
-            localData.cash = data.cash || 0;
-            localData.bank = data.bank || 0;
-            updateBalanceDisplay();
-        });
-
-        // Listen to safe
-        onValue(dbRefs.safe, (snapshot) => {
-            const data = snapshot.val() || { amount: 0 };
-            localData.safe = data.amount || 0;
-            const safeEl = document.getElementById('safeBalanceModal');
-            if (safeEl) safeEl.textContent = localData.safe.toLocaleString();
-        });
-
-        // Listen to today's stats
-        onValue(dbRefs.stats, (snapshot) => {
-            const stats = snapshot.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-            const salesEl = document.getElementById('todaySales');
-            const expEl = document.getElementById('todayExpenses');
-            const persEl = document.getElementById('todayPersonal');
-            if (salesEl) salesEl.textContent = (stats.sales || 0).toLocaleString();
-            if (expEl) expEl.textContent = (stats.shopExpenses || 0).toLocaleString();
-            if (persEl) persEl.textContent = (stats.personalExpenses || 0).toLocaleString();
-        });
-
-        // Listen to transactions (last 5)
-        onValue(dbRefs.transactions, (snapshot) => {
-            const transactions = [];
-            snapshot.forEach((childSnapshot) => {
-                transactions.push({
-                    id: childSnapshot.key,
-                    ...childSnapshot.val()
-                });
-            });
-            updateTransactionsList(transactions.slice(-5).reverse());
-        });
-
-        // Listen to last transaction (for duplicate prevention)
-        onValue(dbRefs.lastTransaction, (snapshot) => {
-            localData.lastTransaction = snapshot.val() || { time: 0, type: '', amount: 0, name: '' };
-        });
-
-        // ==========================================
-        // CONNECTION STATUS MONITORING
-        // ==========================================
-        
-        const connectedRef = ref(database, '.info/connected');
-        onValue(connectedRef, (snap) => {
-            const indicator = document.getElementById('syncIndicator');
-            const liveEl = document.getElementById('liveIndicator');
-            if (!indicator) return;
+        onAuthStateChanged(auth, (user) => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainApp = document.getElementById('mainApp');
+            const syncIndicator = document.getElementById('syncIndicator');
             
-            if (snap.val() === true) {
-                indicator.className = 'sync-indicator sync-online';
-                indicator.textContent = '🟢 متصل';
-                if (liveEl) {
-                    liveEl.textContent = '● مباشر';
-                    liveEl.className = 'text-xs text-emerald-600 font-semibold';
-                }
-            } else {
-                indicator.className = 'sync-indicator sync-offline';
-                indicator.textContent = '🔴 غير متصل';
-                if (liveEl) {
-                    liveEl.textContent = '○ غير متصل';
-                    liveEl.className = 'text-xs text-slate-400 font-semibold';
-                }
-            }
-        });
-
-        // ==========================================
-        // UI UPDATE FUNCTIONS
-        // ==========================================
-        
-        function updateBalanceDisplay() {
-            const cashEl = document.getElementById('cashBalance');
-            const bankEl = document.getElementById('bankBalance');
-            const syncEl = document.getElementById('lastSync');
-            
-            if (cashEl) cashEl.textContent = localData.cash.toLocaleString();
-            if (bankEl) bankEl.textContent = localData.bank.toLocaleString();
-            if (syncEl) syncEl.textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
-        }
-
-        function updateTransactionsList(transactions) {
-            const container = document.getElementById('recentTransactions');
-            if (!container) return;
-            
-            if (transactions.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">لا توجد عمليات حتى الآن</div>';
+            if (!user || user.email !== ALLOWED_EMAIL) {
+                // غير مصرح → اذهب لصفحة الدخول
+                window.location.replace('login.html');
                 return;
             }
             
-            container.innerHTML = transactions.map(t => {
-                const styles = {
-                    sales: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                    shopExpense: 'bg-red-100 text-red-700 border-red-200',
-                    personalExpense: 'bg-blue-100 text-blue-700 border-blue-200',
-                    safe: 'bg-purple-100 text-purple-700 border-purple-200',
-                    transfer: 'bg-slate-100 text-slate-500 border-slate-200 transfer-strikethrough',
-                    externalIn: 'bg-orange-100 text-orange-700 border-orange-200',
-                    externalOut: 'bg-amber-100 text-amber-800 border-amber-200'
-                };
-                
-                const emojis = {
-                    sales: '🟢',
-                    shopExpense: '🔴',
-                    personalExpense: '🔵',
-                    safe: '🟣',
-                    transfer: '⇄',
-                    externalIn: '⬅️',
-                    externalOut: '➡️'
-                };
-                
-                const amountDisplay = t.type === 'transfer' ? 
-                    `<span class="text-xs">(محايد)</span>` : 
-                    `<span class="font-bold ${t.amount < 0 ? 'text-red-600' : 'text-emerald-600'}">${Math.abs(t.amount).toLocaleString()}</span>`;
-                
-                const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
-                
-                return `
-                    <div class="flex justify-between items-center p-3 rounded-xl border ${styles[t.type] || styles.sales}">
-                        <div class="flex items-center gap-2">
-                            <span>${emojis[t.type] || '⚪'}</span>
-                            <div>
-                                <div class="font-semibold text-sm ${t.type === 'transfer' ? 'line-through decoration-slate-400' : ''}">${t.title}</div>
-                                <div class="text-xs opacity-75">${time} • ${t.uid || ''}</div>
-                            </div>
-                        </div>
-                        <div class="text-left">${amountDisplay}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // ==========================================
-        // CLOCK & UID
-        // ==========================================
-        
-        function updateClock() {
-            const now = new Date();
-            const clockEl = document.getElementById('clock');
-            const dateEl = document.getElementById('date');
-            const uidEl = document.getElementById('currentUID');
+            // مصرح → اعرض التطبيق
+            if (loadingScreen) loadingScreen.classList.add('hidden');
+            if (mainApp) mainApp.classList.remove('hidden');
+            if (syncIndicator) syncIndicator.classList.remove('hidden');
             
-            const timeStr = now.toLocaleTimeString('ar-SA', { hour12: false });
-            if (clockEl) clockEl.textContent = timeStr;
-            
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            if (dateEl) dateEl.textContent = now.toLocaleDateString('ar-SA', dateOptions);
-            
-            const uid = Date.now().toString(36).toUpperCase();
-            if (uidEl) uidEl.textContent = 'UID: ' + uid.slice(-6);
-        }
-
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // ==========================================
-        // MODAL FUNCTIONS
-        // ==========================================
-        
-        window.toggleSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const content = document.getElementById('sidebarContent');
-            
-            if (!sidebar || !content) return;
-            
-            if (sidebar.classList.contains('hidden')) {
-                sidebar.classList.remove('hidden');
-                setTimeout(() => content.classList.remove('translate-x-full'), 10);
-            } else {
-                content.classList.add('translate-x-full');
-                setTimeout(() => sidebar.classList.add('hidden'), 300);
-            }
-        };
-
-        window.openModal = function(type) {
-            const modal = document.getElementById(type + 'Modal');
-            const content = document.getElementById(type + 'ModalContent');
-            if (!modal || !content) return;
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => content.classList.remove('translate-y-full'), 10);
-        };
-
-        window.closeModal = function(type) {
-            const modal = document.getElementById(type + 'Modal');
-            const content = document.getElementById(type + 'ModalContent');
-            if (!modal || !content) return;
-            
-            content.classList.add('translate-y-full');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 300);
-        };
-
-        // ==========================================
-        // EVENT LISTENERS SETUP
-        // ==========================================
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            // Sales - Department
-            document.querySelectorAll('.dept-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.dept-btn').forEach(b => {
-                        b.classList.remove('border-emerald-500', 'bg-emerald-50');
-                        b.classList.add('border-slate-200');
-                    });
-                    this.classList.remove('border-slate-200');
-                    this.classList.add('border-emerald-500', 'bg-emerald-50');
-                    const input = document.getElementById('salesDept');
-                    if (input) input.value = this.dataset.value;
-                });
-            });
-
-            // Sales - Period
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.period-btn').forEach(b => {
-                        b.classList.remove('border-emerald-500', 'bg-emerald-50');
-                        b.classList.add('border-slate-200');
-                    });
-                    this.classList.remove('border-slate-200');
-                    this.classList.add('border-emerald-500', 'bg-emerald-50');
-                    const input = document.getElementById('salesPeriod');
-                    if (input) input.value = this.dataset.value;
-                });
-            });
-
-            // Sales - Payment
-            document.querySelectorAll('.payment-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.payment-btn').forEach(b => {
-                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
-                        b.classList.add('border-slate-200');
-                    });
-                    const isCash = this.dataset.value === 'كاش';
-                    this.classList.remove('border-slate-200');
-                    this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
-                    const input = document.getElementById('salesPayment');
-                    if (input) input.value = this.dataset.value;
-                });
-            });
-
-            // Expenses - Type
-            document.querySelectorAll('.type-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.type-btn').forEach(b => {
-                        b.classList.remove('border-red-500', 'bg-red-50', 'border-blue-500', 'bg-blue-50');
-                        b.classList.add('border-slate-200');
-                        const div = b.querySelector('div');
-                        if (div) div.classList.remove('text-red-700', 'text-blue-700', 'font-semibold');
-                    });
-                    
-                    const color = this.dataset.color;
-                    this.classList.remove('border-slate-200');
-                    this.classList.add(`border-${color}-500`, `bg-${color}-50`);
-                    const div = this.querySelector('div');
-                    if (div) div.classList.add(`text-${color}-700`, 'font-semibold');
-                    const input = document.getElementById('expenseType');
-                    if (input) input.value = this.dataset.value;
-                });
-            });
-
-            // Expenses - Payment
-            document.querySelectorAll('.exp-payment-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.exp-payment-btn').forEach(b => {
-                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
-                        b.classList.add('border-slate-200');
-                    });
-                    const isCash = this.dataset.value === 'كاش';
-                    this.classList.remove('border-slate-200');
-                    this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
-                    const input = document.getElementById('expensePayment');
-                    if (input) input.value = this.dataset.value;
-                });
-            });
-
-            // Transfer - From
-            document.querySelectorAll('.from-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.from-btn').forEach(b => {
-                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
-                        b.classList.add('border-slate-200');
-                    });
-                    const isCash = this.dataset.value === 'كاش';
-                    this.classList.remove('border-slate-200');
-                    this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
-                    const input = document.getElementById('transferFrom');
-                    if (input) input.value = this.dataset.value;
-                    updateTransferTo();
-                });
-            });
-
-            // Transfer - To
-            document.querySelectorAll('.to-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.to-btn').forEach(b => {
-                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
-                        b.classList.add('border-slate-200');
-                    });
-                    const isCash = this.dataset.value === 'كاش';
-                    this.classList.remove('border-slate-200');
-                    this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
-                    const input = document.getElementById('transferTo');
-                    if (input) input.value = this.dataset.value;
-                });
-            });
-
-            // Safe - Operation
-            document.querySelectorAll('.safe-op-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.safe-op-btn').forEach(b => {
-                        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-red-500', 'bg-red-50');
-                        b.classList.add('border-slate-200');
-                    });
-                    const isAdd = this.dataset.value === 'add';
-                    this.classList.remove('border-slate-200');
-                    this.classList.add(isAdd ? 'border-emerald-500' : 'border-red-500', isAdd ? 'bg-emerald-50' : 'bg-red-50');
-                    const input = document.getElementById('safeOperation');
-                    if (input) input.value = this.dataset.value;
-                });
-            });
-
-            // Close modals on outside click
-            document.querySelectorAll('[id$="Modal"]').forEach(modal => {
-                modal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        const type = this.id.replace('Modal', '');
-                        closeModal(type);
-                    }
-                });
-            });
+            showUserBadge(user.email);
+            initApp();
         });
 
-        function updateTransferTo() {
-            const from = document.getElementById('transferFrom');
-            if (!from) return;
-            const toBtn = document.querySelector(`.to-btn[data-value="${from.value === 'كاش' ? 'بنكك' : 'كاش'}"]`);
-            if (toBtn) toBtn.click();
-        }
-
-        // ==========================================
-        // UTILITY FUNCTIONS
-        // ==========================================
-        
-        function normalizeText(text) {
-            if (!text) return '';
-            return text.replace(/ة$/, 'ه').replace(/ه$/, 'ه').toLowerCase().trim();
-        }
-
-        function checkDuplicate(type, name, amount) {
-            const now = Date.now();
-            const last = localData.lastTransaction;
-            
-            if (last && last.type === type && 
-                normalizeText(last.name) === normalizeText(name) && 
-                last.amount == amount && 
-                (now - last.time) < 60000) {
-                return true;
+        window.signOutUser = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Sign out error:', error);
             }
-            return false;
-        }
-
-        window.confirmDuplicate = function() {
-            const warning = document.getElementById('duplicateWarning');
-            const btn = document.getElementById('expenseSubmitBtn');
-            if (warning) warning.classList.add('hidden');
-            if (btn) btn.classList.remove('hidden');
         };
 
-        window.cancelDuplicate = function() {
-            const name = document.getElementById('expenseName');
-            const amount = document.getElementById('expenseAmount');
-            const warning = document.getElementById('duplicateWarning');
-            const btn = document.getElementById('expenseSubmitBtn');
+        function showUserBadge(email) {
+            const badge = document.getElementById('userBadge');
+            const emailEl = document.getElementById('userEmailDisplay');
+            if (badge && emailEl) {
+                emailEl.textContent = email;
+                badge.classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        // APP INITIALIZATION
+        // ==========================================
+
+        function initApp() {
+            const dbRefs = {
+                balances: ref(database, 'balances'),
+                transactions: ref(database, 'transactions'),
+                stats: ref(database, 'stats/today'),
+                safe: ref(database, 'safe'),
+                lastTransaction: ref(database, 'lastTransaction')
+            };
+
+            let localData = {
+                cash: 0,
+                bank: 0,
+                safe: 0,
+                lastTransaction: { time: 0, type: '', amount: 0, name: '' }
+            };
+
+            // ==========================================
+            // REALTIME LISTENERS
+            // ==========================================
             
-            if (name) name.value = '';
-            if (amount) amount.value = '';
-            if (warning) warning.classList.add('hidden');
-            if (btn) btn.classList.remove('hidden');
-        };
+            onValue(dbRefs.balances, (snapshot) => {
+                const data = snapshot.val() || { cash: 0, bank: 0 };
+                localData.cash = data.cash || 0;
+                localData.bank = data.bank || 0;
+                updateBalanceDisplay();
+            });
 
-        // ==========================================
-        // FORM SUBMISSIONS (FIREBASE)
-        // ==========================================
-        
-        // Sales Form
-        const salesForm = document.getElementById('salesForm');
-        if (salesForm) {
-            salesForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const amountInput = document.getElementById('salesAmount');
-                const paymentInput = document.getElementById('salesPayment');
-                const deptInput = document.getElementById('salesDept');
-                const periodInput = document.getElementById('salesPeriod');
-                
-                const amount = parseFloat(amountInput?.value || 0);
-                const payment = paymentInput?.value || 'كاش';
-                const dept = deptInput?.value;
-                const period = periodInput?.value;
-                
-                if (!dept || !period) {
-                    alert('الرجاء اختيار القسم والفترة');
-                    return;
-                }
+            onValue(dbRefs.safe, (snapshot) => {
+                const data = snapshot.val() || { amount: 0 };
+                localData.safe = data.amount || 0;
+                const safeEl = document.getElementById('safeBalanceModal');
+                if (safeEl) safeEl.textContent = localData.safe.toLocaleString();
+            });
 
-                const uid = Date.now().toString(36).toUpperCase().slice(-6);
-                const timestamp = Date.now();
+            onValue(dbRefs.stats, (snapshot) => {
+                const stats = snapshot.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                const salesEl = document.getElementById('todaySales');
+                const expEl = document.getElementById('todayExpenses');
+                const persEl = document.getElementById('todayPersonal');
+                if (salesEl) salesEl.textContent = (stats.sales || 0).toLocaleString();
+                if (expEl) expEl.textContent = (stats.shopExpenses || 0).toLocaleString();
+                if (persEl) persEl.textContent = (stats.personalExpenses || 0).toLocaleString();
+            });
+
+            onValue(dbRefs.transactions, (snapshot) => {
+                const transactions = [];
+                snapshot.forEach((childSnapshot) => {
+                    transactions.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                updateTransactionsList(transactions.slice(-5).reverse());
+            });
+
+            onValue(dbRefs.lastTransaction, (snapshot) => {
+                localData.lastTransaction = snapshot.val() || { time: 0, type: '', amount: 0, name: '' };
+            });
+
+            // ==========================================
+            // CONNECTION STATUS
+            // ==========================================
+            
+            const connectedRef = ref(database, '.info/connected');
+            onValue(connectedRef, (snap) => {
+                const indicator = document.getElementById('syncIndicator');
+                const liveEl = document.getElementById('liveIndicator');
+                if (!indicator) return;
                 
-                // Update balances
-                const balanceUpdate = {};
-                if (payment === 'كاش') {
-                    balanceUpdate['cash'] = localData.cash + amount;
+                if (snap.val() === true) {
+                    indicator.className = 'sync-indicator sync-online';
+                    indicator.textContent = '🟢 متصل';
+                    if (liveEl) {
+                        liveEl.textContent = '● مباشر';
+                        liveEl.className = 'text-xs text-emerald-600 font-semibold';
+                    }
                 } else {
-                    balanceUpdate['bank'] = localData.bank + amount;
-                }
-                
-                // Update stats
-                const statsUpdate = {};
-                try {
-                    const statsSnap = await get(dbRefs.stats);
-                    const currentStats = statsSnap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-                    statsUpdate['sales'] = (currentStats.sales || 0) + amount;
-                } catch (e) {
-                    statsUpdate['sales'] = amount;
-                }
-
-                // Create transaction
-                const newTxRef = push(dbRefs.transactions);
-                const transaction = {
-                    type: 'sales',
-                    title: `مبيعات ${dept} - ${period} (${payment})`,
-                    amount: amount,
-                    timestamp: timestamp,
-                    uid: uid,
-                    payment: payment,
-                    dept: dept,
-                    period: period
-                };
-
-                try {
-                    await Promise.all([
-                        update(dbRefs.balances, balanceUpdate),
-                        update(dbRefs.stats, statsUpdate),
-                        set(newTxRef, transaction),
-                        set(dbRefs.lastTransaction, {
-                            time: timestamp,
-                            type: 'sales',
-                            amount: amount,
-                            name: dept
-                        })
-                    ]);
-
-                    closeModal('sales');
-                    this.reset();
-                } catch (error) {
-                    console.error('Error saving sale:', error);
-                    alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+                    indicator.className = 'sync-indicator sync-offline';
+                    indicator.textContent = '🔴 غير متصل';
+                    if (liveEl) {
+                        liveEl.textContent = '○ غير متصل';
+                        liveEl.className = 'text-xs text-slate-400 font-semibold';
+                    }
                 }
             });
-        }
 
-        // Expenses Form
-        const expensesForm = document.getElementById('expensesForm');
-        if (expensesForm) {
-            expensesForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
+            // ==========================================
+            // UI FUNCTIONS
+            // ==========================================
+            
+            function updateBalanceDisplay() {
+                const cashEl = document.getElementById('cashBalance');
+                const bankEl = document.getElementById('bankBalance');
+                const syncEl = document.getElementById('lastSync');
                 
-                const amountInput = document.getElementById('expenseAmount');
-                const nameInput = document.getElementById('expenseName');
-                const typeInput = document.getElementById('expenseType');
-                const paymentInput = document.getElementById('expensePayment');
-                const vendorInput = document.getElementById('expenseVendor');
+                if (cashEl) cashEl.textContent = localData.cash.toLocaleString();
+                if (bankEl) bankEl.textContent = localData.bank.toLocaleString();
+                if (syncEl) syncEl.textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+            }
+
+            function updateTransactionsList(transactions) {
+                const container = document.getElementById('recentTransactions');
+                if (!container) return;
                 
-                const amount = parseFloat(amountInput?.value || 0);
-                const name = nameInput?.value;
-                const type = typeInput?.value || 'محل';
-                const payment = paymentInput?.value || 'كاش';
-                const vendor = vendorInput?.value;
+                if (transactions.length === 0) {
+                    container.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">لا توجد عمليات حتى الآن</div>';
+                    return;
+                }
                 
-                // Check for duplicates
-                if (checkDuplicate(type, name, amount)) {
-                    const dupName = document.getElementById('dupName');
-                    const dupAmount = document.getElementById('dupAmount');
-                    const warning = document.getElementById('duplicateWarning');
-                    const btn = document.getElementById('expenseSubmitBtn');
+                container.innerHTML = transactions.map(t => {
+                    const styles = {
+                        sales: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                        shopExpense: 'bg-red-100 text-red-700 border-red-200',
+                        personalExpense: 'bg-blue-100 text-blue-700 border-blue-200',
+                        safe: 'bg-purple-100 text-purple-700 border-purple-200',
+                        transfer: 'bg-slate-100 text-slate-500 border-slate-200 transfer-strikethrough',
+                        externalIn: 'bg-orange-100 text-orange-700 border-orange-200',
+                        externalOut: 'bg-amber-100 text-amber-800 border-amber-200'
+                    };
                     
-                    if (dupName) dupName.textContent = name;
-                    if (dupAmount) dupAmount.textContent = amount;
-                    if (warning) warning.classList.remove('hidden');
-                    if (btn) btn.classList.add('hidden');
-                    return;
-                }
+                    const emojis = {
+                        sales: '🟢',
+                        shopExpense: '🔴',
+                        personalExpense: '🔵',
+                        safe: '🟣',
+                        transfer: '⇄',
+                        externalIn: '⬅️',
+                        externalOut: '➡️'
+                    };
+                    
+                    const amountDisplay = t.type === 'transfer' ? 
+                        `<span class="text-xs">(محايد)</span>` : 
+                        `<span class="font-bold ${t.amount < 0 ? 'text-red-600' : 'text-emerald-600'}">${Math.abs(t.amount).toLocaleString()}</span>`;
+                    
+                    const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                    
+                    return `
+                        <div class="flex justify-between items-center p-3 rounded-xl border ${styles[t.type] || styles.sales}">
+                            <div class="flex items-center gap-2">
+                                <span>${emojis[t.type] || '⚪'}</span>
+                                <div>
+                                    <div class="font-semibold text-sm ${t.type === 'transfer' ? 'line-through decoration-slate-400' : ''}">${t.title}</div>
+                                    <div class="text-xs opacity-75">${time} • ${t.uid || ''}</div>
+                                </div>
+                            </div>
+                            <div class="text-left">${amountDisplay}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
 
-                const uid = Date.now().toString(36).toUpperCase().slice(-6);
-                const timestamp = Date.now();
+            // ==========================================
+            // CLOCK
+            // ==========================================
+            
+            function updateClock() {
+                const now = new Date();
+                const clockEl = document.getElementById('clock');
+                const dateEl = document.getElementById('date');
+                const uidEl = document.getElementById('currentUID');
                 
-                // Update balances
-                const balanceUpdate = {};
-                if (payment === 'كاش') {
-                    balanceUpdate['cash'] = localData.cash - amount;
+                const timeStr = now.toLocaleTimeString('ar-SA', { hour12: false });
+                if (clockEl) clockEl.textContent = timeStr;
+                
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                if (dateEl) dateEl.textContent = now.toLocaleDateString('ar-SA', dateOptions);
+                
+                const uid = Date.now().toString(36).toUpperCase();
+                if (uidEl) uidEl.textContent = 'UID: ' + uid.slice(-6);
+            }
+
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            // ==========================================
+            // MODAL FUNCTIONS
+            // ==========================================
+            
+            window.toggleSidebar = function() {
+                const sidebar = document.getElementById('sidebar');
+                const content = document.getElementById('sidebarContent');
+                
+                if (!sidebar || !content) return;
+                
+                if (sidebar.classList.contains('hidden')) {
+                    sidebar.classList.remove('hidden');
+                    setTimeout(() => content.classList.remove('translate-x-full'), 10);
                 } else {
-                    balanceUpdate['bank'] = localData.bank - amount;
+                    content.classList.add('translate-x-full');
+                    setTimeout(() => sidebar.classList.add('hidden'), 300);
                 }
+            };
+
+            window.openModal = function(type) {
+                const modal = document.getElementById(type + 'Modal');
+                const content = document.getElementById(type + 'ModalContent');
+                if (!modal || !content) return;
                 
-                // Update stats
-                const statsUpdate = {};
-                try {
-                    const statsSnap = await get(dbRefs.stats);
-                    const currentStats = statsSnap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-                    if (type === 'محل') {
-                        statsUpdate['shopExpenses'] = (currentStats.shopExpenses || 0) + amount;
-                    } else {
-                        statsUpdate['personalExpenses'] = (currentStats.personalExpenses || 0) + amount;
-                    }
-                } catch (e) {
-                    if (type === 'محل') {
-                        statsUpdate['shopExpenses'] = amount;
-                    } else {
-                        statsUpdate['personalExpenses'] = amount;
-                    }
-                }
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => content.classList.remove('translate-y-full'), 10);
+            };
 
-                // Create transaction
-                const newTxRef = push(dbRefs.transactions);
-                const transaction = {
-                    type: type === 'محل' ? 'shopExpense' : 'personalExpense',
-                    title: `${type === 'محل' ? '🔴' : '🔵'} ${name} ${vendor ? '(' + vendor + ')' : ''}`,
-                    amount: -amount,
-                    timestamp: timestamp,
-                    uid: uid,
-                    payment: payment,
-                    expenseType: type,
-                    vendor: vendor || ''
-                };
+            window.closeModal = function(type) {
+                const modal = document.getElementById(type + 'Modal');
+                const content = document.getElementById(type + 'ModalContent');
+                if (!modal || !content) return;
+                
+                content.classList.add('translate-y-full');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            };
 
-                try {
-                    await Promise.all([
-                        update(dbRefs.balances, balanceUpdate),
-                        update(dbRefs.stats, statsUpdate),
-                        set(newTxRef, transaction),
-                        set(dbRefs.lastTransaction, {
-                            time: timestamp,
-                            type: type,
-                            amount: amount,
-                            name: name
-                        })
-                    ]);
+            // ==========================================
+            // EVENT LISTENERS
+            // ==========================================
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                // Sales - Department
+                document.querySelectorAll('.dept-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.dept-btn').forEach(b => {
+                            b.classList.remove('border-emerald-500', 'bg-emerald-50');
+                            b.classList.add('border-slate-200');
+                        });
+                        this.classList.remove('border-slate-200');
+                        this.classList.add('border-emerald-500', 'bg-emerald-50');
+                        const input = document.getElementById('salesDept');
+                        if (input) input.value = this.dataset.value;
+                    });
+                });
 
-                    closeModal('expenses');
-                    this.reset();
-                    const warning = document.getElementById('duplicateWarning');
-                    const btn = document.getElementById('expenseSubmitBtn');
-                    if (warning) warning.classList.add('hidden');
-                    if (btn) btn.classList.remove('hidden');
-                } catch (error) {
-                    console.error('Error saving expense:', error);
-                    alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
-                }
+                // Sales - Period
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.period-btn').forEach(b => {
+                            b.classList.remove('border-emerald-500', 'bg-emerald-50');
+                            b.classList.add('border-slate-200');
+                        });
+                        this.classList.remove('border-slate-200');
+                        this.classList.add('border-emerald-500', 'bg-emerald-50');
+                        const input = document.getElementById('salesPeriod');
+                        if (input) input.value = this.dataset.value;
+                    });
+                });
+
+                // Sales - Payment
+                document.querySelectorAll('.payment-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.payment-btn').forEach(b => {
+                            b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                            b.classList.add('border-slate-200');
+                        });
+                        const isCash = this.dataset.value === 'كاش';
+                        this.classList.remove('border-slate-200');
+                        this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+                        const input = document.getElementById('salesPayment');
+                        if (input) input.value = this.dataset.value;
+                    });
+                });
+
+                // Expenses - Type
+                document.querySelectorAll('.type-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.type-btn').forEach(b => {
+                            b.classList.remove('border-red-500', 'bg-red-50', 'border-blue-500', 'bg-blue-50');
+                            b.classList.add('border-slate-200');
+                            const div = b.querySelector('div');
+                            if (div) div.classList.remove('text-red-700', 'text-blue-700', 'font-semibold');
+                        });
+                        
+                        const color = this.dataset.color;
+                        this.classList.remove('border-slate-200');
+                        this.classList.add(`border-${color}-500`, `bg-${color}-50`);
+                        const div = this.querySelector('div');
+                        if (div) div.classList.add(`text-${color}-700`, 'font-semibold');
+                        const input = document.getElementById('expenseType');
+                        if (input) input.value = this.dataset.value;
+                    });
+                });
+
+                // Expenses - Payment
+                document.querySelectorAll('.exp-payment-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.exp-payment-btn').forEach(b => {
+                            b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                            b.classList.add('border-slate-200');
+                        });
+                        const isCash = this.dataset.value === 'كاش';
+                        this.classList.remove('border-slate-200');
+                        this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+                        const input = document.getElementById('expensePayment');
+                        if (input) input.value = this.dataset.value;
+                    });
+                });
+
+                // Transfer - From
+                document.querySelectorAll('.from-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.from-btn').forEach(b => {
+                            b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                            b.classList.add('border-slate-200');
+                        });
+                        const isCash = this.dataset.value === 'كاش';
+                        this.classList.remove('border-slate-200');
+                        this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+                        const input = document.getElementById('transferFrom');
+                        if (input) input.value = this.dataset.value;
+                        updateTransferTo();
+                    });
+                });
+
+                // Transfer - To
+                document.querySelectorAll('.to-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.to-btn').forEach(b => {
+                            b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                            b.classList.add('border-slate-200');
+                        });
+                        const isCash = this.dataset.value === 'كاش';
+                        this.classList.remove('border-slate-200');
+                        this.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+                        const input = document.getElementById('transferTo');
+                        if (input) input.value = this.dataset.value;
+                    });
+                });
+
+                // Safe - Operation
+                document.querySelectorAll('.safe-op-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.safe-op-btn').forEach(b => {
+                            b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-red-500', 'bg-red-50');
+                            b.classList.add('border-slate-200');
+                        });
+                        const isAdd = this.dataset.value === 'add';
+                        this.classList.remove('border-slate-200');
+                        this.classList.add(isAdd ? 'border-emerald-500' : 'border-red-500', isAdd ? 'bg-emerald-50' : 'bg-red-50');
+                        const input = document.getElementById('safeOperation');
+                        if (input) input.value = this.dataset.value;
+                    });
+                });
+
+                // Close modals on outside click
+                document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            const type = this.id.replace('Modal', '');
+                            closeModal(type);
+                        }
+                    });
+                });
             });
-        }
 
-        // Transfer Form (Zero-Impact)
-        const transferForm = document.getElementById('transferForm');
-        if (transferForm) {
-            transferForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
+            function updateTransferTo() {
+                const from = document.getElementById('transferFrom');
+                if (!from) return;
+                const toBtn = document.querySelector(`.to-btn[data-value="${from.value === 'كاش' ? 'بنكك' : 'كاش'}"]`);
+                if (toBtn) toBtn.click();
+            }
+
+            // ==========================================
+            // UTILITY FUNCTIONS
+            // ==========================================
+            
+            function normalizeText(text) {
+                if (!text) return '';
+                return text.replace(/ة$/, 'ه').replace(/ه$/, 'ه').toLowerCase().trim();
+            }
+
+            function checkDuplicate(type, name, amount) {
+                const now = Date.now();
+                const last = localData.lastTransaction;
                 
-                const amountInput = document.getElementById('transferAmount');
-                const fromInput = document.getElementById('transferFrom');
-                const toInput = document.getElementById('transferTo');
-                
-                const amount = parseFloat(amountInput?.value || 0);
-                const from = fromInput?.value || 'كاش';
-                const to = toInput?.value || 'بنكك';
-                
-                if (from === to) {
-                    alert('لا يمكن التحويل لنفس الحساب!');
-                    return;
+                if (last && last.type === type && 
+                    normalizeText(last.name) === normalizeText(name) && 
+                    last.amount == amount && 
+                    (now - last.time) < 60000) {
+                    return true;
                 }
-                
-                const uid = Date.now().toString(36).toUpperCase().slice(-6);
-                const timestamp = Date.now();
-                
-                // Update balances (Zero-Impact on profits)
-                const balanceUpdate = {};
-                if (from === 'كاش') {
-                    balanceUpdate['cash'] = localData.cash - amount;
-                    balanceUpdate['bank'] = localData.bank + amount;
-                } else {
-                    balanceUpdate['bank'] = localData.bank - amount;
-                    balanceUpdate['cash'] = localData.cash + amount;
-                }
+                return false;
+            }
 
-                // Create transaction (Zero-Impact)
-                const newTxRef = push(dbRefs.transactions);
-                const transaction = {
-                    type: 'transfer',
-                    title: `⇄ تبديل: ${from} → ${to} (محايد)`,
-                    amount: 0,
-                    timestamp: timestamp,
-                    uid: uid,
-                    from: from,
-                    to: to,
-                    transferAmount: amount
-                };
+            window.confirmDuplicate = function() {
+                const warning = document.getElementById('duplicateWarning');
+                const btn = document.getElementById('expenseSubmitBtn');
+                if (warning) warning.classList.add('hidden');
+                if (btn) btn.classList.remove('hidden');
+            };
 
-                try {
-                    await Promise.all([
-                        update(dbRefs.balances, balanceUpdate),
-                        set(newTxRef, transaction)
-                    ]);
+            window.cancelDuplicate = function() {
+                const name = document.getElementById('expenseName');
+                const amount = document.getElementById('expenseAmount');
+                const warning = document.getElementById('duplicateWarning');
+                const btn = document.getElementById('expenseSubmitBtn');
+                
+                if (name) name.value = '';
+                if (amount) amount.value = '';
+                if (warning) warning.classList.add('hidden');
+                if (btn) btn.classList.remove('hidden');
+            };
 
-                    closeModal('transfer');
-                    this.reset();
-                } catch (error) {
-                    console.error('Error saving transfer:', error);
-                    alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
-                }
-            });
-        }
-
-        // Safe Form
-        const safeForm = document.getElementById('safeForm');
-        if (safeForm) {
-            safeForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const amountInput = document.getElementById('safeAmount');
-                const operationInput = document.getElementById('safeOperation');
-                
-                const amount = parseFloat(amountInput?.value || 0);
-                const operation = operationInput?.value || 'add';
-                
-                if (operation === 'add') {
-                    if (localData.cash < amount) {
-                        alert('⚠️ رصيد الكاش غير كافٍ!');
+            // ==========================================
+            // FORM SUBMISSIONS
+            // ==========================================
+            
+            // Sales Form
+            const salesForm = document.getElementById('salesForm');
+            if (salesForm) {
+                salesForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const amountInput = document.getElementById('salesAmount');
+                    const paymentInput = document.getElementById('salesPayment');
+                    const deptInput = document.getElementById('salesDept');
+                    const periodInput = document.getElementById('salesPeriod');
+                    
+                    const amount = parseFloat(amountInput?.value || 0);
+                    const payment = paymentInput?.value || 'كاش';
+                    const dept = deptInput?.value;
+                    const period = periodInput?.value;
+                    
+                    if (!dept || !period) {
+                        alert('الرجاء اختيار القسم والفترة');
                         return;
                     }
-                } else {
-                    if (localData.safe < amount) {
-                        alert('⚠️ رصيد الخزنة غير كافٍ!');
+
+                    const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                    const timestamp = Date.now();
+                    
+                    const balanceUpdate = {};
+                    if (payment === 'كاش') {
+                        balanceUpdate['cash'] = localData.cash + amount;
+                    } else {
+                        balanceUpdate['bank'] = localData.bank + amount;
+                    }
+                    
+                    const statsUpdate = {};
+                    try {
+                        const statsSnap = await get(dbRefs.stats);
+                        const currentStats = statsSnap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                        statsUpdate['sales'] = (currentStats.sales || 0) + amount;
+                    } catch (e) {
+                        statsUpdate['sales'] = amount;
+                    }
+
+                    const newTxRef = push(dbRefs.transactions);
+                    const transaction = {
+                        type: 'sales',
+                        title: `مبيعات ${dept} - ${period} (${payment})`,
+                        amount: amount,
+                        timestamp: timestamp,
+                        uid: uid,
+                        payment: payment,
+                        dept: dept,
+                        period: period
+                    };
+
+                    try {
+                        await Promise.all([
+                            update(dbRefs.balances, balanceUpdate),
+                            update(dbRefs.stats, statsUpdate),
+                            set(newTxRef, transaction),
+                            set(dbRefs.lastTransaction, {
+                                time: timestamp,
+                                type: 'sales',
+                                amount: amount,
+                                name: dept
+                            })
+                        ]);
+
+                        closeModal('sales');
+                        this.reset();
+                    } catch (error) {
+                        console.error('Error saving sale:', error);
+                        alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+                    }
+                });
+            }
+
+            // Expenses Form
+            const expensesForm = document.getElementById('expensesForm');
+            if (expensesForm) {
+                expensesForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const amountInput = document.getElementById('expenseAmount');
+                    const nameInput = document.getElementById('expenseName');
+                    const typeInput = document.getElementById('expenseType');
+                    const paymentInput = document.getElementById('expensePayment');
+                    const vendorInput = document.getElementById('expenseVendor');
+                    
+                    const amount = parseFloat(amountInput?.value || 0);
+                    const name = nameInput?.value;
+                    const type = typeInput?.value || 'محل';
+                    const payment = paymentInput?.value || 'كاش';
+                    const vendor = vendorInput?.value;
+                    
+                    if (checkDuplicate(type, name, amount)) {
+                        const dupName = document.getElementById('dupName');
+                        const dupAmount = document.getElementById('dupAmount');
+                        const warning = document.getElementById('duplicateWarning');
+                        const btn = document.getElementById('expenseSubmitBtn');
+                        
+                        if (dupName) dupName.textContent = name;
+                        if (dupAmount) dupAmount.textContent = amount;
+                        if (warning) warning.classList.remove('hidden');
+                        if (btn) btn.classList.add('hidden');
                         return;
                     }
-                }
-                
-                const uid = Date.now().toString(36).toUpperCase().slice(-6);
-                const timestamp = Date.now();
-                
-                // Update balances
-                const balanceUpdate = {};
-                const safeUpdate = {};
-                
-                if (operation === 'add') {
-                    balanceUpdate['cash'] = localData.cash - amount;
-                    safeUpdate['amount'] = localData.safe + amount;
-                } else {
-                    balanceUpdate['cash'] = localData.cash + amount;
-                    safeUpdate['amount'] = localData.safe - amount;
-                }
 
-                // Create transaction
-                const newTxRef = push(dbRefs.transactions);
-                const transaction = {
-                    type: 'safe',
-                    title: `🏦 ${operation === 'add' ? 'إيداع' : 'سحب'} من الخزنة`,
-                    amount: operation === 'add' ? amount : -amount,
-                    timestamp: timestamp,
-                    uid: uid,
-                    operation: operation
-                };
+                    const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                    const timestamp = Date.now();
+                    
+                    const balanceUpdate = {};
+                    if (payment === 'كاش') {
+                        balanceUpdate['cash'] = localData.cash - amount;
+                    } else {
+                        balanceUpdate['bank'] = localData.bank - amount;
+                    }
+                    
+                    const statsUpdate = {};
+                    try {
+                        const statsSnap = await get(dbRefs.stats);
+                        const currentStats = statsSnap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                        if (type === 'محل') {
+                            statsUpdate['shopExpenses'] = (currentStats.shopExpenses || 0) + amount;
+                        } else {
+                            statsUpdate['personalExpenses'] = (currentStats.personalExpenses || 0) + amount;
+                        }
+                    } catch (e) {
+                        if (type === 'محل') {
+                            statsUpdate['shopExpenses'] = amount;
+                        } else {
+                            statsUpdate['personalExpenses'] = amount;
+                        }
+                    }
 
-                try {
-                    await Promise.all([
-                        update(dbRefs.balances, balanceUpdate),
-                        set(dbRefs.safe, safeUpdate),
-                        set(newTxRef, transaction)
-                    ]);
+                    const newTxRef = push(dbRefs.transactions);
+                    const transaction = {
+                        type: type === 'محل' ? 'shopExpense' : 'personalExpense',
+                        title: `${type === 'محل' ? '🔴' : '🔵'} ${name} ${vendor ? '(' + vendor + ')' : ''}`,
+                        amount: -amount,
+                        timestamp: timestamp,
+                        uid: uid,
+                        payment: payment,
+                        expenseType: type,
+                        vendor: vendor || ''
+                    };
 
-                    closeModal('safe');
-                    this.reset();
-                } catch (error) {
-                    console.error('Error saving safe operation:', error);
-                    alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
-                }
-            });
+                    try {
+                        await Promise.all([
+                            update(dbRefs.balances, balanceUpdate),
+                            update(dbRefs.stats, statsUpdate),
+                            set(newTxRef, transaction),
+                            set(dbRefs.lastTransaction, {
+                                time: timestamp,
+                                type: type,
+                                amount: amount,
+                                name: name
+                            })
+                        ]);
+
+                        closeModal('expenses');
+                        this.reset();
+                        const warning = document.getElementById('duplicateWarning');
+                        const btn = document.getElementById('expenseSubmitBtn');
+                        if (warning) warning.classList.add('hidden');
+                        if (btn) btn.classList.remove('hidden');
+                    } catch (error) {
+                        console.error('Error saving expense:', error);
+                        alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+                    }
+                });
+            }
+
+            // Transfer Form
+            const transferForm = document.getElementById('transferForm');
+            if (transferForm) {
+                transferForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const amountInput = document.getElementById('transferAmount');
+                    const fromInput = document.getElementById('transferFrom');
+                    const toInput = document.getElementById('transferTo');
+                    
+                    const amount = parseFloat(amountInput?.value || 0);
+                    const from = fromInput?.value || 'كاش';
+                    const to = toInput?.value || 'بنكك';
+                    
+                    if (from === to) {
+                        alert('لا يمكن التحويل لنفس الحساب!');
+                        return;
+                    }
+                    
+                    const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                    const timestamp = Date.now();
+                    
+                    const balanceUpdate = {};
+                    if (from === 'كاش') {
+                        balanceUpdate['cash'] = localData.cash - amount;
+                        balanceUpdate['bank'] = localData.bank + amount;
+                    } else {
+                        balanceUpdate['bank'] = localData.bank - amount;
+                        balanceUpdate['cash'] = localData.cash + amount;
+                    }
+
+                    const newTxRef = push(dbRefs.transactions);
+                    const transaction = {
+                        type: 'transfer',
+                        title: `⇄ تبديل: ${from} → ${to} (محايد)`,
+                        amount: 0,
+                        timestamp: timestamp,
+                        uid: uid,
+                        from: from,
+                        to: to,
+                        transferAmount: amount
+                    };
+
+                    try {
+                        await Promise.all([
+                            update(dbRefs.balances, balanceUpdate),
+                            set(newTxRef, transaction)
+                        ]);
+
+                        closeModal('transfer');
+                        this.reset();
+                    } catch (error) {
+                        console.error('Error saving transfer:', error);
+                        alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+                    }
+                });
+            }
+
+            // Safe Form
+            const safeForm = document.getElementById('safeForm');
+            if (safeForm) {
+                safeForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const amountInput = document.getElementById('safeAmount');
+                    const operationInput = document.getElementById('safeOperation');
+                    
+                    const amount = parseFloat(amountInput?.value || 0);
+                    const operation = operationInput?.value || 'add';
+                    
+                    if (operation === 'add') {
+                        if (localData.cash < amount) {
+                            alert('⚠️ رصيد الكاش غير كافٍ!');
+                            return;
+                        }
+                    } else {
+                        if (localData.safe < amount) {
+                            alert('⚠️ رصيد الخزنة غير كافٍ!');
+                            return;
+                        }
+                    }
+                    
+                    const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                    const timestamp = Date.now();
+                    
+                    const balanceUpdate = {};
+                    const safeUpdate = {};
+                    
+                    if (operation === 'add') {
+                        balanceUpdate['cash'] = localData.cash - amount;
+                        safeUpdate['amount'] = localData.safe + amount;
+                    } else {
+                        balanceUpdate['cash'] = localData.cash + amount;
+                        safeUpdate['amount'] = localData.safe - amount;
+                    }
+
+                    const newTxRef = push(dbRefs.transactions);
+                    const transaction = {
+                        type: 'safe',
+                        title: `🏦 ${operation === 'add' ? 'إيداع' : 'سحب'} من الخزنة`,
+                        amount: operation === 'add' ? amount : -amount,
+                        timestamp: timestamp,
+                        uid: uid,
+                        operation: operation
+                    };
+
+                    try {
+                        await Promise.all([
+                            update(dbRefs.balances, balanceUpdate),
+                            set(dbRefs.safe, safeUpdate),
+                            set(newTxRef, transaction)
+                        ]);
+
+                        closeModal('safe');
+                        this.reset();
+                    } catch (error) {
+                        console.error('Error saving safe operation:', error);
+                        alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+                    }
+                });
+            }
         }
     </script>
 </body>
