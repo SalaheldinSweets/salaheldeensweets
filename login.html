@@ -15,14 +15,7 @@
         .glass-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-        .shake { animation: shake 0.5s ease-in-out; }
         .spinner {
             width: 40px;
             height: 40px;
@@ -39,12 +32,11 @@
     <!-- شاشة التحميل -->
     <div id="checkingScreen" class="fixed inset-0 bg-gradient-to-br from-slate-800 to-slate-900 z-50 flex flex-col items-center justify-center">
         <div class="spinner mb-4"></div>
-        <p class="text-white font-semibold">جاري التحقق من الجلسة...</p>
+        <p class="text-white font-semibold">جاري التحقق...</p>
     </div>
 
     <!-- بطاقة تسجيل الدخول -->
     <div id="loginCard" class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl text-center hidden">
-        <!-- Logo -->
         <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
             <span class="text-5xl">💰</span>
         </div>
@@ -52,9 +44,8 @@
         <h1 class="text-2xl font-bold text-slate-800 mb-2">مدير حسابات صلاح الدين</h1>
         <p class="text-slate-500 text-sm mb-8">نظام إدارة مالي متكامل</p>
         
-        <!-- زر Google -->
-        <button onclick="signIn()" id="signInBtn" class="w-full bg-white border-2 border-slate-200 hover:border-emerald-500 hover:shadow-lg rounded-xl p-4 flex items-center justify-center gap-3 transition-all duration-200 group">
-            <svg class="w-6 h-6 group-hover:scale-110 transition" viewBox="0 0 24 24">
+        <button onclick="signIn()" id="signInBtn" class="w-full bg-white border-2 border-slate-200 hover:border-emerald-500 hover:shadow-lg rounded-xl p-4 flex items-center justify-center gap-3 transition-all">
+            <svg class="w-6 h-6" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -63,18 +54,9 @@
             <span class="font-bold text-slate-700">تسجيل الدخول بـ Google</span>
         </button>
         
-        <!-- رسالة خطأ -->
-        <div id="errorMsg" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm shake"></div>
+        <div id="errorMsg" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm"></div>
+        <div id="successMsg" class="hidden mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-600 text-sm"></div>
         
-        <!-- رسالة نجاح -->
-        <div id="successMsg" class="hidden mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-600 text-sm">
-            ✓ تم تسجيل الدخول، جاري التحويل...
-        </div>
-        
-        <!-- معلومات التصحيح -->
-        <div id="debugInfo" class="hidden mt-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600 text-right font-mono"></div>
-        
-        <!-- معلومات -->
         <div class="mt-8 pt-6 border-t border-slate-100">
             <p class="text-xs text-slate-400">
                 الحساب المصرح: 
@@ -83,10 +65,9 @@
         </div>
     </div>
 
-    <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
@@ -99,191 +80,80 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        
-        // تكوين الموفر
         const provider = new GoogleAuthProvider();
-        provider.addScope('email');
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
-
+        
         const ALLOWED_EMAIL = 'nohesapnooo@gmail.com';
-        const CHECKING_SCREEN = document.getElementById('checkingScreen');
-        const LOGIN_CARD = document.getElementById('loginCard');
 
-        // ==========================================
-        // التحقق من الجلسة عند التحميل
-        // ==========================================
-
-        onAuthStateChanged(auth, (user) => {
-            console.log('Auth state changed:', user?.email || 'No user');
-            
-            if (user) {
-                // هناك مستخدم مسجل
-                console.log('User email:', user.email);
-                console.log('User UID:', user.uid);
-                
-                if (user.email === ALLOWED_EMAIL) {
-                    // الحساب الصحيح → اذهب للتطبيق
-                    showSuccess('تم العثور على جلسة نشطة، جاري التحويل...');
-                    setTimeout(() => {
-                        window.location.replace('index.html');
-                    }, 1000);
+        // التحقق من نتيجة Redirect عند التحميل
+        getRedirectResult(auth).then((result) => {
+            if (result && result.user) {
+                console.log('Redirect result:', result.user.email);
+                if (result.user.email === ALLOWED_EMAIL) {
+                    showSuccess('✓ تم الدخول، جاري التحويل...');
+                    setTimeout(() => window.location.replace('index.html'), 1000);
                 } else {
-                    // حساب خاطئ → اخرجه واعرض الخطأ
-                    console.log('Wrong account, signing out...');
                     signOut(auth).then(() => {
                         hideChecking();
-                        showError(`⛔ الحساب ${user.email} غير مصرح له. استخدم: ${ALLOWED_EMAIL}`);
+                        showError(`⛔ الحساب ${result.user.email} غير مصرح`);
                     });
                 }
+            }
+        }).catch((error) => {
+            console.error('Redirect error:', error);
+            hideChecking();
+            if (error.code !== 'auth/null-user') {
+                showError('خطأ: ' + error.message);
+            }
+        });
+
+        // التحقق من الجلسة الحالية
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('Current user:', user.email);
+                if (user.email === ALLOWED_EMAIL) {
+                    window.location.replace('index.html');
+                } else {
+                    signOut(auth);
+                }
             } else {
-                // لا يوجد مستخدم → اعرض شاشة الدخول
                 hideChecking();
             }
         });
 
         function hideChecking() {
-            if (CHECKING_SCREEN) CHECKING_SCREEN.classList.add('hidden');
-            if (LOGIN_CARD) LOGIN_CARD.classList.remove('hidden');
+            document.getElementById('checkingScreen').classList.add('hidden');
+            document.getElementById('loginCard').classList.remove('hidden');
         }
-
-        // ==========================================
-        // تسجيل الدخول
-        // ==========================================
 
         window.signIn = async function() {
             const btn = document.getElementById('signInBtn');
-            const errorDiv = document.getElementById('errorMsg');
-            const debugDiv = document.getElementById('debugInfo');
-            
-            // إخفاء الأخطاء السابقة
-            if (errorDiv) errorDiv.classList.add('hidden');
-            if (debugDiv) debugDiv.classList.add('hidden');
-            
-            // تعطيل الزر
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<div class="spinner w-6 h-6 border-2"></div><span>جاري الدخول...</span>';
-            }
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner w-6 h-6 border-2"></div><span>جاري الاتصال...</span>';
 
             try {
-                console.log('Starting sign in...');
-                const result = await signInWithPopup(auth, provider);
-                
-                console.log('Sign in successful');
-                console.log('Email:', result.user.email);
-                console.log('UID:', result.user.uid);
-                
-                // التحقق من البريد
-                const userEmail = result.user.email;
-                
-                if (userEmail !== ALLOWED_EMAIL) {
-                    console.log('Wrong email, signing out...');
-                    await signOut(auth);
-                    
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = `
-                            <svg class="w-6 h-6" viewBox="0 0 24 24">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            <span class="font-bold text-slate-700">تسجيل الدخول بـ Google</span>
-                        `;
-                    }
-                    
-                    showError(`⛔ الحساب ${userEmail} غير مصرح له بالدخول.`);
-                    
-                    // عرض معلومات التصحيح
-                    if (debugDiv) {
-                        debugDiv.innerHTML = `
-                            <div class="font-bold mb-1">معلومات التصحيح:</div>
-                            <div>البريد المسجل: ${userEmail}</div>
-                            <div>البريد المطلوب: ${ALLOWED_EMAIL}</div>
-                            <div>المطابقة: ${userEmail === ALLOWED_EMAIL ? 'نعم' : 'لا'}</div>
-                        `;
-                        debugDiv.classList.remove('hidden');
-                    }
-                    
-                    return;
-                }
-                
-                // نجاح الدخول
-                showSuccess('✓ تم تسجيل الدخول بنجاح، جاري التحويل...');
-                
-                setTimeout(() => {
-                    window.location.replace('index.html');
-                }, 1500);
-                
+                // استخدام Redirect بدلاً من Popup
+                await signInWithRedirect(auth, provider);
             } catch (error) {
                 console.error('Sign in error:', error);
-                
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = `
-                        <svg class="w-6 h-6" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        <span class="font-bold text-slate-700">تسجيل الدخول بـ Google</span>
-                    `;
-                }
-                
-                let errorMsg = 'فشل تسجيل الدخول';
-                
-                switch(error.code) {
-                    case 'auth/popup-closed-by-user':
-                        errorMsg = '❌ تم إغلاق نافذة Google قبل إكمال الدخول';
-                        break;
-                    case 'auth/popup-blocked':
-                        errorMsg = '❌ تم حظر النافذة المنبثقة. فك حظر النوافذ المنبثقة لهذا الموقع';
-                        break;
-                    case 'auth/cancelled-popup-request':
-                        errorMsg = '❌ تم إلغاء طلب الدخول';
-                        break;
-                    case 'auth/network-request-failed':
-                        errorMsg = '❌ خطأ في الاتصال بالشبكة. تحقق من الإنترنت';
-                        break;
-                    case 'auth/unauthorized-domain':
-                        errorMsg = '❌ هذا المجال غير مصرح له في Firebase';
-                        break;
-                    default:
-                        errorMsg = `❌ خطأ: ${error.message}`;
-                }
-                
-                showError(errorMsg);
-                
-                // عرض معلومات التصحيح للمطور
-                if (debugDiv) {
-                    debugDiv.innerHTML = `
-                        <div class="font-bold mb-1">تفاصيل الخطأ:</div>
-                        <div>الكود: ${error.code}</div>
-                        <div>الرسالة: ${error.message}</div>
-                    `;
-                    debugDiv.classList.remove('hidden');
-                }
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg class="w-6 h-6" viewBox="0 0 24 24">...</svg>
+                    <span class="font-bold text-slate-700">تسجيل الدخول بـ Google</span>
+                `;
+                showError('فشل: ' + error.message);
             }
         };
 
         function showError(msg) {
             const el = document.getElementById('errorMsg');
-            if (el) {
-                el.textContent = msg;
-                el.classList.remove('hidden');
-            }
+            el.textContent = msg;
+            el.classList.remove('hidden');
         }
 
         function showSuccess(msg) {
             const el = document.getElementById('successMsg');
-            if (el) {
-                el.textContent = msg;
-                el.classList.remove('hidden');
-            }
+            el.textContent = msg;
+            el.classList.remove('hidden');
         }
     </script>
 </body>
