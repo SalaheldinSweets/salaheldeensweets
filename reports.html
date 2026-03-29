@@ -97,6 +97,13 @@
         .stats-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
+        
+        /* تنسيق رقم العملية */
+        .operation-number {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
@@ -118,6 +125,26 @@
         <!-- المحتوى -->
         <main class="p-4 space-y-4 pb-24">
             
+            <!-- ✅ تعديل: فلتر الفترة الزمنية للإحصائيات -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <h3 class="font-bold text-slate-700 mb-3">📅 فلترة الإحصائيات</h3>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">من</label>
+                        <input type="date" id="statsFromDate" onchange="updateStatsCards()" 
+                            class="w-full border border-slate-200 rounded-xl p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">إلى</label>
+                        <input type="date" id="statsToDate" onchange="updateStatsCards()" 
+                            class="w-full border border-slate-200 rounded-xl p-2 text-sm">
+                    </div>
+                </div>
+                <button onclick="resetStatsFilter()" class="w-full py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+                    🔄 عرض كل العمليات (من البداية)
+                </button>
+            </div>
+
             <!-- بطاقات الإحصائيات السريعة -->
             <div class="grid grid-cols-2 gap-3 fade-in">
                 <div class="stats-card rounded-2xl p-4 text-white shadow-lg">
@@ -142,14 +169,15 @@
                 </div>
             </div>
 
-            <!-- الرسم البياني -->
+            <!-- ✅ تعديل: الرسم البياني - خطوط مثلثة (بدون تنعيم) -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-slate-700">📈 تحليل المبيعات والمصروفات</h3>
                     <select id="chartPeriod" onchange="updateChart()" class="text-sm border border-slate-200 rounded-lg px-3 py-1">
-                        <option value="today">اليوم</option>
+                        <option value="today" selected>اليوم</option>
                         <option value="week">آخر 7 أيام</option>
                         <option value="month">آخر 30 يوم</option>
+                        <option value="all">كل الفترات</option>
                     </select>
                 </div>
                 <div class="chart-container">
@@ -167,9 +195,9 @@
                 </div>
             </div>
 
-            <!-- فلاتر الفترات -->
+            <!-- فلاتر سجل العمليات -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
-                <h3 class="font-bold text-slate-700 mb-3">🔍 فلترة العمليات</h3>
+                <h3 class="font-bold text-slate-700 mb-3">🔍 فلترة سجل العمليات</h3>
                 
                 <!-- فلتر التاريخ -->
                 <div class="mb-3">
@@ -208,7 +236,7 @@
                 </div>
             </div>
 
-            <!-- جدول العمليات -->
+            <!-- ✅ تعديل: جدول العمليات مع عرض مبلغ التبديل -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-slate-700">📝 سجل العمليات</h3>
@@ -325,8 +353,12 @@
         // ==========================================
         
         function initApp() {
-            // Set today's date in filter
-            document.getElementById('filterDate').valueAsDate = new Date();
+            // Set today's date in filters
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filterDate').value = today;
+            
+            // ✅ تعديل: تعيين فترة الإحصائيات الافتراضية (من البداية إلى اليوم)
+            document.getElementById('statsToDate').value = today;
             
             // Listen to transactions
             onValue(ref(database, 'transactions'), (snap) => {
@@ -341,12 +373,7 @@
                 });
                 allTransactions = txs.reverse(); // الأحدث أولاً
                 applyFilters();
-            });
-
-            // Listen to stats
-            onValue(ref(database, 'stats/today'), (snap) => {
-                const stats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-                updateStatsCards(stats);
+                updateStatsCards(); // ✅ تحديث الإحصائيات عند تحميل البيانات
             });
         }
 
@@ -381,19 +408,60 @@
         }
 
         // ==========================================
-        // STATS CARDS
+        // ✅ تعديل: إحصائيات الفترة الزمنية (من/إلى)
         // ==========================================
         
-        function updateStatsCards(stats) {
-            const totalSales = stats.sales || 0;
-            const totalExpenses = (stats.shopExpenses || 0) + (stats.personalExpenses || 0);
+        window.updateStatsCards = function() {
+            const fromDate = document.getElementById('statsFromDate').value;
+            const toDate = document.getElementById('statsToDate').value;
+            
+            // تصفية العمليات حسب الفترة المحددة
+            let statsTransactions = allTransactions;
+            
+            if (fromDate) {
+                const from = new Date(fromDate);
+                from.setHours(0, 0, 0, 0);
+                statsTransactions = statsTransactions.filter(tx => {
+                    if (!tx.timestamp) return false;
+                    return new Date(tx.timestamp) >= from;
+                });
+            }
+            
+            if (toDate) {
+                const to = new Date(toDate);
+                to.setHours(23, 59, 59, 999);
+                statsTransactions = statsTransactions.filter(tx => {
+                    if (!tx.timestamp) return false;
+                    return new Date(tx.timestamp) <= to;
+                });
+            }
+            
+            // حساب الإحصائيات
+            let totalSales = 0;
+            let totalExpenses = 0;
+            
+            statsTransactions.forEach(tx => {
+                if (tx.type === 'sales') {
+                    totalSales += tx.amount;
+                } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
+                    totalExpenses += Math.abs(tx.amount);
+                }
+            });
+            
             const netProfit = totalSales - totalExpenses;
             
             document.getElementById('totalSales').textContent = totalSales.toLocaleString();
             document.getElementById('totalExpenses').textContent = totalExpenses.toLocaleString();
             document.getElementById('netProfit').textContent = netProfit.toLocaleString();
             document.getElementById('netProfit').className = `text-2xl font-bold ${netProfit >= 0 ? 'text-white' : 'text-red-200'}`;
-        }
+            document.getElementById('totalTransactions').textContent = statsTransactions.length.toLocaleString();
+        };
+
+        window.resetStatsFilter = function() {
+            document.getElementById('statsFromDate').value = '';
+            document.getElementById('statsToDate').value = '';
+            updateStatsCards();
+        };
 
         // ==========================================
         // FILTERING
@@ -463,11 +531,10 @@
             
             renderTransactions();
             updateChart();
-            document.getElementById('totalTransactions').textContent = filteredTransactions.length;
         };
 
         // ==========================================
-        // RENDER TRANSACTIONS
+        // ✅ تعديل: عرض مبلغ التبديل في سجل العمليات
         // ==========================================
         
         function renderTransactions() {
@@ -496,8 +563,24 @@
                 const time = tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
                 const date = tx.timestamp ? new Date(tx.timestamp).toLocaleDateString('ar-SA', {month: 'short', day: 'numeric'}) : '--';
                 const period = tx.calculatedPeriod;
-                const amount = tx.type === 'transfer' ? '-' : Math.abs(tx.amount).toLocaleString();
-                const amountClass = tx.amount > 0 ? 'text-emerald-600' : (tx.amount < 0 ? 'text-red-600' : 'text-slate-400');
+                
+                // ✅ تعديل: عرض مبلغ التبديل بشكل صحيح
+                let amountDisplay = '';
+                let amountClass = '';
+                
+                if (tx.type === 'transfer') {
+                    // عرض مبلغ التبديل مع الاتجاه
+                    const transferAmount = (tx.transferAmount || 0).toLocaleString();
+                    amountDisplay = `<div>
+                        <div class="font-bold text-amber-700">${transferAmount}</div>
+                        <div class="text-xs text-amber-600">${tx.from || ''} → ${tx.to || ''}</div>
+                    </div>`;
+                    amountClass = 'text-amber-600';
+                } else {
+                    const amount = Math.abs(tx.amount || 0).toLocaleString();
+                    amountDisplay = `<div class="font-bold">${amount}</div>`;
+                    amountClass = tx.amount > 0 ? 'text-emerald-600' : (tx.amount < 0 ? 'text-red-600' : 'text-slate-400');
+                }
                 
                 return `
                     <div class="transaction-row grid grid-cols-12 gap-2 items-center p-3 rounded-xl border border-slate-100 transition cursor-pointer" onclick="showTransactionDetails('${tx.id}')">
@@ -506,7 +589,7 @@
                             <div class="text-slate-400 scale-75 origin-right">${date}</div>
                         </div>
                         <div class="col-span-2">
-                            <span class="uid-badge">${tx.uid || tx.id.slice(-6)}</span>
+                            <span class="uid-badge">${tx.operationNumber || tx.uid || tx.id.slice(-6)}</span>
                         </div>
                         <div class="col-span-3">
                             <span class="inline-block px-2 py-1 rounded-lg text-xs font-semibold ${typeInfo.bg} ${typeInfo.color}">
@@ -518,8 +601,8 @@
                                 ${getPeriodIcon(period)} ${period}
                             </span>
                         </div>
-                        <div class="col-span-3 text-left font-bold ${amountClass}">
-                            ${amount}
+                        <div class="col-span-3 text-left ${amountClass}">
+                            ${amountDisplay}
                         </div>
                     </div>
                 `;
@@ -527,7 +610,7 @@
         }
 
         // ==========================================
-        // CHART
+        // ✅ تعديل: الرسم البياني - خطوط مثلثة (بدون تنعيم)
         // ==========================================
         
         window.updateChart = function() {
@@ -545,39 +628,79 @@
                 salesData = new Array(24).fill(0);
                 expensesData = new Array(24).fill(0);
                 
-                filteredTransactions.forEach(tx => {
+                // ✅ تعديل: استخدام كل العمليات لملء البيانات
+                allTransactions.forEach(tx => {
                     if (!tx.timestamp) return;
-                    const hour = new Date(tx.timestamp).getHours();
+                    const txDate = new Date(tx.timestamp);
+                    const today = new Date();
                     
-                    if (tx.type === 'sales') {
-                        salesData[hour] += tx.amount;
-                    } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
-                        expensesData[hour] += Math.abs(tx.amount);
+                    // التحقق من أن العملية اليوم
+                    if (txDate.toDateString() === today.toDateString()) {
+                        const hour = txDate.getHours();
+                        
+                        if (tx.type === 'sales') {
+                            salesData[hour] += tx.amount;
+                        } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
+                            expensesData[hour] += Math.abs(tx.amount);
+                        }
                     }
                 });
+            } else if (period === 'all') {
+                // ✅ تعديل: عرض كل الفترات - تجميع شهري
+                const months = {};
+                allTransactions.forEach(tx => {
+                    if (!tx.timestamp) return;
+                    const date = new Date(tx.timestamp);
+                    const monthKey = date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short' });
+                    
+                    if (!months[monthKey]) {
+                        months[monthKey] = { sales: 0, expenses: 0 };
+                    }
+                    
+                    if (tx.type === 'sales') {
+                        months[monthKey].sales += tx.amount;
+                    } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
+                        months[monthKey].expenses += Math.abs(tx.amount);
+                    }
+                });
+                
+                // ترتيب الأشهر
+                const sortedMonths = Object.keys(months).sort((a, b) => {
+                    const dateA = new Date(a);
+                    const dateB = new Date(b);
+                    return dateA - dateB;
+                });
+                
+                labels = sortedMonths;
+                salesData = sortedMonths.map(m => months[m].sales);
+                expensesData = sortedMonths.map(m => months[m].expenses);
             } else {
                 // Daily data for week/month
                 const days = period === 'week' ? 7 : 30;
+                const today = new Date();
+                
                 for (let i = days - 1; i >= 0; i--) {
-                    const d = new Date();
+                    const d = new Date(today);
                     d.setDate(d.getDate() - i);
-                    labels.push(d.toLocaleDateString('ar-SA', { weekday: 'short' }));
+                    labels.push(d.toLocaleDateString('ar-SA', { weekday: 'short', day: 'numeric' }));
                     salesData.push(0);
                     expensesData.push(0);
                 }
                 
-                filteredTransactions.forEach(tx => {
+                // ✅ تعديل: استخدام كل العمليات المتاحة
+                allTransactions.forEach(tx => {
                     if (!tx.timestamp) return;
                     const txDate = new Date(tx.timestamp);
-                    const today = new Date();
                     const diffDays = Math.floor((today - txDate) / (1000 * 60 * 60 * 24));
                     
                     if (diffDays < days) {
                         const index = days - 1 - diffDays;
-                        if (tx.type === 'sales') {
-                            salesData[index] += tx.amount;
-                        } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
-                            expensesData[index] += Math.abs(tx.amount);
+                        if (index >= 0 && index < days) {
+                            if (tx.type === 'sales') {
+                                salesData[index] += tx.amount;
+                            } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
+                                expensesData[index] += Math.abs(tx.amount);
+                            }
                         }
                     }
                 });
@@ -587,6 +710,7 @@
                 chartInstance.destroy();
             }
             
+            // ✅ تعديل: استخدام tension: 0 لجعل الخطوط مثلثية (بدون تنعيم)
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -597,22 +721,26 @@
                             data: salesData,
                             borderColor: '#10b981',
                             backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#10b981'
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0, // ✅ خط مستقيم (مثلث)
+                            pointRadius: 3,
+                            pointBackgroundColor: '#10b981',
+                            pointStyle: 'triangle', // ✅ شكل المثلث
+                            pointRotation: 0
                         },
                         {
                             label: 'المصروفات',
                             data: expensesData,
                             borderColor: '#ef4444',
                             backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#ef4444'
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0, // ✅ خط مستقيم (مثلث)
+                            pointRadius: 3,
+                            pointBackgroundColor: '#ef4444',
+                            pointStyle: 'triangle', // ✅ شكل المثلث
+                            pointRotation: 180 // ✅ مقلوب للأسفل
                         }
                     ]
                 },
@@ -673,17 +801,25 @@
         
         window.exportToCSV = function() {
             const headers = ['الرقم', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل'];
-            const rows = filteredTransactions.map(tx => [
-                tx.uid || tx.id.slice(-6),
-                tx.timestamp ? new Date(tx.timestamp).toLocaleDateString('ar-SA') : '',
-                tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString('ar-SA') : '',
-                tx.type,
-                tx.calculatedPeriod,
-                tx.dept || '-',
-                tx.payment || '-',
-                tx.amount,
-                tx.title || ''
-            ]);
+            const rows = filteredTransactions.map(tx => {
+                // ✅ تعديل: تضمين مبلغ التبديل في التصدير
+                let amount = tx.amount;
+                if (tx.type === 'transfer') {
+                    amount = `تبديل: ${tx.transferAmount || 0} (${tx.from} → ${tx.to})`;
+                }
+                
+                return [
+                    tx.operationNumber || tx.uid || tx.id.slice(-6),
+                    tx.timestamp ? new Date(tx.timestamp).toLocaleDateString('ar-SA') : '',
+                    tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString('ar-SA') : '',
+                    tx.type,
+                    tx.calculatedPeriod,
+                    tx.dept || '-',
+                    tx.payment || '-',
+                    amount,
+                    tx.title || ''
+                ];
+            });
             
             const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
             const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -701,12 +837,17 @@
             const tx = allTransactions.find(t => t.id === id);
             if (!tx) return;
             
+            let amountInfo = `المبلغ: ${tx.amount}`;
+            if (tx.type === 'transfer') {
+                amountInfo = `مبلغ التبديل: ${tx.transferAmount || 0} (${tx.from} → ${tx.to})`;
+            }
+            
             const details = `
-                الرقم: ${tx.uid || tx.id}
+                الرقم: ${tx.operationNumber || tx.uid || tx.id}
                 التاريخ: ${tx.timestamp ? new Date(tx.timestamp).toLocaleString('ar-SA') : '-'}
                 النوع: ${tx.type}
                 الفترة: ${tx.calculatedPeriod}
-                المبلغ: ${tx.amount}
+                ${amountInfo}
                 ${tx.dept ? 'القسم: ' + tx.dept : ''}
                 ${tx.payment ? 'الطريقة: ' + tx.payment : ''}
                 ${tx.vendor ? 'المورد: ' + tx.vendor : ''}
