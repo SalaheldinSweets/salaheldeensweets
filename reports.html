@@ -46,13 +46,16 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* ✅ تعديل: حاوية الرسم البياني القابلة للتمرير */
+        /* حاوية الرسم البياني القابلة للتمرير */
         .chart-scroll-container {
             overflow-x: auto;
             overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
             scrollbar-color: #cbd5e1 #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: #fff;
         }
         
         .chart-scroll-container::-webkit-scrollbar {
@@ -69,14 +72,10 @@
             border-radius: 4px;
         }
         
-        .chart-scroll-container::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        
         .chart-wrapper {
             position: relative;
-            height: 300px;
-            min-width: 800px; /* عرض ثابت للتمرير */
+            height: 350px;
+            min-width: 1200px; /* عرض كبير للتمرير */
         }
         
         .transaction-row:hover {
@@ -125,14 +124,12 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         
-        /* تنسيق رقم العملية */
         .operation-number {
             font-family: 'Courier New', monospace;
             font-weight: bold;
             letter-spacing: 1px;
         }
         
-        /* مؤشر التمرير */
         .scroll-hint {
             animation: bounce 2s infinite;
         }
@@ -141,6 +138,15 @@
             0%, 20%, 50%, 80%, 100% { transform: translateX(0); }
             40% { transform: translateX(-10px); }
             60% { transform: translateX(-5px); }
+        }
+        
+        /* مؤشر الفترة في الرسم البياني */
+        .period-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 4px;
         }
     </style>
 </head>
@@ -207,31 +213,32 @@
                 </div>
             </div>
 
-            <!-- ✅ تعديل: الرسم البياني القابل للتمرير -->
+            <!-- ✅ تعديل: الرسم البياني بالفترتين (صباحي ومسائي) -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold text-slate-700">📈 تحليل المبيعات والمصروفات</h3>
+                    <h3 class="font-bold text-slate-700">📈 تحليل المبيعات والمصروفات (حسب الفترة)</h3>
                     <div class="flex items-center gap-2 text-xs text-slate-400 scroll-hint">
                         <span>اسحب للتمرير</span>
                         <span>←</span>
                     </div>
                 </div>
                 
-                <!-- ✅ حاوية التمرير -->
-                <div class="chart-scroll-container" id="chartScrollContainer">
-                    <div class="chart-wrapper">
-                        <canvas id="mainChart"></canvas>
+                <!-- ✅ شرح الفترات -->
+                <div class="flex gap-4 mb-3 text-xs">
+                    <div class="flex items-center gap-1">
+                        <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                        <span class="text-slate-600">فترة صباحية (6ص - 3م)</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+                        <span class="text-slate-600">فترة مسائية (3م - 6ص)</span>
                     </div>
                 </div>
                 
-                <div class="flex justify-center gap-4 mt-4 text-sm">
-                    <div class="flex items-center gap-2">
-                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-                        <span class="text-slate-600">المبيعات</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span class="text-slate-600">المصروفات</span>
+                <!-- حاوية التمرير -->
+                <div class="chart-scroll-container" id="chartScrollContainer">
+                    <div class="chart-wrapper">
+                        <canvas id="mainChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -240,14 +247,12 @@
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <h3 class="font-bold text-slate-700 mb-3">🔍 فلترة سجل العمليات</h3>
                 
-                <!-- فلتر التاريخ -->
                 <div class="mb-3">
                     <label class="block text-sm text-slate-600 mb-1">التاريخ</label>
                     <input type="date" id="filterDate" onchange="applyFilters()" 
                         class="w-full border border-slate-200 rounded-xl p-2 text-sm">
                 </div>
 
-                <!-- فلتر الفترة -->
                 <div class="flex gap-2 mb-3">
                     <button onclick="setPeriodFilter('all')" class="filter-btn active flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="all">
                         الكل
@@ -260,7 +265,6 @@
                     </button>
                 </div>
 
-                <!-- فلتر النوع -->
                 <div class="flex flex-wrap gap-2">
                     <button onclick="toggleTypeFilter('sales')" class="type-filter active px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200" data-type="sales">
                         🟢 مبيعات
@@ -286,7 +290,6 @@
                     </button>
                 </div>
 
-                <!-- رأس الجدول -->
                 <div class="grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 mb-2 px-2">
                     <div class="col-span-2">الوقت</div>
                     <div class="col-span-2">الرقم</div>
@@ -295,7 +298,6 @@
                     <div class="col-span-3 text-left">المبلغ</div>
                 </div>
 
-                <!-- قائمة العمليات -->
                 <div id="transactionsList" class="space-y-2 max-h-96 overflow-y-auto hide-scrollbar">
                     <div class="text-center text-slate-400 py-8">
                         جاري تحميل العمليات...
@@ -343,7 +345,6 @@
             onValue 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
             authDomain: "salahsweetmanage.firebaseapp.com",
@@ -359,10 +360,6 @@
         const auth = getAuth(app);
         const database = getDatabase(app);
 
-        // ==========================================
-        // STATE
-        // ==========================================
-        
         let allTransactions = [];
         let filteredTransactions = [];
         let chartInstance = null;
@@ -372,10 +369,6 @@
             types: ['sales', 'expenses', 'transfer', 'safe']
         };
 
-        // ==========================================
-        // AUTH
-        // ==========================================
-        
         onAuthStateChanged(auth, (user) => {
             if (!user || !user.emailVerified) {
                 window.location.href = 'login.html';
@@ -389,17 +382,11 @@
             window.location.href = 'login.html';
         };
 
-        // ==========================================
-        // INITIALIZATION
-        // ==========================================
-        
         function initApp() {
-            // Set today's date in filters
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filterDate').value = today;
             document.getElementById('statsToDate').value = today;
             
-            // Listen to transactions
             onValue(ref(database, 'transactions'), (snap) => {
                 const txs = [];
                 snap.forEach((child) => {
@@ -415,13 +402,8 @@
             });
         }
 
-        // ==========================================
-        // PERIOD CALCULATION
-        // ==========================================
-        
         function calculatePeriod(timestamp) {
             if (!timestamp) return 'غير محدد';
-            
             const date = new Date(timestamp);
             const hours = date.getHours();
             const minutes = date.getMinutes();
@@ -442,10 +424,6 @@
             return period === 'صباحية' ? 'period-morning' : 'period-evening';
         }
 
-        // ==========================================
-        // STATS CARDS
-        // ==========================================
-        
         window.updateStatsCards = function() {
             const fromDate = document.getElementById('statsFromDate').value;
             const toDate = document.getElementById('statsToDate').value;
@@ -496,10 +474,6 @@
             updateStatsCards();
         };
 
-        // ==========================================
-        // FILTERING
-        // ==========================================
-        
         window.setPeriodFilter = function(period) {
             currentFilters.period = period;
             
@@ -561,10 +535,6 @@
             updateChart();
         };
 
-        // ==========================================
-        // RENDER TRANSACTIONS
-        // ==========================================
-        
         function renderTransactions() {
             const container = document.getElementById('transactionsList');
             
@@ -636,17 +606,18 @@
         }
 
         // ==========================================
-        // ✅ تعديل: الرسم البياني القابل للتمرير - عرض كل الأيام من البداية
+        // ✅ تعديل: رسم بياني بفترتين (صباحية ومسائية) لكل يوم
         // ==========================================
         
         window.updateChart = function() {
             const ctx = document.getElementById('mainChart').getContext('2d');
             
-            // ✅ تجميع البيانات يومياً من كل العمليات
-            const dailyData = {};
+            // ✅ تجميع البيانات حسب اليوم والفترة (صباحية/مسائية)
+            const periodData = {};
             
             allTransactions.forEach(tx => {
                 if (!tx.timestamp) return;
+                if (tx.type !== 'sales' && tx.type !== 'shopExpense' && tx.type !== 'personalExpense') return;
                 
                 const date = new Date(tx.timestamp);
                 const dateKey = date.toLocaleDateString('ar-SA', { 
@@ -655,42 +626,64 @@
                     day: '2-digit' 
                 });
                 
-                if (!dailyData[dateKey]) {
-                    dailyData[dateKey] = { 
-                        sales: 0, 
-                        expenses: 0,
-                        timestamp: date.getTime()
+                const period = tx.calculatedPeriod; // 'صباحية' أو 'مسائية'
+                
+                if (!periodData[dateKey]) {
+                    periodData[dateKey] = {
+                        timestamp: date.getTime(),
+                        صباحية: { sales: 0, expenses: 0 },
+                        مسائية: { sales: 0, expenses: 0 }
                     };
                 }
                 
                 if (tx.type === 'sales') {
-                    dailyData[dateKey].sales += tx.amount;
-                } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
-                    dailyData[dateKey].expenses += Math.abs(tx.amount);
+                    periodData[dateKey][period].sales += tx.amount;
+                } else {
+                    periodData[dateKey][period].expenses += Math.abs(tx.amount);
                 }
             });
             
-            // ✅ ترتيب الأيام من الأقدم إلى الأحدث (للعرض من اليمين لليسار)
-            const sortedDates = Object.keys(dailyData).sort((a, b) => {
-                return dailyData[a].timestamp - dailyData[b].timestamp;
+            // ✅ ترتيب الأيام من الأقدم إلى الأحدث
+            const sortedDates = Object.keys(periodData).sort((a, b) => {
+                return periodData[a].timestamp - periodData[b].timestamp;
             });
             
-            const labels = sortedDates.map(date => {
-                const d = new Date(dailyData[date].timestamp);
-                return d.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+            // ✅ إنشاء نقاط البيانات: لكل يوم نقطتان (صباحية ثم مسائية)
+            const labels = [];
+            const salesData = [];
+            const expensesData = [];
+            const pointColors = []; // ألوان النقاط حسب الفترة
+            const pointStyles = []; // أشكال النقاط
+            
+            sortedDates.forEach(dateKey => {
+                const data = periodData[dateKey];
+                const d = new Date(data.timestamp);
+                const dayLabel = d.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+                
+                // ✅ الفترة الصباحية (نقطة 1)
+                labels.push(`${dayLabel} (ص)`);
+                salesData.push(data.صباحية.sales);
+                expensesData.push(data.صباحية.expenses);
+                pointColors.push('#fbbf24'); // أصفر للصباح
+                pointStyles.push('circle');
+                
+                // ✅ الفترة المسائية (نقطة 2)
+                labels.push(`${dayLabel} (م)`);
+                salesData.push(data.مسائية.sales);
+                expensesData.push(data.مسائية.expenses);
+                pointColors.push('#6366f1'); // أزرق/أرجواني للمساء
+                pointStyles.push('rectRot'); // شكل مختلف للتمييز
             });
             
-            const salesData = sortedDates.map(date => dailyData[date].sales);
-            const expensesData = sortedDates.map(date => dailyData[date].expenses);
-            
-            // ✅ حساب العرض المناسب للشارت (80 بكسل لكل يوم)
-            const chartWidth = Math.max(800, sortedDates.length * 80);
+            // ✅ حساب العرض المناسب (100 بكسل لكل نقطة)
+            const chartWidth = Math.max(800, labels.length * 100);
             document.querySelector('.chart-wrapper').style.width = chartWidth + 'px';
             
             if (chartInstance) {
                 chartInstance.destroy();
             }
             
+            // ✅ إنشاء الرسم البياني بخطوط متصلة
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -700,27 +693,31 @@
                             label: 'المبيعات',
                             data: salesData,
                             borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            backgroundColor: pointColors, // ✅ ألوان مختلفة للنقاط
                             borderWidth: 2,
                             fill: false,
-                            tension: 0,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#10b981',
-                            pointStyle: 'triangle',
-                            pointRotation: 0
+                            tension: 0, // ✅ خط مستقيم (مثلث)
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            pointStyle: pointStyles, // ✅ أشكال مختلفة للفترات
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            spanGaps: true // ✅ توصيل النقاط حتى لو كانت قيمة صفر
                         },
                         {
                             label: 'المصروفات',
                             data: expensesData,
                             borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            backgroundColor: pointColors.map(c => c === '#fbbf24' ? '#fcd34d' : '#818cf8'), // ✅ ألوان فاتحة للمصروفات
                             borderWidth: 2,
                             fill: false,
-                            tension: 0,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#ef4444',
-                            pointStyle: 'triangle',
-                            pointRotation: 180
+                            tension: 0, // ✅ خط مستقيم (مثلث)
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            pointStyle: pointStyles,
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            spanGaps: true
                         }
                     ]
                 },
@@ -729,15 +726,25 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { family: 'Cairo', size: 12 },
+                                usePointStyle: true
+                            }
                         },
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            titleFont: { family: 'Cairo' },
-                            bodyFont: { family: 'Cairo' },
+                            backgroundColor: 'rgba(0,0,0,0.9)',
+                            titleFont: { family: 'Cairo', size: 13 },
+                            bodyFont: { family: 'Cairo', size: 12 },
                             callbacks: {
+                                title: function(context) {
+                                    const label = context[0].label;
+                                    const period = label.includes('(ص)') ? '☀️ فترة صباحية' : '🌙 فترة مسائية';
+                                    return label.replace(' (ص)', '').replace(' (م)', '') + ' - ' + period;
+                                },
                                 label: function(context) {
                                     return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' ج';
                                 }
@@ -751,20 +758,33 @@
                                 color: 'rgba(0,0,0,0.05)'
                             },
                             ticks: {
-                                font: { family: 'Cairo', size: 10 },
+                                font: { family: 'Cairo', size: 11 },
                                 callback: function(value) {
                                     return value.toLocaleString();
                                 }
+                            },
+                            title: {
+                                display: true,
+                                text: 'المبلغ (جنية)',
+                                font: { family: 'Cairo', size: 12 }
                             }
                         },
                         x: {
                             grid: {
-                                display: false
+                                color: 'rgba(0,0,0,0.03)'
                             },
                             ticks: {
                                 font: { family: 'Cairo', size: 10 },
-                                maxRotation: 45,
-                                minRotation: 45
+                                maxRotation: 60,
+                                minRotation: 45,
+                                callback: function(value, index, values) {
+                                    // ✅ عرض التاريخ مرة واحدة فقط (للفترتين)
+                                    const label = this.getLabelForValue(value);
+                                    if (label.includes('(ص)')) {
+                                        return label.replace(' (ص)', '');
+                                    }
+                                    return ''; // إخفاء تكرار التاريخ للفترة المسائية
+                                }
                             }
                         }
                     },
@@ -776,17 +796,13 @@
                 }
             });
             
-            // ✅ التمرير التلقائي إلى آخر يوم (الفترة الحالية)
+            // ✅ التمرير التلقائي إلى آخر فترة (الفترة الحالية)
             setTimeout(() => {
                 const container = document.getElementById('chartScrollContainer');
                 container.scrollLeft = container.scrollWidth;
-            }, 100);
+            }, 200);
         };
 
-        // ==========================================
-        // EXPORT
-        // ==========================================
-        
         window.exportToCSV = function() {
             const headers = ['الرقم', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل'];
             const rows = filteredTransactions.map(tx => {
@@ -816,10 +832,6 @@
             link.click();
         };
 
-        // ==========================================
-        // TRANSACTION DETAILS
-        // ==========================================
-        
         window.showTransactionDetails = function(id) {
             const tx = allTransactions.find(t => t.id === id);
             if (!tx) return;
