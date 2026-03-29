@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إدارة الديون - مدير حسابات صلاح الدين</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: #f8fafc;
+            min-height: 100vh;
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+        }
+        
+        .btn-press:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal {
+            display: none;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .warning-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #ef4444;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: transform 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .warning-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .success-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #10b981;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: transform 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .success-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .debtor-card {
+            transition: all 0.3s ease;
+        }
+        
+        .debtor-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .status-paid {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .operation-number {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- رسائل التنبيه -->
+    <div id="warningToast" class="warning-toast">
+        رسالة تحذير
+    </div>
+    <div id="successToast" class="success-toast">
+        ✅ تم بنجاح
+    </div>
+
+    <!-- التطبيق الرئيسي -->
+    <div class="app-container" id="app">
+        <!-- الهيدر -->
+        <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg">
+            <div class="flex justify-between items-center mb-2">
+                <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-slate-700 transition">
+                    <span class="text-2xl">☰</span>
+                </button>
+                <h1 class="text-lg font-bold">📝 إدارة الديون</h1>
+                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">
+                    خروج
+                </button>
+            </div>
+            
+            <div class="text-center mt-4">
+                <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg pulse">
+                    00:00:00
+                </div>
+                <div id="date" class="text-slate-300 text-sm mt-1">
+                    جاري التحميل...
+                </div>
+            </div>
+        </header>
+
+        <!-- القائمة الجانبية -->
+        <div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50" onclick="toggleSidebar()">
+            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
+                <div class="p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-lg">القائمة</h2>
+                        <button onclick="toggleSidebar()" class="text-2xl">&times;</button>
+                    </div>
+                </div>
+                <div class="p-4 space-y-2">
+                    <a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 text-slate-700 flex items-center gap-3">
+                        <span>🏠</span>
+                        <span>الرئيسية</span>
+                    </a>
+                    <a href="debts.html" class="w-full text-right p-3 rounded-xl bg-amber-50 text-amber-700 font-semibold flex items-center gap-3">
+                        <span>📝</span>
+                        <span>الديون</span>
+                    </a>
+                    <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
+                        <span>🏦</span>
+                        <span>الصندوق الجانبي</span>
+                    </a>
+                    <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
+                        <span>📊</span>
+                        <span>التقارير</span>
+                    </a>
+                    <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
+                        <span>🧮</span>
+                        <span>تصفية الوردية</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="p-4 space-y-4 pb-24" id="mainContent">
+            
+            <!-- ملخص الديون -->
+            <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 text-white shadow-lg fade-in">
+                <div class="text-center mb-4">
+                    <div class="text-5xl mb-2">📝</div>
+                    <div class="text-sm opacity-75">إجمالي الديون المستحقة</div>
+                    <div class="text-3xl font-bold mt-1" id="totalDebts">0</div>
+                    <div class="text-xs opacity-75 mt-1">جنية</div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/20">
+                    <div class="text-center">
+                        <div class="text-xs opacity-75">عدد الزبائن</div>
+                        <div class="text-xl font-bold" id="debtorsCount">0</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs opacity-75">ديون مستحقة</div>
+                        <div class="text-xl font-bold text-amber-200" id="pendingDebts">0</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs opacity-75">تم سدادها</div>
+                        <div class="text-xl font-bold text-emerald-200" id="paidDebts">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- البحث والفلترة -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <div class="flex gap-2 mb-3">
+                    <div class="flex-1 relative">
+                        <input type="text" id="searchDebtor" 
+                            class="w-full border-2 border-slate-200 rounded-xl p-3 pr-10 text-right focus:border-amber-500 focus:outline-none" 
+                            placeholder="🔍 البحث باسم الزبون..."
+                            oninput="filterDebtors()">
+                        <span class="absolute left-3 top-3 text-slate-400">🔍</span>
+                    </div>
+                    <button onclick="toggleFilter()" class="px-4 py-2 bg-slate-100 rounded-xl text-slate-600 font-semibold hover:bg-slate-200 transition">
+                        فلتر
+                    </button>
+                </div>
+                
+                <!-- أزرار الفلترة -->
+                <div id="filterButtons" class="flex gap-2 hidden">
+                    <button onclick="setFilter('all')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-amber-500 text-white" data-filter="all">
+                        الكل
+                    </button>
+                    <button onclick="setFilter('pending')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="pending">
+                        مستحقة
+                    </button>
+                    <button onclick="setFilter('paid')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="paid">
+                        مسددة
+                    </button>
+                </div>
+            </div>
+
+            <!-- قائمة الزبائن المدينين -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700">👥 الزبائن المدينين</h3>
+                    <span class="text-xs text-slate-400" id="showingCount">جاري التحميل...</span>
+                </div>
+                
+                <div id="debtorsList" class="space-y-3">
+                    <div class="text-center text-slate-400 py-8">
+                        <div class="text-4xl mb-2">📭</div>
+                        <div>جاري تحميل الديون...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- سجل العمليات -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700">📋 سجل الديون</h3>
+                    <button onclick="exportDebts()" class="text-sm text-emerald-600 font-semibold hover:text-emerald-700">
+                        📥 تصدير
+                    </button>
+                </div>
+                
+                <div id="debtsHistory" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
+                    <!-- تُملأ ديناميكياً -->
+                </div>
+            </div>
+
+        </main>
+
+        <!-- شريط التنقل السفلي -->
+        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
+            <div class="flex justify-around items-center">
+                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏠</span>
+                    <span class="text-xs mt-1">الرئيسية</span>
+                </a>
+                <a href="debts.html" class="flex flex-col items-center p-2 text-amber-600">
+                    <span class="text-xl">📝</span>
+                    <span class="text-xs mt-1 font-semibold">الديون</span>
+                </a>
+                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏦</span>
+                    <span class="text-xs mt-1">الجانبي</span>
+                </a>
+                <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">📊</span>
+                    <span class="text-xs mt-1">التقارير</span>
+                </a>
+                <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🧮</span>
+                    <span class="text-xs mt-1">الوردية</span>
+                </a>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- مودال تسديد الدين -->
+    <div id="repayModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('repay')">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-emerald-800">💵 تسديد دين</h2>
+                <button onclick="closeModal('repay')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <div class="bg-emerald-50 rounded-xl p-3 mb-4 text-sm text-emerald-700">
+                <div class="flex items-start gap-2">
+                    <span class="text-lg">💡</span>
+                    <div>
+                        <div class="font-semibold mb-1">تسديد دين الزبون</div>
+                        <div class="text-xs">سيتم إضافة المبلغ للكاش وإغلاق الدين</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="repayForm" class="space-y-4" onsubmit="handleRepaySubmit(event)">
+                <!-- معلومات الزبون -->
+                <div class="bg-slate-100 rounded-xl p-3 text-center">
+                    <div class="text-xs text-slate-600 mb-1">الزبون</div>
+                    <div class="text-lg font-bold text-slate-800" id="repayCustomerName">---</div>
+                    <input type="hidden" id="repayDebtId">
+                    <input type="hidden" id="repayOriginalAmount">
+                </div>
+
+                <!-- المبلغ المتبقي -->
+                <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-200">
+                    <div class="text-xs text-amber-600 mb-1">المبلغ المستحق</div>
+                    <div class="text-2xl font-bold text-amber-700" id="repayRemainingAmount">0</div>
+                </div>
+
+                <!-- طريقة التسديد -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">طريقة التسديد</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="repay-method-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="كاش" onclick="selectRepayMethod(this)">
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
+                        </button>
+                        <button type="button" class="repay-method-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك" onclick="selectRepayMethod(this)">
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1">بنكك</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="repayMethod" value="كاش">
+                </div>
+
+                <!-- المبلغ المسدد -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ المسدد</label>
+                    <input type="text" id="repayAmount" 
+                        class="formatted-input w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-emerald-500 focus:outline-none" 
+                        placeholder="0" 
+                        oninput="formatNumberInput(this)"
+                        onkeypress="return isNumberKey(event)"
+                        required>
+                </div>
+
+                <!-- ملاحظة -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">ملاحظة (اختياري)</label>
+                    <input type="text" id="repayNote" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none" 
+                        placeholder="مثال: جزء من السداد، سداد كامل...">
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">
+                    ✅ تأكيد التسديد
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال إضافة دين يدوي -->
+    <div id="addDebtModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('addDebt')">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-amber-800">➕ إضافة دين يدوي</h2>
+                <button onclick="closeModal('addDebt')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <div class="bg-amber-50 rounded-xl p-3 mb-4 text-sm text-amber-700">
+                <div class="flex items-start gap-2">
+                    <span class="text-lg">⚠️</span>
+                    <div>
+                        <div class="font-semibold mb-1">تسجيل دين بدون مبيعات</div>
+                        <div class="text-xs">للديون القديمة أو غير المرتبطة بمبيعات</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="addDebtForm" class="space-y-4" onsubmit="handleAddDebtSubmit(event)">
+                <!-- اسم الزبون -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">اسم الزبون *</label>
+                    <input type="text" id="newDebtCustomer" 
+                        class="w-full border-2 border-amber-200 rounded-xl p-3 text-right focus:border-amber-500 focus:outline-none bg-amber-50" 
+                        placeholder="مثال: أحمد، محمد..."
+                        required>
+                </div>
+
+                <!-- المبلغ -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ *</label>
+                    <input type="text" id="newDebtAmount" 
+                        class="formatted-input w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-amber-500 focus:outline-none" 
+                        placeholder="0" 
+                        oninput="formatNumberInput(this)"
+                        onkeypress="return isNumberKey(event)"
+                        required>
+                </div>
+
+                <!-- السبب -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">السبب / البيان</label>
+                    <input type="text" id="newDebtReason" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-amber-500 focus:outline-none" 
+                        placeholder="مثال: دين قديم، قرض...">
+                </div>
+
+                <button type="submit" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
+                    ✅ إضافة الدين
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- زر الإضافة العائم -->
+    <button onclick="openModal('addDebt')" class="fixed bottom-20 left-4 w-14 h-14 bg-amber-500 text-white rounded-full shadow-lg flex items-center justify-center text-2xl btn-press hover:bg-amber-600 transition z-40">
+        ➕
+    </button>
+
+    <!-- Firebase & App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged,
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getDatabase, 
+            ref, 
+            set, 
+            push, 
+            onValue, 
+            update, 
+            get,
+            query,
+            orderByChild,
+            equalTo
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+            authDomain: "salahsweetmanage.firebaseapp.com",
+            databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+            projectId: "salahsweetmanage",
+            storageBucket: "salahsweetmanage.firebasestorage.app",
+            messagingSenderId: "126049780562",
+            appId: "1:126049780562:web:147daa036e56273263308b",
+            measurementId: "G-E7FLGBQ397"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        let currentUser = null;
+        let balances = { cash: 0, bank: 0 };
+        let allDebts = [];
+        let filteredDebts = [];
+        let debtorsSummary = {};
+        let currentFilter = 'all';
+
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+        
+        window.formatNumber = function(num) {
+            if (num === null || num === undefined || isNaN(num)) return '0';
+            return parseInt(num).toLocaleString('en-US');
+        };
+
+        window.formatNumberInput = function(input) {
+            let value = input.value.replace(/[^\d]/g, '');
+            if (value) {
+                input.value = parseInt(value).toLocaleString('en-US');
+            } else {
+                input.value = '';
+            }
+        };
+
+        window.parseFormattedNumber = function(inputId) {
+            const value = document.getElementById(inputId).value.replace(/,/g, '');
+            return parseFloat(value) || 0;
+        };
+
+        window.isNumberKey = function(evt) {
+            const charCode = (evt.which) ? evt.which : evt.keyCode;
+            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                return false;
+            }
+            return true;
+        };
+
+        window.showWarning = function(message) {
+            const toast = document.getElementById('warningToast');
+            toast.textContent = '⚠️ ' + message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        };
+
+        window.showSuccess = function(message) {
+            const toast = document.getElementById('successToast');
+            toast.textContent = '✅ ' + message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        };
+
+        // ==========================================
+        // AUTHENTICATION
+        // ==========================================
+        
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            if (!user.emailVerified) {
+                alert('⚠️ يرجى توثيق حسابك أولاً من بريدك الإلكتروني');
+                signOut(auth);
+                return;
+            }
+            
+            currentUser = user;
+            initApp();
+        });
+
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        };
+
+        // ==========================================
+        // APP INITIALIZATION
+        // ==========================================
+        
+        function initApp() {
+            // Listen to balances
+            onValue(ref(database, 'balances'), (snap) => {
+                balances = snap.val() || { cash: 0, bank: 0 };
+            });
+            
+            // Listen to debts
+            onValue(ref(database, 'debts'), (snap) => {
+                const debts = [];
+                debtorsSummary = {};
+                
+                snap.forEach((child) => {
+                    const debt = { id: child.key, ...child.val() };
+                    debts.push(debt);
+                    
+                    // حساب ملخص لكل زبون
+                    const customer = debt.customer;
+                    if (!debtorsSummary[customer]) {
+                        debtorsSummary[customer] = {
+                            total: 0,
+                            paid: 0,
+                            pending: 0,
+                            count: 0,
+                            lastDebt: null
+                        };
+                    }
+                    
+                    debtorsSummary[customer].total += debt.amount;
+                    debtorsSummary[customer].count++;
+                    
+                    if (debt.status === 'paid') {
+                        debtorsSummary[customer].paid += debt.amount;
+                    } else {
+                        debtorsSummary[customer].pending += debt.amount;
+                        if (!debtorsSummary[customer].lastDebt || debt.createdAt > debtorsSummary[customer].lastDebt.createdAt) {
+                            debtorsSummary[customer].lastDebt = debt;
+                        }
+                    }
+                });
+                
+                // ترتيب تنازلي حسب التاريخ
+                allDebts = debts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                
+                updateSummary();
+                filterDebtors();
+                renderDebtsHistory(debts.slice(0, 20));
+            });
+            
+            // Start clock
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function updateSummary() {
+            let totalPending = 0;
+            let totalPaid = 0;
+            let debtorsCount = 0;
+            
+            Object.values(debtorsSummary).forEach(summary => {
+                if (summary.pending > 0) {
+                    debtorsCount++;
+                    totalPending += summary.pending;
+                }
+                totalPaid += summary.paid;
+            });
+            
+            document.getElementById('totalDebts').textContent = formatNumber(totalPending);
+            document.getElementById('debtorsCount').textContent = debtorsCount;
+            document.getElementById('pendingDebts').textContent = formatNumber(totalPending);
+            document.getElementById('paidDebts').textContent = formatNumber(totalPaid);
+        }
+
+        // ==========================================
+        // FILTER & DISPLAY FUNCTIONS
+        // ==========================================
+        
+        window.toggleFilter = function() {
+            const filterDiv = document.getElementById('filterButtons');
+            filterDiv.classList.toggle('hidden');
+        };
+
+        window.setFilter = function(filter) {
+            currentFilter = filter;
+            
+            // تحديث الأزرار
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.className = 'filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-amber-500 text-white';
+                } else {
+                    btn.className = 'filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600';
+                }
+            });
+            
+            filterDebtors();
+        };
+
+        window.filterDebtors = function() {
+            const searchQuery = document.getElementById('searchDebtor').value.toLowerCase().trim();
+            
+            // تصفية حسب البحث والفلتر
+            const filtered = Object.entries(debtorsSummary).filter(([name, summary]) => {
+                // البحث بالاسم
+                if (searchQuery && !name.toLowerCase().includes(searchQuery)) {
+                    return false;
+                }
+                
+                // الفلتر
+                if (currentFilter === 'pending' && summary.pending <= 0) return false;
+                if (currentFilter === 'paid' && summary.paid <= 0) return false;
+                
+                return true;
+            });
+            
+            // ترتيب حسب المبلغ المستحق (تنازلي)
+            filtered.sort((a, b) => b[1].pending - a[1].pending);
+            
+            renderDebtorsList(filtered);
+        };
+
+        function renderDebtorsList(debtors) {
+            const container = document.getElementById('debtorsList');
+            document.getElementById('showingCount').textContent = `عرض ${debtors.length} زبون`;
+            
+            if (debtors.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-slate-400 py-8">
+                        <div class="text-4xl mb-2">📭</div>
+                        <div>لا توجد ديون مطابقة</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = debtors.map(([name, summary]) => {
+                const hasPending = summary.pending > 0;
+                const statusClass = hasPending ? 'status-pending' : 'status-paid';
+                const statusText = hasPending ? 'مستحق' : 'مسدد';
+                const amount = hasPending ? summary.pending : summary.paid;
+                
+                return `
+                    <div class="debtor-card bg-white rounded-xl p-4 border border-slate-200 shadow-sm cursor-pointer" onclick="showDebtorDetails('${name}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">👤</span>
+                                <div>
+                                    <div class="font-bold text-slate-800">${name}</div>
+                                    <div class="text-xs text-slate-500">${summary.count} عملية</div>
+                                </div>
+                            </div>
+                            <span class="period-badge ${statusClass} px-2 py-1 rounded-full text-xs font-bold">
+                                ${statusText}
+                            </span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+                            <div class="text-sm text-slate-500">
+                                ${hasPending ? 'المستحق:' : 'تم سداد:'}
+                            </div>
+                            <div class="text-xl font-bold ${hasPending ? 'text-amber-600' : 'text-emerald-600'}">
+                                ${formatNumber(amount)} ج
+                            </div>
+                        </div>
+                        
+                        ${hasPending ? `
+                            <button onclick="event.stopPropagation(); openRepayModal('${name}', ${summary.pending})" 
+                                class="w-full mt-3 bg-emerald-500 text-white rounded-lg py-2 text-sm font-bold btn-press hover:bg-emerald-600 transition">
+                                💵 تسديد الدين
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDebtsHistory(debts) {
+            const container = document.getElementById('debtsHistory');
+            
+            if (debts.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد عمليات</div>';
+                return;
+            }
+            
+            container.innerHTML = debts.map(debt => {
+                const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
+                const time = debt.createdAt ? new Date(debt.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                
+                const isPaid = debt.status === 'paid';
+                const statusClass = isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
+                const icon = isPaid ? '✅' : '📝';
+                
+                return `
+                    <div class="flex justify-between items-center p-3 rounded-xl ${statusClass} border border-slate-100">
+                        <div class="flex items-center gap-2 flex-1">
+                            <span>${icon}</span>
+                            <div class="flex-1">
+                                <div class="font-semibold text-sm">${debt.customer}</div>
+                                <div class="text-xs opacity-75">${debt.dept || debt.note || 'دين'}</div>
+                                <div class="text-xs opacity-50">${date} ${time}</div>
+                            </div>
+                        </div>
+                        <div class="text-left font-bold">
+                            ${formatNumber(debt.amount)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // UI FUNCTIONS
+        // ==========================================
+        
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('sidebarContent');
+            
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('translate-x-full'), 10);
+            } else {
+                content.classList.add('translate-x-full');
+                setTimeout(() => sidebar.classList.add('hidden'), 300);
+            }
+        };
+
+        window.openModal = function(type) {
+            const modal = document.getElementById(type + 'Modal');
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        window.closeModal = function(type) {
+            const modal = document.getElementById(type + 'Modal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+                
+                const form = document.getElementById(type + 'Form');
+                if (form) form.reset();
+            }
+        };
+
+        window.selectRepayMethod = function(btn) {
+            document.querySelectorAll('.repay-method-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                b.classList.add('border-slate-200');
+            });
+            const isCash = btn.dataset.value === 'كاش';
+            btn.classList.remove('border-slate-200');
+            btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+            document.getElementById('repayMethod').value = btn.dataset.value;
+        };
+
+        // ==========================================
+        // DEBT OPERATIONS
+        // ==========================================
+        
+        window.openRepayModal = function(customerName, amount) {
+            document.getElementById('repayCustomerName').textContent = customerName;
+            document.getElementById('repayRemainingAmount').textContent = formatNumber(amount);
+            document.getElementById('repayAmount').value = amount;
+            document.getElementById('repayOriginalAmount').value = amount;
+            
+            // البحث عن ID الدين
+            const debt = allDebts.find(d => d.customer === customerName && d.status === 'pending');
+            if (debt) {
+                document.getElementById('repayDebtId').value = debt.id;
+            }
+            
+            openModal('repay');
+        };
+
+        window.handleRepaySubmit = async function(e) {
+            e.preventDefault();
+            
+            const customer = document.getElementById('repayCustomerName').textContent;
+            const debtId = document.getElementById('repayDebtId').value;
+            const amount = parseFormattedNumber('repayAmount');
+            const method = document.getElementById('repayMethod').value;
+            const note = document.getElementById('repayNote').value;
+            
+            if (amount <= 0) {
+                showWarning('المبلغ يجب أن يكون أكبر من صفر');
+                return;
+            }
+            
+            const timestamp = Date.now();
+            const uid = Date.now().toString(36).toUpperCase().slice(-6);
+            
+            // تحديث الرصيد
+            const balanceUpdate = {};
+            if (method === 'كاش') {
+                balanceUpdate.cash = balances.cash + amount;
+            } else {
+                balanceUpdate.bank = balances.bank + amount;
+            }
+            
+            await Promise.all([
+                // 1. تحديث الرصيد
+                update(ref(database, 'balances'), balanceUpdate),
+                
+                // 2. تحديث حالة الدين
+                update(ref(database, `debts/${debtId}`), {
+                    status: 'paid',
+                    paidAt: timestamp,
+                    paidAmount: amount,
+                    paidMethod: method,
+                    paidNote: note || null
+                }),
+                
+                // 3. تسجيل عملية التسديد (لا تُحسب مبيعات!)
+                push(ref(database, 'transactions'), {
+                    type: 'debt_repayment',
+                    title: `تسديد دين - ${customer}`,
+                    amount: amount,
+                    timestamp,
+                    uid,
+                    payment: method,
+                    customer,
+                    note: note || null,
+                    linkedDebt: debtId
+                })
+            ]);
+            
+            closeModal('repay');
+            showSuccess(`تم تسديد دين ${customer} بمبلغ ${formatNumber(amount)} جنيه`);
+        };
+
+        window.handleAddDebtSubmit = async function(e) {
+            e.preventDefault();
+            
+            const customer = document.getElementById('newDebtCustomer').value.trim();
+            const amount = parseFormattedNumber('newDebtAmount');
+            const reason = document.getElementById('newDebtReason').value;
+            
+            if (!customer) {
+                showWarning('الرجاء إدخال اسم الزبون');
+                return;
+            }
+            
+            if (amount <= 0) {
+                showWarning('المبلغ يجب أن يكون أكبر من صفر');
+                return;
+            }
+            
+            const timestamp = Date.now();
+            const uid = Date.now().toString(36).toUpperCase().slice(-6);
+            
+            await push(ref(database, 'debts'), {
+                type: 'manual',
+                customer,
+                amount,
+                note: reason || 'دين يدوي',
+                status: 'pending',
+                createdAt: timestamp,
+                uid
+            });
+            
+            closeModal('addDebt');
+            showSuccess(`تم إضافة دين ${customer} بمبلغ ${formatNumber(amount)} جنيه`);
+        };
+
+        window.showDebtorDetails = function(name) {
+            const summary = debtorsSummary[name];
+            if (!summary) return;
+            
+            const debts = allDebts.filter(d => d.customer === name);
+            
+            let details = `👤 ${name}\n\n`;
+            details += `إجمالي الديون: ${formatNumber(summary.total)} ج\n`;
+            details += `المستحق: ${formatNumber(summary.pending)} ج\n`;
+            details += `المسدد: ${formatNumber(summary.paid)} ج\n\n`;
+            details += `العمليات (${debts.length}):\n`;
+            
+            debts.slice(0, 5).forEach(d => {
+                const date = d.createdAt ? new Date(d.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
+                const status = d.status === 'paid' ? '✅ مسدد' : '📝 مستحق';
+                details += `- ${date}: ${formatNumber(d.amount)} ج (${status})\n`;
+            });
+            
+            alert(details);
+        };
+
+        window.exportDebts = function() {
+            const headers = ['الرقم', 'التاريخ', 'الزبون', 'المبلغ', 'الحالة', 'القسم', 'الملاحظة'];
+            const rows = allDebts.map(d => {
+                return [
+                    d.operationNumber || d.uid || d.id.slice(-6),
+                    d.createdAt ? new Date(d.createdAt).toLocaleDateString('ar-SA') : '',
+                    d.customer,
+                    d.amount,
+                    d.status === 'paid' ? 'مسدد' : 'مستحق',
+                    d.dept || '-',
+                    d.note || ''
+                ];
+            });
+            
+            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `ديون_الزبائن_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        };
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    const type = this.id.replace('Modal', '');
+                    closeModal(type);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
