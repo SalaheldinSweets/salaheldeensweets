@@ -46,7 +46,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* حاوية الرسم البياني القابلة للتمرير */
         .chart-scroll-container {
             overflow-x: auto;
             overflow-y: hidden;
@@ -75,7 +74,7 @@
         .chart-wrapper {
             position: relative;
             height: 350px;
-            min-width: 1200px; /* عرض كبير للتمرير */
+            min-width: 1200px;
         }
         
         .transaction-row:hover {
@@ -138,15 +137,6 @@
             0%, 20%, 50%, 80%, 100% { transform: translateX(0); }
             40% { transform: translateX(-10px); }
             60% { transform: translateX(-5px); }
-        }
-        
-        /* مؤشر الفترة في الرسم البياني */
-        .period-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-left: 4px;
         }
     </style>
 </head>
@@ -213,7 +203,7 @@
                 </div>
             </div>
 
-            <!-- ✅ تعديل: الرسم البياني بالفترتين (صباحي ومسائي) -->
+            <!-- الرسم البياني بالفترتين (صباحي ومسائي) -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold text-slate-700">📈 تحليل المبيعات والمصروفات (حسب الفترة)</h3>
@@ -223,7 +213,7 @@
                     </div>
                 </div>
                 
-                <!-- ✅ شرح الفترات -->
+                <!-- شرح الفترات -->
                 <div class="flex gap-4 mb-3 text-xs">
                     <div class="flex items-center gap-1">
                         <span class="w-3 h-3 rounded-full bg-amber-400"></span>
@@ -402,13 +392,18 @@
             });
         }
 
+        // ==========================================
+        // ✅ حساب الفترة الصحيح
+        // ==========================================
         function calculatePeriod(timestamp) {
             if (!timestamp) return 'غير محدد';
-            const date = new Date(timestamp);
+            const ts = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp;
+            const date = new Date(ts);
             const hours = date.getHours();
             const minutes = date.getMinutes();
             const timeValue = hours + (minutes / 60);
             
+            // الفترة الصباحية: 6:00 - 15:00 (6 صباحاً - 3 عصراً)
             if (timeValue >= 6 && timeValue < 15) {
                 return 'صباحية';
             } else {
@@ -606,13 +601,13 @@
         }
 
         // ==========================================
-        // ✅ تعديل: رسم بياني بفترتين (صباحية ومسائية) لكل يوم
+        // ✅ تعديل: رسم بياني بفترتين - عدم عرض الفترات المستقبلية
         // ==========================================
-        
         window.updateChart = function() {
             const ctx = document.getElementById('mainChart').getContext('2d');
+            const now = new Date(); // الوقت الحالي
             
-            // ✅ تجميع البيانات حسب اليوم والفترة (صباحية/مسائية)
+            // تجميع البيانات حسب اليوم والفترة
             const periodData = {};
             
             allTransactions.forEach(tx => {
@@ -626,11 +621,16 @@
                     day: '2-digit' 
                 });
                 
-                const period = tx.calculatedPeriod; // 'صباحية' أو 'مسائية'
+                // حساب الفترة من الوقت الفعلي للعملية
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                const timeValue = hours + (minutes / 60);
+                const period = (timeValue >= 6 && timeValue < 15) ? 'صباحية' : 'مسائية';
                 
                 if (!periodData[dateKey]) {
                     periodData[dateKey] = {
                         timestamp: date.getTime(),
+                        dateObj: date,
                         صباحية: { sales: 0, expenses: 0 },
                         مسائية: { sales: 0, expenses: 0 }
                     };
@@ -643,39 +643,57 @@
                 }
             });
             
-            // ✅ ترتيب الأيام من الأقدم إلى الأحدث
+            // ترتيب الأيام من الأقدم إلى الأحدث
             const sortedDates = Object.keys(periodData).sort((a, b) => {
                 return periodData[a].timestamp - periodData[b].timestamp;
             });
             
-            // ✅ إنشاء نقاط البيانات: لكل يوم نقطتان (صباحية ثم مسائية)
+            // إنشاء نقاط البيانات
             const labels = [];
             const salesData = [];
             const expensesData = [];
-            const pointColors = []; // ألوان النقاط حسب الفترة
-            const pointStyles = []; // أشكال النقاط
+            const pointColors = [];
+            const pointStyles = [];
             
             sortedDates.forEach(dateKey => {
                 const data = periodData[dateKey];
-                const d = new Date(data.timestamp);
+                const d = data.dateObj;
                 const dayLabel = d.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
                 
-                // ✅ الفترة الصباحية (نقطة 1)
-                labels.push(`${dayLabel} (ص)`);
-                salesData.push(data.صباحية.sales);
-                expensesData.push(data.صباحية.expenses);
-                pointColors.push('#fbbf24'); // أصفر للصباح
-                pointStyles.push('circle');
+                // التحقق مما إذا كان هذا اليوم هو اليوم الحالي
+                const isToday = d.toDateString() === now.toDateString();
                 
-                // ✅ الفترة المسائية (نقطة 2)
-                labels.push(`${dayLabel} (م)`);
-                salesData.push(data.مسائية.sales);
-                expensesData.push(data.مسائية.expenses);
-                pointColors.push('#6366f1'); // أزرق/أرجواني للمساء
-                pointStyles.push('rectRot'); // شكل مختلف للتمييز
+                // حساب الوقت الحالي
+                const currentHours = now.getHours();
+                const currentMinutes = now.getMinutes();
+                const currentTimeValue = currentHours + (currentMinutes / 60);
+                
+                // ✅ الفترة الصباحية: تُعرض إذا كانت تحتوي على بيانات
+                const hasMorningData = data.صباحية.sales > 0 || data.صباحية.expenses > 0;
+                if (hasMorningData) {
+                    labels.push(`${dayLabel} (ص)`);
+                    salesData.push(data.صباحية.sales);
+                    expensesData.push(data.صباحية.expenses);
+                    pointColors.push('#fbbf24');
+                    pointStyles.push('circle');
+                }
+                
+                // ✅ الفترة المسائية: تُعرض فقط إذا:
+                // 1. ليست اليوم الحالي، أو
+                // 2. هي اليوم الحالي والوقت الحالي >= 15:00 (3 عصراً)
+                const hasEveningData = data.مسائية.sales > 0 || data.مسائية.expenses > 0;
+                const isEveningStarted = !isToday || (isToday && currentTimeValue >= 15);
+                
+                if (hasEveningData && isEveningStarted) {
+                    labels.push(`${dayLabel} (م)`);
+                    salesData.push(data.مسائية.sales);
+                    expensesData.push(data.مسائية.expenses);
+                    pointColors.push('#6366f1');
+                    pointStyles.push('rectRot');
+                }
             });
             
-            // ✅ حساب العرض المناسب (100 بكسل لكل نقطة)
+            // حساب العرض المناسب
             const chartWidth = Math.max(800, labels.length * 100);
             document.querySelector('.chart-wrapper').style.width = chartWidth + 'px';
             
@@ -683,7 +701,6 @@
                 chartInstance.destroy();
             }
             
-            // ✅ إنشاء الرسم البياني بخطوط متصلة
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -693,25 +710,25 @@
                             label: 'المبيعات',
                             data: salesData,
                             borderColor: '#10b981',
-                            backgroundColor: pointColors, // ✅ ألوان مختلفة للنقاط
+                            backgroundColor: pointColors,
                             borderWidth: 2,
                             fill: false,
-                            tension: 0, // ✅ خط مستقيم (مثلث)
+                            tension: 0,
                             pointRadius: 6,
                             pointHoverRadius: 8,
-                            pointStyle: pointStyles, // ✅ أشكال مختلفة للفترات
+                            pointStyle: pointStyles,
                             pointBorderColor: '#fff',
                             pointBorderWidth: 2,
-                            spanGaps: true // ✅ توصيل النقاط حتى لو كانت قيمة صفر
+                            spanGaps: true
                         },
                         {
                             label: 'المصروفات',
                             data: expensesData,
                             borderColor: '#ef4444',
-                            backgroundColor: pointColors.map(c => c === '#fbbf24' ? '#fcd34d' : '#818cf8'), // ✅ ألوان فاتحة للمصروفات
+                            backgroundColor: pointColors.map(c => c === '#fbbf24' ? '#fcd34d' : '#818cf8'),
                             borderWidth: 2,
                             fill: false,
-                            tension: 0, // ✅ خط مستقيم (مثلث)
+                            tension: 0,
                             pointRadius: 6,
                             pointHoverRadius: 8,
                             pointStyle: pointStyles,
@@ -778,12 +795,11 @@
                                 maxRotation: 60,
                                 minRotation: 45,
                                 callback: function(value, index, values) {
-                                    // ✅ عرض التاريخ مرة واحدة فقط (للفترتين)
                                     const label = this.getLabelForValue(value);
                                     if (label.includes('(ص)')) {
                                         return label.replace(' (ص)', '');
                                     }
-                                    return ''; // إخفاء تكرار التاريخ للفترة المسائية
+                                    return '';
                                 }
                             }
                         }
@@ -796,7 +812,7 @@
                 }
             });
             
-            // ✅ التمرير التلقائي إلى آخر فترة (الفترة الحالية)
+            // التمرير التلقائي إلى آخر فترة
             setTimeout(() => {
                 const container = document.getElementById('chartScrollContainer');
                 container.scrollLeft = container.scrollWidth;
