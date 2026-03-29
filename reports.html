@@ -46,10 +46,37 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        .chart-container {
+        /* ✅ تعديل: حاوية الرسم البياني القابلة للتمرير */
+        .chart-scroll-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        .chart-scroll-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .chart-scroll-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        .chart-scroll-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .chart-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .chart-wrapper {
             position: relative;
             height: 300px;
-            width: 100%;
+            min-width: 800px; /* عرض ثابت للتمرير */
         }
         
         .transaction-row:hover {
@@ -104,6 +131,17 @@
             font-weight: bold;
             letter-spacing: 1px;
         }
+        
+        /* مؤشر التمرير */
+        .scroll-hint {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(0); }
+            40% { transform: translateX(-10px); }
+            60% { transform: translateX(-5px); }
+        }
     </style>
 </head>
 <body>
@@ -125,7 +163,7 @@
         <!-- المحتوى -->
         <main class="p-4 space-y-4 pb-24">
             
-            <!-- ✅ تعديل: فلتر الفترة الزمنية للإحصائيات -->
+            <!-- فلتر الفترة الزمنية للإحصائيات -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <h3 class="font-bold text-slate-700 mb-3">📅 فلترة الإحصائيات</h3>
                 <div class="grid grid-cols-2 gap-2 mb-3">
@@ -169,20 +207,23 @@
                 </div>
             </div>
 
-            <!-- ✅ تعديل: الرسم البياني - خطوط مثلثة (بدون تنعيم) -->
+            <!-- ✅ تعديل: الرسم البياني القابل للتمرير -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold text-slate-700">📈 تحليل المبيعات والمصروفات</h3>
-                    <select id="chartPeriod" onchange="updateChart()" class="text-sm border border-slate-200 rounded-lg px-3 py-1">
-                        <option value="today" selected>اليوم</option>
-                        <option value="week">آخر 7 أيام</option>
-                        <option value="month">آخر 30 يوم</option>
-                        <option value="all">كل الفترات</option>
-                    </select>
+                    <div class="flex items-center gap-2 text-xs text-slate-400 scroll-hint">
+                        <span>اسحب للتمرير</span>
+                        <span>←</span>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="mainChart"></canvas>
+                
+                <!-- ✅ حاوية التمرير -->
+                <div class="chart-scroll-container" id="chartScrollContainer">
+                    <div class="chart-wrapper">
+                        <canvas id="mainChart"></canvas>
+                    </div>
                 </div>
+                
                 <div class="flex justify-center gap-4 mt-4 text-sm">
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
@@ -236,7 +277,7 @@
                 </div>
             </div>
 
-            <!-- ✅ تعديل: جدول العمليات مع عرض مبلغ التبديل -->
+            <!-- جدول العمليات -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-slate-700">📝 سجل العمليات</h3>
@@ -327,7 +368,7 @@
         let chartInstance = null;
         let currentFilters = {
             date: null,
-            period: 'all', // 'all', 'morning', 'evening'
+            period: 'all',
             types: ['sales', 'expenses', 'transfer', 'safe']
         };
 
@@ -356,8 +397,6 @@
             // Set today's date in filters
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filterDate').value = today;
-            
-            // ✅ تعديل: تعيين فترة الإحصائيات الافتراضية (من البداية إلى اليوم)
             document.getElementById('statsToDate').value = today;
             
             // Listen to transactions
@@ -367,18 +406,17 @@
                     txs.push({ 
                         id: child.key, 
                         ...child.val(),
-                        // تحديد الفترة تلقائياً إذا لم تكن محددة
                         calculatedPeriod: child.val().period || calculatePeriod(child.val().timestamp)
                     });
                 });
-                allTransactions = txs.reverse(); // الأحدث أولاً
+                allTransactions = txs.reverse();
                 applyFilters();
-                updateStatsCards(); // ✅ تحديث الإحصائيات عند تحميل البيانات
+                updateStatsCards();
             });
         }
 
         // ==========================================
-        // PERIOD CALCULATION (6 AM - 3 PM = Morning, 3 PM - 6 AM = Evening)
+        // PERIOD CALCULATION
         // ==========================================
         
         function calculatePeriod(timestamp) {
@@ -388,9 +426,6 @@
             const hours = date.getHours();
             const minutes = date.getMinutes();
             const timeValue = hours + (minutes / 60);
-            
-            // الفترة الصباحية: 6:00 - 15:00 (6 صباحاً - 3 عصراً)
-            // الفترة المسائية: 15:00 - 6:00 (3 عصراً - 6 صباحاً)
             
             if (timeValue >= 6 && timeValue < 15) {
                 return 'صباحية';
@@ -408,14 +443,13 @@
         }
 
         // ==========================================
-        // ✅ تعديل: إحصائيات الفترة الزمنية (من/إلى)
+        // STATS CARDS
         // ==========================================
         
         window.updateStatsCards = function() {
             const fromDate = document.getElementById('statsFromDate').value;
             const toDate = document.getElementById('statsToDate').value;
             
-            // تصفية العمليات حسب الفترة المحددة
             let statsTransactions = allTransactions;
             
             if (fromDate) {
@@ -436,7 +470,6 @@
                 });
             }
             
-            // حساب الإحصائيات
             let totalSales = 0;
             let totalExpenses = 0;
             
@@ -470,7 +503,6 @@
         window.setPeriodFilter = function(period) {
             currentFilters.period = period;
             
-            // Update UI
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.dataset.filter === period) {
@@ -489,7 +521,6 @@
                 currentFilters.types.push(type);
             }
             
-            // Update UI
             document.querySelectorAll('.type-filter').forEach(btn => {
                 if (btn.dataset.type === type) {
                     btn.classList.toggle('active');
@@ -505,7 +536,6 @@
             currentFilters.date = dateInput ? new Date(dateInput) : null;
             
             filteredTransactions = allTransactions.filter(tx => {
-                // Filter by date
                 if (currentFilters.date) {
                     const txDate = new Date(tx.timestamp);
                     const filterDate = new Date(currentFilters.date);
@@ -514,14 +544,12 @@
                     }
                 }
                 
-                // Filter by period
                 if (currentFilters.period !== 'all') {
                     const txPeriod = tx.calculatedPeriod;
                     if (currentFilters.period === 'morning' && txPeriod !== 'صباحية') return false;
                     if (currentFilters.period === 'evening' && txPeriod !== 'مسائية') return false;
                 }
                 
-                // Filter by type
                 let type = tx.type;
                 if (type === 'shopExpense' || type === 'personalExpense') type = 'expenses';
                 if (!currentFilters.types.includes(type)) return false;
@@ -534,7 +562,7 @@
         };
 
         // ==========================================
-        // ✅ تعديل: عرض مبلغ التبديل في سجل العمليات
+        // RENDER TRANSACTIONS
         // ==========================================
         
         function renderTransactions() {
@@ -564,12 +592,10 @@
                 const date = tx.timestamp ? new Date(tx.timestamp).toLocaleDateString('ar-SA', {month: 'short', day: 'numeric'}) : '--';
                 const period = tx.calculatedPeriod;
                 
-                // ✅ تعديل: عرض مبلغ التبديل بشكل صحيح
                 let amountDisplay = '';
                 let amountClass = '';
                 
                 if (tx.type === 'transfer') {
-                    // عرض مبلغ التبديل مع الاتجاه
                     const transferAmount = (tx.transferAmount || 0).toLocaleString();
                     amountDisplay = `<div>
                         <div class="font-bold text-amber-700">${transferAmount}</div>
@@ -610,107 +636,61 @@
         }
 
         // ==========================================
-        // ✅ تعديل: الرسم البياني - خطوط مثلثة (بدون تنعيم)
+        // ✅ تعديل: الرسم البياني القابل للتمرير - عرض كل الأيام من البداية
         // ==========================================
         
         window.updateChart = function() {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            const period = document.getElementById('chartPeriod').value;
             
-            // Prepare data based on period
-            let labels = [];
-            let salesData = [];
-            let expensesData = [];
+            // ✅ تجميع البيانات يومياً من كل العمليات
+            const dailyData = {};
             
-            if (period === 'today') {
-                // Hourly data for today
-                labels = ['6ص', '7ص', '8ص', '9ص', '10ص', '11ص', '12ظ', '1م', '2م', '3م', '4م', '5م', '6م', '7م', '8م', '9م', '10م', '11م', '12ص', '1ص', '2ص', '3ص', '4ص', '5ص'];
-                salesData = new Array(24).fill(0);
-                expensesData = new Array(24).fill(0);
+            allTransactions.forEach(tx => {
+                if (!tx.timestamp) return;
                 
-                // ✅ تعديل: استخدام كل العمليات لملء البيانات
-                allTransactions.forEach(tx => {
-                    if (!tx.timestamp) return;
-                    const txDate = new Date(tx.timestamp);
-                    const today = new Date();
-                    
-                    // التحقق من أن العملية اليوم
-                    if (txDate.toDateString() === today.toDateString()) {
-                        const hour = txDate.getHours();
-                        
-                        if (tx.type === 'sales') {
-                            salesData[hour] += tx.amount;
-                        } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
-                            expensesData[hour] += Math.abs(tx.amount);
-                        }
-                    }
-                });
-            } else if (period === 'all') {
-                // ✅ تعديل: عرض كل الفترات - تجميع شهري
-                const months = {};
-                allTransactions.forEach(tx => {
-                    if (!tx.timestamp) return;
-                    const date = new Date(tx.timestamp);
-                    const monthKey = date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short' });
-                    
-                    if (!months[monthKey]) {
-                        months[monthKey] = { sales: 0, expenses: 0 };
-                    }
-                    
-                    if (tx.type === 'sales') {
-                        months[monthKey].sales += tx.amount;
-                    } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
-                        months[monthKey].expenses += Math.abs(tx.amount);
-                    }
+                const date = new Date(tx.timestamp);
+                const dateKey = date.toLocaleDateString('ar-SA', { 
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit' 
                 });
                 
-                // ترتيب الأشهر
-                const sortedMonths = Object.keys(months).sort((a, b) => {
-                    const dateA = new Date(a);
-                    const dateB = new Date(b);
-                    return dateA - dateB;
-                });
-                
-                labels = sortedMonths;
-                salesData = sortedMonths.map(m => months[m].sales);
-                expensesData = sortedMonths.map(m => months[m].expenses);
-            } else {
-                // Daily data for week/month
-                const days = period === 'week' ? 7 : 30;
-                const today = new Date();
-                
-                for (let i = days - 1; i >= 0; i--) {
-                    const d = new Date(today);
-                    d.setDate(d.getDate() - i);
-                    labels.push(d.toLocaleDateString('ar-SA', { weekday: 'short', day: 'numeric' }));
-                    salesData.push(0);
-                    expensesData.push(0);
+                if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = { 
+                        sales: 0, 
+                        expenses: 0,
+                        timestamp: date.getTime()
+                    };
                 }
                 
-                // ✅ تعديل: استخدام كل العمليات المتاحة
-                allTransactions.forEach(tx => {
-                    if (!tx.timestamp) return;
-                    const txDate = new Date(tx.timestamp);
-                    const diffDays = Math.floor((today - txDate) / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays < days) {
-                        const index = days - 1 - diffDays;
-                        if (index >= 0 && index < days) {
-                            if (tx.type === 'sales') {
-                                salesData[index] += tx.amount;
-                            } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
-                                expensesData[index] += Math.abs(tx.amount);
-                            }
-                        }
-                    }
-                });
-            }
+                if (tx.type === 'sales') {
+                    dailyData[dateKey].sales += tx.amount;
+                } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
+                    dailyData[dateKey].expenses += Math.abs(tx.amount);
+                }
+            });
+            
+            // ✅ ترتيب الأيام من الأقدم إلى الأحدث (للعرض من اليمين لليسار)
+            const sortedDates = Object.keys(dailyData).sort((a, b) => {
+                return dailyData[a].timestamp - dailyData[b].timestamp;
+            });
+            
+            const labels = sortedDates.map(date => {
+                const d = new Date(dailyData[date].timestamp);
+                return d.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+            });
+            
+            const salesData = sortedDates.map(date => dailyData[date].sales);
+            const expensesData = sortedDates.map(date => dailyData[date].expenses);
+            
+            // ✅ حساب العرض المناسب للشارت (80 بكسل لكل يوم)
+            const chartWidth = Math.max(800, sortedDates.length * 80);
+            document.querySelector('.chart-wrapper').style.width = chartWidth + 'px';
             
             if (chartInstance) {
                 chartInstance.destroy();
             }
             
-            // ✅ تعديل: استخدام tension: 0 لجعل الخطوط مثلثية (بدون تنعيم)
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -723,10 +703,10 @@
                             backgroundColor: 'rgba(16, 185, 129, 0.1)',
                             borderWidth: 2,
                             fill: false,
-                            tension: 0, // ✅ خط مستقيم (مثلث)
-                            pointRadius: 3,
+                            tension: 0,
+                            pointRadius: 4,
                             pointBackgroundColor: '#10b981',
-                            pointStyle: 'triangle', // ✅ شكل المثلث
+                            pointStyle: 'triangle',
                             pointRotation: 0
                         },
                         {
@@ -736,11 +716,11 @@
                             backgroundColor: 'rgba(239, 68, 68, 0.1)',
                             borderWidth: 2,
                             fill: false,
-                            tension: 0, // ✅ خط مستقيم (مثلث)
-                            pointRadius: 3,
+                            tension: 0,
+                            pointRadius: 4,
                             pointBackgroundColor: '#ef4444',
-                            pointStyle: 'triangle', // ✅ شكل المثلث
-                            pointRotation: 180 // ✅ مقلوب للأسفل
+                            pointStyle: 'triangle',
+                            pointRotation: 180
                         }
                     ]
                 },
@@ -782,7 +762,9 @@
                                 display: false
                             },
                             ticks: {
-                                font: { family: 'Cairo', size: 10 }
+                                font: { family: 'Cairo', size: 10 },
+                                maxRotation: 45,
+                                minRotation: 45
                             }
                         }
                     },
@@ -793,6 +775,12 @@
                     }
                 }
             });
+            
+            // ✅ التمرير التلقائي إلى آخر يوم (الفترة الحالية)
+            setTimeout(() => {
+                const container = document.getElementById('chartScrollContainer');
+                container.scrollLeft = container.scrollWidth;
+            }, 100);
         };
 
         // ==========================================
@@ -802,7 +790,6 @@
         window.exportToCSV = function() {
             const headers = ['الرقم', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل'];
             const rows = filteredTransactions.map(tx => {
-                // ✅ تعديل: تضمين مبلغ التبديل في التصدير
                 let amount = tx.amount;
                 if (tx.type === 'transfer') {
                     amount = `تبديل: ${tx.transferAmount || 0} (${tx.from} → ${tx.to})`;
@@ -830,7 +817,7 @@
         };
 
         // ==========================================
-        // TRANSACTION DETAILS (Modal)
+        // TRANSACTION DETAILS
         // ==========================================
         
         window.showTransactionDetails = function(id) {
