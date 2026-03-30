@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>سجل الحركات المالية - مدير حسابات صلاح الدين</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: #f8fafc;
+            min-height: 100vh;
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+        }
+        
+        .btn-press:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal {
+            display: none;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        
+        .warning-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #ef4444;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: transform 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .warning-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .success-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #10b981;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: transform 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .success-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .operation-number {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        .uid-badge {
+            font-family: monospace;
+            font-size: 10px;
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #475569;
+        }
+        
+        .status-normal {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .status-edited {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .status-deleted {
+            background: #fee2e2;
+            color: #dc2626;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        
+        .transaction-row {
+            transition: all 0.3s ease;
+        }
+        
+        .transaction-row:hover {
+            background-color: #f1f5f9;
+            transform: translateX(-4px);
+        }
+        
+        .transaction-row.deleted {
+            opacity: 0.6;
+            background: #fee2e2;
+        }
+        
+        .transaction-row.edited {
+            background: linear-gradient(to right, #fef3c7 0%, #ffffff 100%);
+        }
+        
+        .edit-badge {
+            background: #fbbf24;
+            color: #92400e;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .delete-badge {
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .delta-positive {
+            color: #059669;
+        }
+        
+        .delta-negative {
+            color: #dc2626;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .filter-btn {
+            transition: all 0.2s;
+        }
+        
+        .filter-btn.active {
+            background: #10b981;
+            color: white;
+        }
+        
+        .type-filter {
+            transition: all 0.2s;
+        }
+        
+        .type-filter.active {
+            transform: scale(1.05);
+        }
+        
+        .edit-history {
+            background: #f8fafc;
+            border-right: 3px solid #fbbf24;
+            padding: 8px 12px;
+            margin-top: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- رسائل التنبيه -->
+    <div id="warningToast" class="warning-toast">
+        رسالة تحذير
+    </div>
+    <div id="successToast" class="success-toast">
+        ✅ تم بنجاح
+    </div>
+
+    <!-- التطبيق الرئيسي -->
+    <div class="app-container" id="app">
+        <!-- الهيدر -->
+        <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg">
+            <div class="flex justify-between items-center mb-2">
+                <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-slate-700 transition">
+                    <span class="text-2xl">☰</span>
+                </button>
+                <h1 class="text-lg font-bold">📋 سجل الحركات المالية</h1>
+                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">
+                    خروج
+                </button>
+            </div>
+            
+            <div class="text-center mt-4">
+                <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg pulse">
+                    00:00:00
+                </div>
+                <div id="date" class="text-slate-300 text-sm mt-1">
+                    جاري التحميل...
+                </div>
+                <div class="text-xs text-emerald-400 mt-1" id="userEmail"></div>
+            </div>
+        </header>
+
+        <!-- القائمة الجانبية -->
+        <div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50" onclick="toggleSidebar()">
+            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
+                <div class="p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-lg">القائمة</h2>
+                        <button onclick="toggleSidebar()" class="text-2xl">&times;</button>
+                    </div>
+                </div>
+                <div class="p-4 space-y-2">
+                    <a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 text-slate-700 flex items-center gap-3">
+                        <span>🏠</span>
+                        <span>الرئيسية</span>
+                    </a>
+                    <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700">
+                        <span>📝</span>
+                        <span>الديون</span>
+                    </a>
+                    <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
+                        <span>🏦</span>
+                        <span>الصندوق الجانبي</span>
+                    </a>
+                    <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
+                        <span>📊</span>
+                        <span>التقارير</span>
+                    </a>
+                    <a href="audit-log.html" class="w-full text-right p-3 rounded-xl bg-slate-100 text-slate-800 font-semibold flex items-center gap-3">
+                        <span>📋</span>
+                        <span>سجل الحركات</span>
+                    </a>
+                    <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
+                        <span>🧮</span>
+                        <span>تصفية الوردية</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="p-4 space-y-4 pb-24" id="mainContent">
+            
+            <!-- ملخص الرقابة -->
+            <div class="bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl p-4 text-white shadow-lg fade-in">
+                <div class="text-center mb-4">
+                    <div class="text-5xl mb-2">📋</div>
+                    <div class="text-sm opacity-75">إجمالي العمليات المسجلة</div>
+                    <div class="text-3xl font-bold mt-1" id="totalOperations">0</div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/20">
+                    <div class="text-center">
+                        <div class="text-xs opacity-75">عادية</div>
+                        <div class="text-xl font-bold text-emerald-300" id="normalCount">0</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs opacity-75">معدلة</div>
+                        <div class="text-xl font-bold text-amber-300" id="editedCount">0</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs opacity-75">محذوفة</div>
+                        <div class="text-xl font-bold text-red-300" id="deletedCount">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- فلاتر البحث المتقدمة -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <h3 class="font-bold text-slate-700 mb-3">🔍 فلاتر البحث</h3>
+                
+                <!-- البحث بالرقم أو الاسم -->
+                <div class="mb-3">
+                    <div class="relative">
+                        <input type="text" id="searchQuery" 
+                            class="w-full border-2 border-slate-200 rounded-xl p-3 pr-10 text-right focus:border-slate-500 focus:outline-none" 
+                            placeholder="🔍 رقم العملية، اسم الزبون، المورد..."
+                            oninput="applyFilters()">
+                        <span class="absolute left-3 top-3 text-slate-400">🔍</span>
+                    </div>
+                </div>
+
+                <!-- نطاق التاريخ -->
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">من</label>
+                        <input type="date" id="fromDate" onchange="applyFilters()" 
+                            class="w-full border border-slate-200 rounded-xl p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">إلى</label>
+                        <input type="date" id="toDate" onchange="applyFilters()" 
+                            class="w-full border border-slate-200 rounded-xl p-2 text-sm">
+                    </div>
+                </div>
+
+                <!-- فلتر الحالة -->
+                <div class="mb-3">
+                    <label class="block text-xs text-slate-500 mb-1">حالة العملية</label>
+                    <div class="flex gap-2">
+                        <button onclick="setStatusFilter('all')" class="filter-btn active flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="all">
+                            الكل
+                        </button>
+                        <button onclick="setStatusFilter('normal')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="normal">
+                            عادي
+                        </button>
+                        <button onclick="setStatusFilter('edited')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="edited">
+                            معدل
+                        </button>
+                        <button onclick="setStatusFilter('deleted')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="deleted">
+                            محذوف
+                        </button>
+                    </div>
+                </div>
+
+                <!-- فلتر النوع -->
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">نوع العملية</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="toggleTypeFilter('sales')" class="type-filter active px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200" data-type="sales">
+                            🟢 مبيعات
+                        </button>
+                        <button onclick="toggleTypeFilter('expenses')" class="type-filter active px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200" data-type="expenses">
+                            🔴 مصروفات
+                        </button>
+                        <button onclick="toggleTypeFilter('transfer')" class="type-filter active px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200" data-type="transfer">
+                            🟡 تبديل
+                        </button>
+                        <button onclick="toggleTypeFilter('debt')" class="type-filter active px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200" data-type="debt">
+                            🔵 ديون
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- جدول العمليات -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700">📋 سجل العمليات</h3>
+                    <div class="flex gap-2">
+                        <button onclick="exportToCSV()" class="text-sm text-emerald-600 font-semibold hover:text-emerald-700">
+                            📥 تصدير
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 mb-2 px-2">
+                    <div class="col-span-2">الوقت</div>
+                    <div class="col-span-2">الرقم</div>
+                    <div class="col-span-3">النوع</div>
+                    <div class="col-span-2">الحالة</div>
+                    <div class="col-span-3 text-left">المبلغ</div>
+                </div>
+
+                <div id="transactionsList" class="space-y-2 max-h-96 overflow-y-auto hide-scrollbar">
+                    <div class="text-center text-slate-400 py-8">
+                        <div class="text-4xl mb-2">📭</div>
+                        <div>جاري تحميل العمليات...</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- شريط التنقل السفلي -->
+        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
+            <div class="flex justify-around items-center">
+                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏠</span>
+                    <span class="text-xs mt-1">الرئيسية</span>
+                </a>
+                <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">📝</span>
+                    <span class="text-xs mt-1">الديون</span>
+                </a>
+                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏦</span>
+                    <span class="text-xs mt-1">الجانبي</span>
+                </a>
+                <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">📊</span>
+                    <span class="text-xs mt-1">التقارير</span>
+                </a>
+                <a href="audit-log.html" class="flex flex-col items-center p-2 text-slate-800">
+                    <span class="text-xl">📋</span>
+                    <span class="text-xs mt-1 font-semibold">السجل</span>
+                </a>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- مودال التعديل -->
+    <div id="editModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('edit')">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-amber-800">✏️ تعديل العملية</h2>
+                <button onclick="closeModal('edit')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-sm text-amber-800">
+                <div class="flex items-start gap-2">
+                    <span class="text-lg">⚠️</span>
+                    <div>
+                        <div class="font-semibold mb-1">تنبيه مهم</div>
+                        <div class="text-xs">سيتم حساب الفرق (Δ) بين المبلغ القديم والجديد وتحديث الرصيد تلقائياً.</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="editForm" class="space-y-4" onsubmit="handleEditSubmit(event)">
+                <input type="hidden" id="editTransactionId">
+                <input type="hidden" id="editOldAmount">
+                <input type="hidden" id="editType">
+                <input type="hidden" id="editPayment">
+
+                <!-- معلومات العملية الحالية -->
+                <div class="bg-slate-100 rounded-xl p-3 text-center">
+                    <div class="text-xs text-slate-600 mb-1">العملية الحالية</div>
+                    <div class="text-lg font-bold text-slate-800" id="editCurrentInfo">---</div>
+                    <div class="text-sm text-slate-600 mt-1">المبلغ الحالي: <span id="editCurrentAmount" class="font-bold text-amber-600">0</span></div>
+                </div>
+
+                <!-- المبلغ الجديد -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ الجديد</label>
+                    <input type="text" id="editNewAmount" 
+                        class="formatted-input w-full border-2 border-amber-200 rounded-xl p-3 text-lg text-center focus:border-amber-500 focus:outline-none bg-amber-50" 
+                        placeholder="0" 
+                        oninput="formatNumberInput(this); calculateDelta()"
+                        onkeypress="return isNumberKey(event)"
+                        required>
+                </div>
+
+                <!-- عرض الفرق المحسوب -->
+                <div id="deltaDisplay" class="hidden bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
+                    <div class="text-xs text-slate-600 mb-1">الفرق (Δ) - سيتم تطبيقه على الرصيد</div>
+                    <div class="text-2xl font-bold" id="deltaAmount">0</div>
+                    <div class="text-xs mt-1" id="deltaDescription"></div>
+                </div>
+
+                <!-- سبب التعديل -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">سبب التعديل *</label>
+                    <input type="text" id="editReason" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-amber-500 focus:outline-none" 
+                        placeholder="مثال: خطأ في الإدخال، تعديل بعد المراجعة..."
+                        required>
+                </div>
+
+                <div class="bg-red-50 border border-red-200 rounded-xl p-3 space-y-1 text-xs text-red-800">
+                    <div>⚠️ لا يمكن التراجع عن هذا الإجراء</div>
+                    <div>✓ سيتم حفظ التاريخ الأصلي والجديد</div>
+                    <div>✓ سيظهر التعديل في السجل باللون الأصفر</div>
+                </div>
+
+                <button type="submit" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
+                    ✅ تأكيد التعديل
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال الحذف -->
+    <div id="deleteModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('delete')">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-red-800">🗑️ حذف العملية</h2>
+                <button onclick="closeModal('delete')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-sm text-red-800">
+                <div class="flex items-start gap-2">
+                    <span class="text-lg">⚠️</span>
+                    <div>
+                        <div class="font-semibold mb-1">تنبيه: استرداد عكسي</div>
+                        <div class="text-xs" id="deleteImpactText">سيتم عكس تأثير هذه العملية على الأرصدة.</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="deleteForm" class="space-y-4" onsubmit="handleDeleteSubmit(event)">
+                <input type="hidden" id="deleteTransactionId">
+                <input type="hidden" id="deleteType">
+                <input type="hidden" id="deleteAmount">
+                <input type="hidden" id="deletePayment">
+
+                <!-- معلومات العملية -->
+                <div class="bg-slate-100 rounded-xl p-3 text-center">
+                    <div class="text-xs text-slate-600 mb-1">العملية المراد حذفها</div>
+                    <div class="text-lg font-bold text-slate-800" id="deleteCurrentInfo">---</div>
+                    <div class="text-sm text-slate-600 mt-1">المبلغ: <span id="deleteCurrentAmount" class="font-bold text-red-600">0</span></div>
+                </div>
+
+                <!-- التأثير على الأرصدة -->
+                <div id="reversalDisplay" class="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
+                    <div class="text-xs text-slate-600 mb-1">التأثير على الأرصدة (الاسترداد العكسي)</div>
+                    <div class="text-lg font-bold text-emerald-600" id="reversalEffect">+0 للكاش</div>
+                    <div class="text-xs text-slate-500 mt-1">سيتم تعديل الرصيد تلقائياً</div>
+                </div>
+
+                <!-- سبب الحذف -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">سبب الحذف *</label>
+                    <input type="text" id="deleteReason" 
+                        class="w-full border-2 border-red-200 rounded-xl p-3 text-right focus:border-red-500 focus:outline-none bg-red-50" 
+                        placeholder="مثال: عملية مكررة، خطأ في البيانات..."
+                        required>
+                </div>
+
+                <div class="bg-slate-100 rounded-xl p-3 space-y-1 text-xs text-slate-600">
+                    <div>ℹ️ لن يتم مسح العملية نهائياً</div>
+                    <div>✓ ستظهر مشطوبة في السجل باللون الأحمر</div>
+                    <div>✓ يمكن مراجعة تاريخ الحذف والسبب لاحقاً</div>
+                </div>
+
+                <button type="submit" class="w-full bg-red-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-red-600 transition">
+                    🗑️ تأكيد الحذف
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase & Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged,
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getDatabase, 
+            ref, 
+            onValue, 
+            update, 
+            get,
+            query,
+            orderByChild
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+            authDomain: "salahsweetmanage.firebaseapp.com",
+            databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+            projectId: "salahsweetmanage",
+            storageBucket: "salahsweetmanage.firebasestorage.app",
+            messagingSenderId: "126049780562",
+            appId: "1:126049780562:web:147daa036e56273263308b",
+            measurementId: "G-E7FLGBQ397"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        let currentUser = null;
+        let balances = { cash: 0, bank: 0 };
+        let allTransactions = [];
+        let filteredTransactions = [];
+        let currentFilters = {
+            status: 'all',
+            types: ['sales', 'expenses', 'transfer', 'debt'],
+            search: '',
+            fromDate: null,
+            toDate: null
+        };
+
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+        
+        window.formatNumber = function(num) {
+            if (num === null || num === undefined || isNaN(num)) return '0';
+            return parseInt(num).toLocaleString('en-US');
+        };
+
+        window.formatNumberInput = function(input) {
+            let value = input.value.replace(/[^\d]/g, '');
+            if (value) {
+                input.value = parseInt(value).toLocaleString('en-US');
+            } else {
+                input.value = '';
+            }
+        };
+
+        window.parseFormattedNumber = function(inputId) {
+            const value = document.getElementById(inputId).value.replace(/,/g, '');
+            return parseFloat(value) || 0;
+        };
+
+        window.isNumberKey = function(evt) {
+            const charCode = (evt.which) ? evt.which : evt.keyCode;
+            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                return false;
+            }
+            return true;
+        };
+
+        window.showWarning = function(message) {
+            const toast = document.getElementById('warningToast');
+            toast.textContent = '⚠️ ' + message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        };
+
+        window.showSuccess = function(message) {
+            const toast = document.getElementById('successToast');
+            toast.textContent = '✅ ' + message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        };
+
+        // ==========================================
+        // AUTHENTICATION
+        // ==========================================
+        
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            if (!user.emailVerified) {
+                alert('⚠️ يرجى توثيق حسابك أولاً من بريدك الإلكتروني');
+                signOut(auth);
+                return;
+            }
+            
+            currentUser = user;
+            document.getElementById('userEmail').textContent = '👤 ' + user.email;
+            initApp();
+        });
+
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        };
+
+        // ==========================================
+        // APP INITIALIZATION
+        // ==========================================
+        
+        function initApp() {
+            // Listen to balances
+            onValue(ref(database, 'balances'), (snap) => {
+                balances = snap.val() || { cash: 0, bank: 0 };
+            });
+            
+            // Listen to transactions
+            onValue(ref(database, 'transactions'), (snap) => {
+                const txs = [];
+                snap.forEach((child) => {
+                    txs.push({ 
+                        id: child.key, 
+                        ...child.val() 
+                    });
+                });
+                
+                // ترتيب تنازلي حسب التاريخ
+                allTransactions = txs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                updateStats();
+                applyFilters();
+            });
+            
+            // Start clock
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fromDate').value = today;
+            document.getElementById('toDate').value = today;
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function updateStats() {
+            const normal = allTransactions.filter(t => !t.status || t.status === 'normal').length;
+            const edited = allTransactions.filter(t => t.status === 'edited').length;
+            const deleted = allTransactions.filter(t => t.status === 'deleted').length;
+            
+            document.getElementById('totalOperations').textContent = allTransactions.length;
+            document.getElementById('normalCount').textContent = normal;
+            document.getElementById('editedCount').textContent = edited;
+            document.getElementById('deletedCount').textContent = deleted;
+        }
+
+        // ==========================================
+        // FILTER FUNCTIONS
+        // ==========================================
+        
+        window.setStatusFilter = function(status) {
+            currentFilters.status = status;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === status) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            applyFilters();
+        };
+
+        window.toggleTypeFilter = function(type) {
+            const index = currentFilters.types.indexOf(type);
+            if (index > -1) {
+                currentFilters.types.splice(index, 1);
+            } else {
+                currentFilters.types.push(type);
+            }
+            
+            document.querySelectorAll('.type-filter').forEach(btn => {
+                if (btn.dataset.type === type) {
+                    btn.classList.toggle('active');
+                    btn.classList.toggle('opacity-50');
+                }
+            });
+            
+            applyFilters();
+        };
+
+        window.applyFilters = function() {
+            const searchQuery = document.getElementById('searchQuery').value.toLowerCase().trim();
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            
+            currentFilters.search = searchQuery;
+            currentFilters.fromDate = fromDate ? new Date(fromDate) : null;
+            currentFilters.toDate = toDate ? new Date(toDate) : null;
+            
+            filteredTransactions = allTransactions.filter(tx => {
+                // فلتر الحالة
+                if (currentFilters.status !== 'all') {
+                    const txStatus = tx.status || 'normal';
+                    if (txStatus !== currentFilters.status) return false;
+                }
+                
+                // فلتر النوع
+                let type = tx.type;
+                if (type === 'shopExpense' || type === 'personalExpense') type = 'expenses';
+                if (type === 'debt_full_repayment' || type === 'debt_partial_repayment' || type === 'manual') type = 'debt';
+                if (!currentFilters.types.includes(type)) return false;
+                
+                // فلتر البحث
+                if (searchQuery) {
+                    const searchable = [
+                        tx.operationNumber,
+                        tx.uid,
+                        tx.customer,
+                        tx.vendor,
+                        tx.title
+                    ].join(' ').toLowerCase();
+                    if (!searchable.includes(searchQuery)) return false;
+                }
+                
+                // فلتر التاريخ
+                if (currentFilters.fromDate) {
+                    const txDate = new Date(tx.timestamp);
+                    txDate.setHours(0, 0, 0, 0);
+                    if (txDate < currentFilters.fromDate) return false;
+                }
+                
+                if (currentFilters.toDate) {
+                    const txDate = new Date(tx.timestamp);
+                    txDate.setHours(23, 59, 59, 999);
+                    if (txDate > currentFilters.toDate) return false;
+                }
+                
+                return true;
+            });
+            
+            renderTransactions();
+        };
+
+        // ==========================================
+        // RENDER FUNCTIONS
+        // ==========================================
+        
+        function renderTransactions() {
+            const container = document.getElementById('transactionsList');
+            
+            if (filteredTransactions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-slate-400 py-8">
+                        <div class="text-4xl mb-2">📭</div>
+                        <div>لا توجد عمليات مطابقة للفلتر</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const typeLabels = {
+                sales: { label: 'مبيعات', color: 'text-emerald-600', bg: 'bg-emerald-50', icon: '🟢' },
+                shopExpense: { label: 'مصروف محل', color: 'text-red-600', bg: 'bg-red-50', icon: '🔴' },
+                personalExpense: { label: 'مصروف شخصي', color: 'text-blue-600', bg: 'bg-blue-50', icon: '🔵' },
+                transfer: { label: 'تبديل', color: 'text-amber-600', bg: 'bg-amber-50', icon: '🟡' },
+                debt_full_repayment: { label: 'تسديد كامل', color: 'text-emerald-600', bg: 'bg-emerald-50', icon: '✅' },
+                debt_partial_repayment: { label: 'تسديد جزئي', color: 'text-amber-600', bg: 'bg-amber-50', icon: '💵' },
+                manual: { label: 'دين يدوي', color: 'text-purple-600', bg: 'bg-purple-50', icon: '📝' }
+            };
+            
+            container.innerHTML = filteredTransactions.map(tx => {
+                const typeInfo = typeLabels[tx.type] || { label: tx.type, color: 'text-slate-600', bg: 'bg-slate-50', icon: '⚪' };
+                const time = tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                const date = tx.timestamp ? new Date(tx.timestamp).toLocaleDateString('ar-SA', {month: 'short', day: 'numeric'}) : '--';
+                
+                const status = tx.status || 'normal';
+                let statusClass = 'status-normal';
+                let statusText = 'عادي';
+                let rowClass = '';
+                let badges = '';
+                
+                if (status === 'edited') {
+                    statusClass = 'status-edited';
+                    statusText = 'معدل';
+                    rowClass = 'edited';
+                    badges = `<span class="edit-badge ml-2">✏️ تم التعديل</span>`;
+                } else if (status === 'deleted') {
+                    statusClass = 'status-deleted';
+                    statusText = 'محذوف';
+                    rowClass = 'deleted';
+                    badges = `<span class="delete-badge ml-2">🗑️ تم الحذف</span>`;
+                }
+                
+                let amountDisplay = '';
+                let amountClass = '';
+                
+                if (tx.type === 'transfer') {
+                    const transferAmount = formatNumber(tx.transferAmount || 0);
+                    amountDisplay = `
+                        <div class="font-bold text-slate-700">${transferAmount}</div>
+                        <div class="text-xs text-slate-500">${tx.from || ''} → ${tx.to || ''}</div>
+                    `;
+                    amountClass = 'text-slate-600';
+                } else {
+                    const amount = Math.abs(tx.amount || 0);
+                    const isPositive = tx.amount > 0;
+                    amountDisplay = `<div class="font-bold">${formatNumber(amount)}</div>`;
+                    amountClass = isPositive ? 'text-emerald-600' : 'text-red-600';
+                }
+                
+                // تاريخ التعديل إن وجد
+                let editHistory = '';
+                if (tx.editHistory && tx.editHistory.length > 0) {
+                    const lastEdit = tx.editHistory[tx.editHistory.length - 1];
+                    editHistory = `
+                        <div class="edit-history">
+                            <div class="text-amber-700 font-semibold text-xs mb-1">📋 تاريخ التعديل الأخير:</div>
+                            <div class="text-slate-600">من ${formatNumber(lastEdit.oldAmount)} إلى ${formatNumber(lastEdit.newAmount)}</div>
+                            <div class="text-slate-500 text-xs mt-1">الفرق: ${lastEdit.delta > 0 ? '+' : ''}${formatNumber(lastEdit.delta)} | ${lastEdit.reason}</div>
+                            <div class="text-slate-400 text-xs">${new Date(lastEdit.timestamp).toLocaleString('ar-SA')}</div>
+                        </div>
+                    `;
+                }
+                
+                // تاريخ الحذف إن وجد
+                let deleteInfo = '';
+                if (status === 'deleted' && tx.deletedAt) {
+                    deleteInfo = `
+                        <div class="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded">
+                            🗑️ تم الحذف بتاريخ: ${new Date(tx.deletedAt).toLocaleString('ar-SA')}<br>
+                            السبب: ${tx.deleteReason || 'غير محدد'}
+                        </div>
+                    `;
+                }
+                
+                // أزرار الإجراءات (لا تظهر للعمليات المحذوفة)
+                let actions = '';
+                if (status !== 'deleted' && tx.type !== 'transfer') {
+                    actions = `
+                        <div class="flex gap-2 mt-2 pt-2 border-t border-slate-100">
+                            <button onclick="openEditModal('${tx.id}')" class="flex-1 bg-amber-100 text-amber-700 py-2 rounded-lg text-xs font-bold hover:bg-amber-200 transition">
+                                ✏️ تعديل
+                            </button>
+                            <button onclick="openDeleteModal('${tx.id}')" class="flex-1 bg-red-100 text-red-700 py-2 rounded-lg text-xs font-bold hover:bg-red-200 transition">
+                                🗑️ حذف
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="transaction-row ${rowClass} bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <div class="col-span-2 text-xs">
+                                <div class="font-semibold">${time}</div>
+                                <div class="text-slate-400 scale-75 origin-right">${date}</div>
+                            </div>
+                            <div class="col-span-2">
+                                <span class="uid-badge">${tx.operationNumber || tx.uid || tx.id.slice(-6)}</span>
+                            </div>
+                            <div class="col-span-3">
+                                <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold ${typeInfo.bg} ${typeInfo.color}">
+                                    ${typeInfo.icon} ${typeInfo.label}
+                                </span>
+                                ${badges}
+                            </div>
+                            <div class="col-span-2 text-center">
+                                <span class="inline-block px-2 py-1 rounded-full text-xs font-bold ${statusClass}">
+                                    ${statusText}
+                                </span>
+                            </div>
+                            <div class="col-span-3 text-left ${amountClass}">
+                                ${amountDisplay}
+                            </div>
+                        </div>
+                        ${editHistory}
+                        ${deleteInfo}
+                        ${actions}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // EDIT MODAL FUNCTIONS
+        // ==========================================
+        
+        window.openEditModal = function(id) {
+            const tx = allTransactions.find(t => t.id === id);
+            if (!tx || tx.status === 'deleted') return;
+            
+            // لا يمكن تعديل التبديلات (معقدة وzero-impact)
+            if (tx.type === 'transfer') {
+                showWarning('لا يمكن تعديل عمليات التبديل. يفضل حذفها وإنشاء جديدة.');
+                return;
+            }
+            
+            document.getElementById('editTransactionId').value = id;
+            document.getElementById('editOldAmount').value = tx.amount;
+            document.getElementById('editType').value = tx.type;
+            document.getElementById('editPayment').value = tx.payment || 'كاش';
+            document.getElementById('editCurrentInfo').textContent = tx.title || tx.type;
+            document.getElementById('editCurrentAmount').textContent = formatNumber(Math.abs(tx.amount));
+            document.getElementById('editNewAmount').value = '';
+            document.getElementById('editReason').value = '';
+            
+            document.getElementById('deltaDisplay').classList.add('hidden');
+            
+            openModal('edit');
+        };
+
+        window.calculateDelta = function() {
+            const oldAmount = parseFloat(document.getElementById('editOldAmount').value) || 0;
+            const newAmount = parseFormattedNumber('editNewAmount');
+            
+            if (newAmount <= 0) return;
+            
+            const delta = newAmount - Math.abs(oldAmount);
+            const type = document.getElementById('editType').value;
+            
+            let description = '';
+            let deltaClass = '';
+            
+            // منطق الفرق حسب نوع العملية
+            if (type === 'sales' || type.includes('debt')) {
+                // المبيعات: Delta موجب = زيادة في الرصيد
+                if (delta > 0) {
+                    description = `سيتم إضافة ${formatNumber(delta)} للرصيد`;
+                    deltaClass = 'delta-positive';
+                } else if (delta < 0) {
+                    description = `سيتم خصم ${formatNumber(Math.abs(delta))} من الرصيد`;
+                    deltaClass = 'delta-negative';
+                } else {
+                    description = 'لا يوجد تغيير في الرصيد';
+                    deltaClass = 'text-slate-600';
+                }
+            } else {
+                // المصروفات: Delta موجب = زيادة في المصروف = خصم إضافي من الرصيد
+                if (delta > 0) {
+                    description = `سيتم خصم ${formatNumber(delta)} إضافية من الرصيد`;
+                    deltaClass = 'delta-negative';
+                } else if (delta < 0) {
+                    description = `سيتم إرجاع ${formatNumber(Math.abs(delta))} للرصيد (استرداد)`;
+                    deltaClass = 'delta-positive';
+                } else {
+                    description = 'لا يوجد تغيير في الرصيد';
+                    deltaClass = 'text-slate-600';
+                }
+            }
+            
+            const display = document.getElementById('deltaDisplay');
+            const amountEl = document.getElementById('deltaAmount');
+            const descEl = document.getElementById('deltaDescription');
+            
+            display.classList.remove('hidden');
+            amountEl.textContent = (delta > 0 ? '+' : '') + formatNumber(delta);
+            amountEl.className = `text-2xl font-bold ${deltaClass}`;
+            descEl.textContent = description;
+        };
+
+        window.handleEditSubmit = async function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('editTransactionId').value;
+            const oldAmount = parseFloat(document.getElementById('editOldAmount').value) || 0;
+            const newAmount = parseFormattedNumber('editNewAmount');
+            const type = document.getElementById('editType').value;
+            const payment = document.getElementById('editPayment').value;
+            const reason = document.getElementById('editReason').value.trim();
+            
+            if (!reason) {
+                showWarning('الرجاء إدخال سبب التعديل');
+                return;
+            }
+            
+            if (newAmount <= 0) {
+                showWarning('المبلغ الجديد يجب أن يكون أكبر من صفر');
+                return;
+            }
+            
+            const delta = newAmount - Math.abs(oldAmount);
+            
+            // تحديث الرصيد حسب نوع العملية والفرق
+            const balanceUpdate = {};
+            const isCash = payment === 'كاش';
+            const balanceKey = isCash ? 'cash' : 'bank';
+            
+            if (type === 'sales' || type.includes('debt')) {
+                // المبيعات: إذا زاد المبلغ، نضيف الفرق. إذا قل، نخصم الفرق
+                balanceUpdate[balanceKey] = balances[balanceKey] + delta;
+            } else {
+                // المصروفات: عكس المنطق (المصروف زيادة = خصم أكبر)
+                balanceUpdate[balanceKey] = balances[balanceKey] - delta;
+            }
+            
+            const timestamp = Date.now();
+            
+            // بناء سجل التعديل
+            const editRecord = {
+                oldAmount: Math.abs(oldAmount),
+                newAmount: newAmount,
+                delta: delta,
+                reason: reason,
+                timestamp: timestamp,
+                editedBy: currentUser.email
+            };
+            
+            // جلب التاريخ الحالي للتعديلات إن وجد
+            const txRef = ref(database, `transactions/${id}`);
+            const currentTx = (await get(txRef)).val();
+            const editHistory = currentTx.editHistory || [];
+            editHistory.push(editRecord);
+            
+            // تحديث متعدد المسارات (Atomic)
+            const updates = {};
+            
+            // 1. تحديث العملية
+            updates[`transactions/${id}/amount`] = type === 'sales' || type.includes('debt') ? newAmount : -newAmount;
+            updates[`transactions/${id}/status`] = 'edited';
+            updates[`transactions/${id}/lastEdited`] = timestamp;
+            updates[`transactions/${id}/editHistory`] = editHistory;
+            updates[`transactions/${id}/editReason`] = reason;
+            
+            // 2. تحديث الرصيد
+            updates[`balances/${balanceKey}`] = balanceUpdate[balanceKey];
+            
+            // 3. تحديث الإحصائيات إذا كانت عملية اليوم
+            const todayKey = new Date().toISOString().split('T')[0];
+            if (currentTx.date === todayKey) {
+                const statsRef = ref(database, 'stats/today');
+                const currentStats = (await get(statsRef)).val() || {};
+                
+                if (type === 'sales') {
+                    const oldSales = currentStats.sales || 0;
+                    updates['stats/today/sales'] = oldSales + delta;
+                } else if (type === 'shopExpense') {
+                    const oldExp = currentStats.shopExpenses || 0;
+                    updates['stats/today/shopExpenses'] = oldExp + delta;
+                }
+            }
+            
+            await update(ref(database), updates);
+            
+            closeModal('edit');
+            showSuccess(`تم تعديل العملية بنجاح. الفرق المطبق: ${delta > 0 ? '+' : ''}${formatNumber(delta)}`);
+        };
+
+        // ==========================================
+        // DELETE MODAL FUNCTIONS
+        // ==========================================
+        
+        window.openDeleteModal = function(id) {
+            const tx = allTransactions.find(t => t.id === id);
+            if (!tx || tx.status === 'deleted') return;
+            
+            document.getElementById('deleteTransactionId').value = id;
+            document.getElementById('deleteType').value = tx.type;
+            document.getElementById('deleteAmount').value = tx.amount;
+            document.getElementById('deletePayment').value = tx.payment || 'كاش';
+            document.getElementById('deleteCurrentInfo').textContent = tx.title || tx.type;
+            document.getElementById('deleteCurrentAmount').textContent = formatNumber(Math.abs(tx.amount));
+            document.getElementById('deleteReason').value = '';
+            
+            // حساب التأثير العكسي
+            const amount = Math.abs(tx.amount);
+            const type = tx.type;
+            const payment = tx.payment || 'كاش';
+            let effectText = '';
+            
+            if (type === 'sales' || type.includes('debt')) {
+                // عكس المبيعات = خصم من الرصيد
+                effectText = `-${formatNumber(amount)} من ${payment} (استرداد المبيعات)`;
+            } else if (type === 'shopExpense' || type === 'personalExpense') {
+                // عكس المصروف = إضافة للرصيد
+                effectText = `+${formatNumber(amount)} لـ ${payment} (استرداد المصروف)`;
+            } else if (type === 'transfer') {
+                effectText = 'عكس التبديل (إرجاع المبلغ للمصدر)';
+            }
+            
+            document.getElementById('reversalEffect').textContent = effectText;
+            
+            openModal('delete');
+        };
+
+        window.handleDeleteSubmit = async function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('deleteTransactionId').value;
+            const type = document.getElementById('deleteType').value;
+            const amount = parseFloat(document.getElementById('deleteAmount').value) || 0;
+            const payment = document.getElementById('deletePayment').value;
+            const reason = document.getElementById('deleteReason').value.trim();
+            
+            if (!reason) {
+                showWarning('الرجاء إدخال سبب الحذف');
+                return;
+            }
+            
+            const timestamp = Date.now();
+            const isCash = payment === 'كاش';
+            const balanceKey = isCash ? 'cash' : 'bank';
+            
+            // حساب التعديل العكسي للرصيد
+            const balanceUpdate = {};
+            
+            if (type === 'sales' || type.includes('debt')) {
+                // عكس المبيعات: خصم المبلغ من الرصيد
+                balanceUpdate[balanceKey] = balances[balanceKey] - Math.abs(amount);
+            } else if (type === 'shopExpense' || type === 'personalExpense') {
+                // عكس المصروف: إضافة المبلغ للرصيد
+                balanceUpdate[balanceKey] = balances[balanceKey] + Math.abs(amount);
+            } else if (type === 'transfer') {
+                // عكس التبديل: إرجاع المبلغ للمصدر
+                const tx = allTransactions.find(t => t.id === id);
+                if (tx) {
+                    if (tx.from === 'كاش') {
+                        balanceUpdate.cash = balances.cash + tx.transferAmount;
+                        balanceUpdate.bank = balances.bank - tx.transferAmount;
+                    } else {
+                        balanceUpdate.bank = balances.bank + tx.transferAmount;
+                        balanceUpdate.cash = balances.cash - tx.transferAmount;
+                    }
+                }
+            }
+            
+            // تحديث متعدد المسارات
+            const updates = {};
+            
+            // 1. Soft delete للعملية
+            updates[`transactions/${id}/status`] = 'deleted';
+            updates[`transactions/${id}/deletedAt`] = timestamp;
+            updates[`transactions/${id}/deleteReason`] = reason;
+            updates[`transactions/${id}/deletedBy`] = currentUser.email;
+            
+            // 2. تحديث الرصيد
+            if (type === 'transfer') {
+                updates['balances/cash'] = balanceUpdate.cash;
+                updates['balances/bank'] = balanceUpdate.bank;
+            } else {
+                updates[`balances/${balanceKey}`] = balanceUpdate[balanceKey];
+            }
+            
+            // 3. تحديث الإحصائيات
+            const tx = allTransactions.find(t => t.id === id);
+            const todayKey = new Date().toISOString().split('T')[0];
+            if (tx && tx.date === todayKey) {
+                const statsRef = ref(database, 'stats/today');
+                const currentStats = (await get(statsRef)).val() || {};
+                
+                if (type === 'sales') {
+                    updates['stats/today/sales'] = (currentStats.sales || 0) - Math.abs(amount);
+                } else if (type === 'shopExpense') {
+                    updates['stats/today/shopExpenses'] = (currentStats.shopExpenses || 0) - Math.abs(amount);
+                } else if (type === 'personalExpense') {
+                    updates['stats/today/personalExpenses'] = (currentStats.personalExpenses || 0) - Math.abs(amount);
+                }
+            }
+            
+            await update(ref(database), updates);
+            
+            closeModal('delete');
+            showSuccess('تم حذف العملية وعكس تأثيرها على الأرصدة بنجاح');
+        };
+
+        // ==========================================
+        // UI FUNCTIONS
+        // ==========================================
+        
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('sidebarContent');
+            
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('translate-x-full'), 10);
+            } else {
+                content.classList.add('translate-x-full');
+                setTimeout(() => sidebar.classList.add('hidden'), 300);
+            }
+        };
+
+        window.openModal = function(type) {
+            const modal = document.getElementById(type + 'Modal');
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        window.closeModal = function(type) {
+            const modal = document.getElementById(type + 'Modal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+                
+                const form = document.getElementById(type + 'Form');
+                if (form) form.reset();
+            }
+        };
+
+        window.exportToCSV = function() {
+            const headers = ['الرقم', 'التاريخ', 'الوقت', 'النوع', 'الحالة', 'العنوان', 'المبلغ', 'الطريقة', 'الزبون/المورد', 'ملاحظات'];
+            const rows = filteredTransactions.map(tx => {
+                const status = tx.status || 'normal';
+                const statusText = status === 'normal' ? 'عادي' : (status === 'edited' ? 'معدل' : 'محذوف');
+                
+                return [
+                    tx.operationNumber || tx.uid || tx.id.slice(-6),
+                    tx.timestamp ? new Date(tx.timestamp).toLocaleDateString('ar-SA') : '',
+                    tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString('ar-SA') : '',
+                    tx.type,
+                    statusText,
+                    tx.title || '',
+                    tx.amount,
+                    tx.payment || '-',
+                    tx.customer || tx.vendor || '-',
+                    tx.note || tx.editReason || tx.deleteReason || ''
+                ];
+            });
+            
+            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `سجل_الحركات_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        };
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    const type = this.id.replace('Modal', '');
+                    closeModal(type);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
