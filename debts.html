@@ -160,6 +160,14 @@
             transform: translateY(-50%);
             font-size: 1.5rem;
         }
+        
+        /* تحسين نمط البحث */
+        .search-highlight {
+            background: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -302,13 +310,19 @@
                 </div>
             </div>
 
-            <!-- سجل العمليات -->
+            <!-- سجل العمليات مع البحث -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-slate-700">📋 سجل الديون</h3>
-                    <button onclick="exportDebts()" class="text-sm text-emerald-600 font-semibold hover:text-emerald-700">
-                        📥 تصدير
-                    </button>
+                    <div class="flex gap-2">
+                        <input type="text" id="searchHistory" 
+                            class="border-2 border-slate-200 rounded-lg p-2 text-sm text-right focus:border-amber-500 focus:outline-none" 
+                            placeholder="🔍 بحث في السجل..."
+                            oninput="filterHistory()">
+n                        <button onclick="exportDebts()" class="text-sm text-emerald-600 font-semibold hover:text-emerald-700 px-3 py-2 bg-emerald-50 rounded-lg">
+                            📥 تصدير
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="debtsHistory" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
@@ -388,17 +402,17 @@
                     </div>
                 </div>
 
-                <!-- طريقة التسديد -->
+                <!-- طريقة التسديد - إصلاح النمط -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">طريقة التسديد</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" class="repay-method-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="كاش" onclick="selectRepayMethod(this)">
+                        <button type="button" id="btnCash" class="repay-method-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition-all duration-200" data-value="كاش" onclick="selectRepayMethod(this)">
                             <span class="text-2xl">💵</span>
                             <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
                         </button>
-                        <button type="button" class="repay-method-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك" onclick="selectRepayMethod(this)">
+                        <button type="button" id="btnBank" class="repay-method-btn border-2 border-slate-200 rounded-xl p-3 text-center transition-all duration-200 hover:bg-blue-50" data-value="بنكك" onclick="selectRepayMethod(this)">
                             <span class="text-2xl">💳</span>
-                            <div class="text-sm mt-1">بنكك</div>
+                            <div class="text-sm mt-1 font-semibold text-slate-600">بنكك</div>
                         </button>
                     </div>
                     <input type="hidden" id="repayMethod" value="كاش">
@@ -424,10 +438,33 @@
                         placeholder="مثال: تسديد جزئي، تسديد كامل...">
                 </div>
 
-                <button type="submit" id="repaySubmitBtn" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">
+                <button type="submit" id="repaySubmitBtn" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     ✅ تأكيد التسديد
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- مودال تفاصيل الزبون -->
+    <div id="customerDetailsModal" class="modal fixed inset-0 bg-black/50 items-center z-50 p-4" onclick="closeCustomerDetails()">
+        <div class="bg-white rounded-2xl w-full max-w-md mx-auto p-6 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-4">
+                <h2 class="text-xl font-bold text-slate-800" id="detailsCustomerName">تفاصيل الزبون</h2>
+                <button onclick="closeCustomerDetails()" class="text-slate-400 text-2xl hover:text-slate-600">&times;</button>
+            </div>
+
+            <div id="customerDetailsContent" class="space-y-4">
+                <!-- تُملأ ديناميكياً -->
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-200 flex gap-2">
+                <button onclick="printCustomerDetails()" class="flex-1 bg-slate-100 text-slate-700 rounded-xl p-3 font-semibold hover:bg-slate-200 transition">
+                    🖨️ طباعة
+                </button>
+                <button onclick="exportCustomerDetails()" class="flex-1 bg-emerald-100 text-emerald-700 rounded-xl p-3 font-semibold hover:bg-emerald-200 transition">
+                    📥 تصدير PDF
+                </button>
+            </div>
         </div>
     </div>
 
@@ -534,7 +571,8 @@
         let filteredDebts = [];
         let debtorsSummary = {};
         let currentFilter = 'all';
-        let currentCustomerDebts = []; // ديون الزبون الحالي المرتبة حسب الأقدمية
+        let currentCustomerDebts = [];
+        let currentCustomerName = '';
 
         // ==========================================
         // UTILITY FUNCTIONS
@@ -633,7 +671,6 @@
                     const debt = { id: child.key, ...child.val() };
                     debts.push(debt);
                     
-                    // حساب ملخص لكل زبون
                     const customer = debt.customer;
                     if (!debtorsSummary[customer]) {
                         debtorsSummary[customer] = {
@@ -641,7 +678,7 @@
                             paid: 0,
                             pending: 0,
                             count: 0,
-                            debts: [] // مصفوفة معرفات الديون
+                            debts: []
                         };
                     }
                     
@@ -656,15 +693,13 @@
                     }
                 });
                 
-                // ترتيب تنازلي حسب التاريخ
                 allDebts = debts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 
                 updateSummary();
                 filterDebtors();
-                renderDebtsHistory(debts.slice(0, 20));
+                renderDebtsHistory(debts.slice(0, 50));
             });
             
-            // Start clock
             updateClock();
             setInterval(updateClock, 1000);
         }
@@ -706,7 +741,6 @@
         window.setFilter = function(filter) {
             currentFilter = filter;
             
-            // تحديث الأزرار
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 if (btn.dataset.filter === filter) {
                     btn.className = 'filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-amber-500 text-white';
@@ -721,21 +755,17 @@
         window.filterDebtors = function() {
             const searchQuery = document.getElementById('searchDebtor').value.toLowerCase().trim();
             
-            // تصفية حسب البحث والفلتر
             const filtered = Object.entries(debtorsSummary).filter(([name, summary]) => {
-                // البحث بالاسم
                 if (searchQuery && !name.toLowerCase().includes(searchQuery)) {
                     return false;
                 }
                 
-                // الفلتر
                 if (currentFilter === 'pending' && summary.pending <= 0) return false;
                 if (currentFilter === 'paid' && summary.paid <= 0) return false;
                 
                 return true;
             });
             
-            // ترتيب حسب المبلغ المستحق (تنازلي)
             filtered.sort((a, b) => b[1].pending - a[1].pending);
             
             renderDebtorsList(filtered);
@@ -743,6 +773,7 @@
 
         function renderDebtorsList(debtors) {
             const container = document.getElementById('debtorsList');
+            const searchQuery = document.getElementById('searchDebtor').value.toLowerCase().trim();
             document.getElementById('showingCount').textContent = `عرض ${debtors.length} زبون`;
             
             if (debtors.length === 0) {
@@ -761,13 +792,18 @@
                 const statusText = hasPending ? 'مستحق' : 'مسدد';
                 const amount = hasPending ? summary.pending : summary.paid;
                 
+                // تمييز الاسم المبحوث عنه
+                const displayName = searchQuery 
+                    ? name.replace(new RegExp(`(${searchQuery})`, 'gi'), '<span class="search-highlight">$1</span>')
+                    : name;
+                
                 return `
-                    <div class="debtor-card bg-white rounded-xl p-4 border border-slate-200 shadow-sm cursor-pointer" onclick="showDebtorDetails('${name}')">
+                    <div class="debtor-card bg-white rounded-xl p-4 border border-slate-200 shadow-sm cursor-pointer" onclick="showCustomerDetails('${name}')">
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex items-center gap-2">
                                 <span class="text-2xl">👤</span>
                                 <div>
-                                    <div class="font-bold text-slate-800">${name}</div>
+                                    <div class="font-bold text-slate-800">${displayName}</div>
                                     <div class="text-xs text-slate-500">${summary.count} عملية</div>
                                 </div>
                             </div>
@@ -796,46 +832,95 @@
             }).join('');
         }
 
-        function renderDebtsHistory(debts) {
+        // ==========================================
+        // سجل الديون - البحث والفلترة
+        // ==========================================
+        
+        window.filterHistory = function() {
+            const searchQuery = document.getElementById('searchHistory').value.toLowerCase().trim();
+            renderDebtsHistory(allDebts, searchQuery);
+        };
+
+        function renderDebtsHistory(debts, searchQuery = '') {
             const container = document.getElementById('debtsHistory');
             
-            if (debts.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد عمليات</div>';
+            // تصفية حسب البحث
+            let filteredDebts = debts;
+            if (searchQuery) {
+                filteredDebts = debts.filter(d => 
+                    d.customer.toLowerCase().includes(searchQuery) ||
+                    (d.note && d.note.toLowerCase().includes(searchQuery)) ||
+                    (d.dept && d.dept.toLowerCase().includes(searchQuery))
+                );
+            }
+            
+            if (filteredDebts.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد عمليات مطابقة</div>';
                 return;
             }
             
-            container.innerHTML = debts.map(debt => {
-                const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
-                const time = debt.createdAt ? new Date(debt.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+            // تجميع حسب الزبون إذا كان هناك بحث
+            if (searchQuery) {
+                const grouped = filteredDebts.reduce((acc, debt) => {
+                    if (!acc[debt.customer]) acc[debt.customer] = [];
+                    acc[debt.customer].push(debt);
+                    return acc;
+                }, {});
                 
-                const isPaid = debt.status === 'paid';
-                const statusClass = isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
-                const icon = isPaid ? '✅' : '📝';
-                const amountText = isPaid ? formatNumber(debt.originalAmount || debt.amount) : formatNumber(debt.amount);
-                
-                // عرض المدفوعات الجزئية إن وجدت
-                let partialInfo = '';
-                if (!isPaid && debt.partialPayment > 0) {
-                    partialInfo = `<div class="text-xs text-emerald-600 mt-1">مدفوع جزئياً: ${formatNumber(debt.partialPayment)} ج</div>`;
-                }
-                
-                return `
-                    <div class="flex justify-between items-center p-3 rounded-xl ${statusClass} border border-slate-100 relative ${isPaid ? 'paid' : ''}">
-                        <div class="flex items-center gap-2 flex-1">
-                            <span>${icon}</span>
-                            <div class="flex-1">
-                                <div class="font-semibold text-sm">${debt.customer}</div>
-                                <div class="text-xs opacity-75">${debt.dept || debt.note || 'دين'}</div>
-                                <div class="text-xs opacity-50">${date} ${time}</div>
-                                ${partialInfo}
+                container.innerHTML = Object.entries(grouped).map(([customer, customerDebts]) => {
+                    const totalPending = customerDebts.filter(d => d.status === 'pending').reduce((sum, d) => sum + d.amount, 0);
+                    const totalPaid = customerDebts.filter(d => d.status === 'paid').length;
+                    
+                    return `
+                        <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 mb-3">
+                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-200">
+                                <div class="font-bold text-slate-800">👤 ${customer}</div>
+                                <div class="text-sm ${totalPending > 0 ? 'text-amber-600' : 'text-emerald-600'} font-bold">
+                                    ${totalPending > 0 ? `مستحق: ${formatNumber(totalPending)} ج` : 'مسدد بالكامل ✅'}
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                ${customerDebts.map(debt => renderDebtItem(debt)).join('')}
                             </div>
                         </div>
-                        <div class="text-left font-bold">
-                            ${amountText}
+                    `;
+                }).join('');
+            } else {
+                // عرض عادي بدون تجميع
+                container.innerHTML = filteredDebts.map(debt => renderDebtItem(debt)).join('');
+            }
+        }
+
+        function renderDebtItem(debt) {
+            const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
+            const time = debt.createdAt ? new Date(debt.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+            
+            const isPaid = debt.status === 'paid';
+            const statusClass = isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
+            const icon = isPaid ? '✅' : '📝';
+            const amountText = isPaid ? formatNumber(debt.originalAmount || debt.amount) : formatNumber(debt.amount);
+            
+            let partialInfo = '';
+            if (!isPaid && debt.partialPayment > 0) {
+                partialInfo = `<div class="text-xs text-emerald-600 mt-1">مدفوع جزئياً: ${formatNumber(debt.partialPayment)} ج</div>`;
+            }
+            
+            return `
+                <div class="flex justify-between items-center p-3 rounded-xl ${statusClass} border border-slate-100 relative ${isPaid ? 'paid' : ''}">
+                    <div class="flex items-center gap-2 flex-1">
+                        <span>${icon}</span>
+                        <div class="flex-1">
+                            <div class="font-semibold text-sm">${debt.customer}</div>
+                            <div class="text-xs opacity-75">${debt.dept || debt.note || 'دين'}</div>
+                            <div class="text-xs opacity-50">${date} ${time}</div>
+                            ${partialInfo}
                         </div>
                     </div>
-                `;
-            }).join('');
+                    <div class="text-left font-bold">
+                        ${amountText}
+                    </div>
+                </div>
+            `;
         }
 
         // ==========================================
@@ -874,341 +959,464 @@
             }
         };
 
+        // ==========================================
+        // إصلاح منطق اختيار طريقة التسديد
+        // ==========================================
         window.selectRepayMethod = function(btn) {
+            const value = btn.dataset.value;
+            const isCash = value === 'كاش';
+            
+            // إزالة جميع الفئات النشطة من الأزرار
             document.querySelectorAll('.repay-method-btn').forEach(b => {
                 b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
                 b.classList.add('border-slate-200');
+                
+                // إعادة تعيين النص
+                const textDiv = b.querySelector('div');
+                if (b.dataset.value === 'كاش') {
+                    textDiv.className = 'text-sm mt-1 font-semibold text-slate-600';
+                } else {
+                    textDiv.className = 'text-sm mt-1 font-semibold text-slate-600';
+                }
             });
-            const isCash = btn.dataset.value === 'كاش';
+            
+            // إضافة الفئات النشطة للزر المحدد
             btn.classList.remove('border-slate-200');
-            btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
-            document.getElementById('repayMethod').value = btn.dataset.value;
+            
+            if (isCash) {
+                btn.classList.add('border-emerald-500', 'bg-emerald-50');
+                btn.querySelector('div').className = 'text-sm mt-1 font-semibold text-emerald-700';
+            } else {
+                btn.classList.add('border-blue-500', 'bg-blue-50');
+                btn.querySelector('div').className = 'text-sm mt-1 font-semibold text-blue-700';
+            }
+            
+            // تحديث القيمة المخفية
+            document.getElementById('repayMethod').value = value;
+            
+            console.log('تم اختيار طريقة التسديد:', value); // للتصحيح
         };
 
         // ==========================================
-        // DEBT OPERATIONS - التسديد العام
+        // تفاصيل الزبون - نافذة منبثقة محسنة
         // ==========================================
         
-        window.openRepayModal = function(customerName) {
-            document.getElementById('repayCustomerName').textContent = customerName;
-            
-            // جلب جميع الديون المستحقة لهذا الزبون وترتيبها حسب الأقدمية (FIFO)
-            currentCustomerDebts = allDebts
-                .filter(d => d.customer === customerName && d.status === 'pending')
-                .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); // الأقدم أولاً
-            
-            if (currentCustomerDebts.length === 0) {
-                showWarning('لا توجد ديون مستحقة لهذا الزبون');
-                return;
-            }
-            
-            // حساب المجموع الكلي
-            const totalPending = currentCustomerDebts.reduce((sum, d) => sum + d.amount, 0);
-            document.getElementById('repayTotalAmount').textContent = formatNumber(totalPending);
-            
-            // عرض قائمة الديون المفصلة
-            renderRepayDebtsList(currentCustomerDebts);
-            
-            // تعبئة المبلغ تلقائياً بالمجموع الكلي
-            document.getElementById('repayAmount').value = formatNumber(totalPending);
-            validateRepayAmount();
-            
-            openModal('repay');
-        };
-
-        function renderRepayDebtsList(debts) {
-            const container = document.getElementById('repayDebtsList');
-            
-            container.innerHTML = debts.map((debt, index) => {
-                const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
-                const original = debt.originalAmount || debt.amount;
-                const remaining = debt.amount;
-                const paid = debt.partialPayment || 0;
-                
-                return `
-                    <div class="debt-item bg-white rounded-lg p-2 border border-slate-200 text-sm relative" id="repay-debt-item-${debt.id}">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span class="font-bold text-slate-700">${index + 1}.</span>
-                                <span class="text-slate-600">${date}</span>
-                            </div>
-                            <div class="text-amber-600 font-bold">${formatNumber(remaining)} ج</div>
-                        </div>
-                        ${paid > 0 ? `<div class="text-xs text-emerald-600">مدفوع سابقاً: ${formatNumber(paid)} من أصل ${formatNumber(original)}</div>` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-
-        window.validateRepayAmount = function() {
-            const input = document.getElementById('repayAmount');
-            const validation = document.getElementById('repayValidation');
-            const submitBtn = document.getElementById('repaySubmitBtn');
-            
-            const amount = parseFormattedNumber('repayAmount');
-            const totalPending = currentCustomerDebts.reduce((sum, d) => sum + d.amount, 0);
-            
-            if (amount <= 0) {
-                validation.textContent = 'المبلغ يجب أن يكون أكبر من صفر';
-                validation.className = 'text-xs mt-1 text-center text-red-500';
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50');
-            } else if (amount > totalPending) {
-                validation.textContent = `المبلغ يتجاوز المستحق (${formatNumber(totalPending)} ج)`;
-                validation.className = 'text-xs mt-1 text-center text-red-500';
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50');
-            } else {
-                const remaining = totalPending - amount;
-                if (remaining === 0) {
-                    validation.textContent = 'سيتم تسديد المبلغ كاملاً ✅';
-                    validation.className = 'text-xs mt-1 text-center text-emerald-600 font-bold';
-                } else {
-                    validation.textContent = `المتبقي بعد التسديد: ${formatNumber(remaining)} ج`;
-                    validation.className = 'text-xs mt-1 text-center text-amber-600';
-                }
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50');
-            }
-        };
-
-        // ==========================================
-        // الإصلاح الرئيسي: تسديد عام من المجموع الكلي
-        // ==========================================
-        window.handleRepaySubmit = async function(e) {
-            e.preventDefault();
-            
-            const customer = document.getElementById('repayCustomerName').textContent;
-            const amount = parseFormattedNumber('repayAmount');
-            const method = document.getElementById('repayMethod').value;
-            const note = document.getElementById('repayNote').value;
-            
-            // التحقق من المبلغ
-            const totalPending = currentCustomerDebts.reduce((sum, d) => sum + d.amount, 0);
-            
-            if (amount <= 0) {
-                showWarning('المبلغ يجب أن يكون أكبر من صفر');
-                return;
-            }
-            
-            if (amount > totalPending) {
-                showWarning('المبلغ المسدد أكبر من المجموع المستحق!');
-                return;
-            }
-            
-            const timestamp = Date.now();
-            const uid = Date.now().toString(36).toUpperCase().slice(-6);
-            
-            // تحديث الرصيد
-            const balanceUpdate = {};
-            if (method === 'كاش') {
-                balanceUpdate.cash = balances.cash + amount;
-            } else {
-                balanceUpdate.bank = balances.bank + amount;
-            }
-            
-            // توزيع المبلغ على الديون حسب FIFO (الأقدم أولاً)
-            let remainingAmount = amount;
-            const debtsToUpdate = [];
-            const fullyPaidDebts = []; // لتتبع الديون المسددة بالكامل لوضع ✅
-            
-            for (const debt of currentCustomerDebts) {
-                if (remainingAmount <= 0) break;
-                
-                const debtRemaining = debt.amount;
-                const paymentForThisDebt = Math.min(remainingAmount, debtRemaining);
-                const newRemaining = debtRemaining - paymentForThisDebt;
-                const previousPartial = debt.partialPayment || 0;
-                const totalPaidForDebt = previousPartial + paymentForThisDebt;
-                const originalAmount = debt.originalAmount || debtRemaining;
-                
-                if (newRemaining === 0) {
-                    // تسديد كامل لهذا الدين
-                    debtsToUpdate.push({
-                        id: debt.id,
-                        updates: {
-                            status: 'paid',
-                            paidAt: timestamp,
-                            paidAmount: totalPaidForDebt,
-                            paidMethod: method,
-                            paidNote: note || null,
-                            remaining: 0,
-                            amount: 0,
-                            originalAmount: originalAmount,
-                            partialPayment: totalPaidForDebt,
-                            finalPaymentAt: timestamp
-                        }
-                    });
-                    fullyPaidDebts.push(debt.id);
-                } else {
-                    // تسديد جزئي
-                    debtsToUpdate.push({
-                        id: debt.id,
-                        updates: {
-                            amount: newRemaining,
-                            originalAmount: originalAmount,
-                            partialPayment: totalPaidForDebt,
-                            lastPaymentAt: timestamp,
-                            status: 'pending',
-                            lastPaymentMethod: method,
-                            lastPaymentNote: note || 'سداد جزئي'
-                        }
-                    });
-                }
-                
-                // إضافة سجل الدفع لهذا الدين
-                await push(ref(database, `debts/${debt.id}/payments`), {
-                    amount: paymentForThisDebt,
-                    method: method,
-                    date: timestamp,
-                    note: note || (newRemaining === 0 ? 'سداد كامل' : 'سداد جزئي'),
-                    remainingAfter: newRemaining
-                });
-                
-                remainingAmount -= paymentForThisDebt;
-            }
-            
-            // تنفيذ جميع التحديثات في معاملة واحدة
-            const updates = {};
-            
-            // 1. تحديث الرصيد
-            updates['balances'] = balanceUpdate;
-            
-            // 2. تحديث الديون
-            debtsToUpdate.forEach(({ id, updates: debtUpdates }) => {
-                Object.entries(debtUpdates).forEach(([key, value]) => {
-                    updates[`debts/${id}/${key}`] = value;
-                });
-            });
-            
-            // 3. تسجيل العملية الرئيسية
-            const transactionRef = push(ref(database, 'transactions'));
-            updates[`transactions/${transactionRef.key}`] = {
-                type: amount === totalPending ? 'debt_full_repayment' : 'debt_partial_repayment',
-                title: amount === totalPending ? `تسديد كامل - ${customer}` : `تسديد جزئي - ${customer}`,
-                amount: amount,
-                timestamp,
-                uid,
-                payment: method,
-                customer,
-                note: note || (amount === totalPending ? 'تسديد كامل للمجموع' : 'تسديد جزئي من المجموع'),
-                totalPending,
-                remainingAfter: totalPending - amount,
-                affectedDebts: debtsToUpdate.map(d => d.id),
-                fullyPaidDebts: fullyPaidDebts
-            };
-            
-            await update(ref(database), updates);
-            
-            // رسالة النجاح
-            if (amount === totalPending) {
-                showSuccess(`تم تسديد جميع ديون ${customer} بالكامل بمبلغ ${formatNumber(amount)} جنيه ✅`);
-            } else {
-                showSuccess(`تم تسديد ${formatNumber(amount)} ج من ديون ${customer}، المتبقي: ${formatNumber(totalPending - amount)} ج`);
-            }
-            
-            closeModal('repay');
-        };
-
-        window.handleAddDebtSubmit = async function(e) {
-            e.preventDefault();
-            
-            const customer = document.getElementById('newDebtCustomer').value.trim();
-            const amount = parseFormattedNumber('newDebtAmount');
-            const reason = document.getElementById('newDebtReason').value;
-            
-            if (!customer) {
-                showWarning('الرجاء إدخال اسم الزبون');
-                return;
-            }
-            
-            if (amount <= 0) {
-                showWarning('المبلغ يجب أن يكون أكبر من صفر');
-                return;
-            }
-            
-            const timestamp = Date.now();
-            const uid = Date.now().toString(36).toUpperCase().slice(-6);
-            
-            await push(ref(database, 'debts'), {
-                type: 'manual',
-                customer,
-                amount: amount,
-                originalAmount: amount,
-                note: reason || 'دين يدوي',
-                status: 'pending',
-                createdAt: timestamp,
-                uid,
-                partialPayment: 0,
-                payments: {}
-            });
-            
-            closeModal('addDebt');
-            showSuccess(`تم إضافة دين ${customer} بمبلغ ${formatNumber(amount)} جنيه`);
-        };
-
-        window.showDebtorDetails = function(name) {
-            const summary = debtorsSummary[name];
+        window.showCustomerDetails = function(customerName) {
+            currentCustomerName = customerName;
+            const summary = debtorsSummary[customerName];
             if (!summary) return;
             
-            const debts = allDebts.filter(d => d.customer === name).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            const debts = allDebts.filter(d => d.customer === customerName).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             
-            let details = `👤 ${name}\n\n`;
-            details += `إجمالي الديون: ${formatNumber(summary.total)} ج\n`;
-            details += `المستحق: ${formatNumber(summary.pending)} ج\n`;
-            details += `المسدد: ${formatNumber(summary.paid)} ج\n\n`;
-            details += `العمليات (${debts.length}):\n`;
+            document.getElementById('detailsCustomerName').textContent = `👤 ${customerName}`;
             
-            debts.forEach((d, index) => {
-                const date = d.createdAt ? new Date(d.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
-                const status = d.status === 'paid' ? '✅ مسدد' : '📝 مستحق';
-                const currentAmount = d.status === 'paid' ? (d.originalAmount || d.amount) : d.amount;
-                details += `${index + 1}. ${date}: ${formatNumber(currentAmount)} ج (${status})\n`;
-                if (d.partialPayment > 0 && d.status === 'pending') {
-                    details += `   ↳ مدفوع: ${formatNumber(d.partialPayment)} ج، متبقي: ${formatNumber(d.amount)} ج\n`;
-                }
-            });
+            const content = document.getElementById('customerDetailsContent');
             
-            alert(details);
-        };
-
-        window.exportDebts = function() {
-            const headers = ['الرقم', 'التاريخ', 'الزبون', 'المبلغ الأصلي', 'المدفوع', 'المتبقي', 'الحالة', 'القسم', 'الملاحظة'];
-            const rows = allDebts.map(d => {
-                const original = d.originalAmount || d.amount;
-                const paid = d.partialPayment || 0;
-                const remaining = d.status === 'paid' ? 0 : d.amount;
+            // ملخص الحساب
+            const totalPending = summary.pending;
+            const totalPaid = summary.paid;
+            const totalOriginal = summary.total;
+            
+            content.innerHTML = `
+                <div class="bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-white rounded-lg p-2 shadow-sm">
+                            <div class="text-xs text-slate-500 mb-1">إجمالي الديون</div>
+                            <div class="text-lg font-bold text-slate-700">${formatNumber(totalOriginal)} ج</div>
+                        </div>
+                        <div class="bg-amber-50 rounded-lg p-2 shadow-sm border border-amber-200">
+                            <div class="text-xs text-amber-600 mb-1">المستحق</div>
+                            <div class="text-lg font-bold text-amber-700">${formatNumber(totalPending)} ج</div>
+                        </div>
+                        <div class="bg-emerald-50 rounded-lg p-2 shadow-sm border border-emerald-200">
+                            <div class="text-xs text-emerald-600 mb-1">المسدد</div>
+                            <div class="text-lg font-bold text-emerald-700">${formatNumber(totalPaid)} ج</div>
+                        </div>
+                    </div>
+                </div>
                 
-                return [
-                    d.operationNumber || d.uid || d.id.slice(-6),
-                    d.createdAt ? new Date(d.createdAt).toLocaleDateString('ar-SA') : '',
-                    d.customer,
-                    original,
-                    paid,
-                    remaining,
-                    d.status === 'paid' ? 'مسدد' : 'مستحق',
-                    d.dept || '-',
-                    d.note || ''
-                ];
-            });
-            
-            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `ديون_الزبائن_${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
-        };
+                <div class="mt-4">
+                    <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                        <span>📋</span>
+                        <span>سجل العمليات (${debts.length})</span>
+                    </h3>
+                    <div class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
+                        ${debts.map((debt, index) => {
+                            const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
+                            const time = debt.createdAt ? new Date(debt.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                            const isPaid = debt.status === 'paid';
+                            
+                            return `
+                                <div class="bg-white rounded-lg p-3 border ${isPaid ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200'} relative">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <div class="font-bold text-slate-800 mb-1">
+n                                                ${isPaid ? '✅ ' : '📝 '}
+n                                                ${debt.note || debt.dept || 'دين'}
+n                                            </div>
+n                                            <div class="text-xs text-slate-500">${date} ${time}</div>
+n                                            ${debt.paidAt ? `<div class="text-xs text-emerald-600 mt-1">تم التسديد: ${new Date(debt.paidAt).toLocaleDateString('ar-SA')}</div>` : ''}
+n                                        </div>
+n                                        <div class="text-left">
+n                                            <div class="text-lg font-bold ${isPaid ? 'text-emerald-600' : 'text-amber-600'}">
+n                                                ${formatNumber(isPaid ? (debt.originalAmount || debt.amount) : debt.amount)} ج
+n                                            </div>
+n                                            ${!isPaid && debt.partialPayment > 0 ? `<div class="text-xs text-emerald-600">مدفوع: ${formatNumber(debt.partialPayment)}</div>` : ''}
+n                                        </div>
+n                                    </div>
+n                                </div>
+n                            `;
+n                        }).join('')}
+n                    </div>
+n                </div>
+n            `;
+n            
+n            openModal('customerDetails');
+n        };
 
-        // Close modals on outside click
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    const type = this.id.replace('Modal', '');
-                    closeModal(type);
-                }
-            });
-        });
-    </script>
+n        window.closeCustomerDetails = function() {
+n            closeModal('customerDetails');
+n        };
+
+n        window.printCustomerDetails = function() {
+n            window.print();
+n        };
+
+n        window.exportCustomerDetails = function() {
+n            const summary = debtorsSummary[currentCustomerName];
+n            const debts = allDebts.filter(d => d.customer === currentCustomerName);
+n            
+n            let csvContent = `تقرير ديون الزبون: ${currentCustomerName}\n`;
+n            csvContent += `تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}\n\n`;
+n            csvContent += `الإجمالي,المستحق,المسدد\n`;
+n            csvContent += `${summary.total},${summary.pending},${summary.paid}\n\n`;
+n            csvContent += `التاريخ,البيان,المبلغ,الحالة,ملاحظات\n`;
+n            
+n            debts.forEach(d => {
+n                const date = d.createdAt ? new Date(d.createdAt).toLocaleDateString('ar-SA') : '';
+n                const status = d.status === 'paid' ? 'مسدد' : 'مستحق';
+n                const amount = d.status === 'paid' ? (d.originalAmount || d.amount) : d.amount;
+n                csvContent += `${date},${d.note || d.dept || 'دين'},${amount},${status},${d.paidNote || ''}\n`;
+n            });
+n            
+n            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+n            const link = document.createElement('a');
+n            link.href = URL.createObjectURL(blob);
+n            link.download = `تقرير_${currentCustomerName}_${new Date().toISOString().split('T')[0]}.csv`;
+n            link.click();
+n        };
+
+n        // ==========================================
+n        // DEBT OPERATIONS - التسديد العام
+n        // ==========================================
+n        
+n        window.openRepayModal = function(customerName) {
+n            currentCustomerName = customerName;
+n            document.getElementById('repayCustomerName').textContent = customerName;
+n            
+n            // جلب جميع الديون المستحقة وترتيبها حسب الأقدمية
+n            currentCustomerDebts = allDebts
+n                .filter(d => d.customer === customerName && d.status === 'pending')
+n                .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+n            
+n            if (currentCustomerDebts.length === 0) {
+n                showWarning('لا توجد ديون مستحقة لهذا الزبون');
+n                return;
+n            }
+n            
+n            // حساب المجموع الكلي
+n            const totalPending = currentCustomerDebts.reduce((sum, d) => sum + d.amount, 0);
+n            document.getElementById('repayTotalAmount').textContent = formatNumber(totalPending);
+n            
+n            // عرض قائمة الديون
+n            renderRepayDebtsList(currentCustomerDebts);
+n            
+n            // تعبئة المبلغ تلقائياً
+n            document.getElementById('repayAmount').value = formatNumber(totalPending);
+n            
+n            // إعادة تعيين طريقة التسديد إلى كاش
+n            selectRepayMethod(document.getElementById('btnCash'));
+n            
+n            validateRepayAmount();
+n            openModal('repay');
+n        };
+
+n        function renderRepayDebtsList(debts) {
+n            const container = document.getElementById('repayDebtsList');
+n            
+n            container.innerHTML = debts.map((debt, index) => {
+n                const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
+n                const original = debt.originalAmount || debt.amount;
+n                const remaining = debt.amount;
+n                const paid = debt.partialPayment || 0;
+n                
+n                return `
+n                    <div class="debt-item bg-white rounded-lg p-2 border border-slate-200 text-sm relative" id="repay-debt-item-${debt.id}">
+n                        <div class="flex justify-between items-center">
+n                            <div>
+n                                <span class="font-bold text-slate-700">${index + 1}.</span>
+n                                <span class="text-slate-600">${date}</span>
+n                            </div>
+n                            <div class="text-amber-600 font-bold">${formatNumber(remaining)} ج</div>
+n                        </div>
+n                        ${paid > 0 ? `<div class="text-xs text-emerald-600">مدفوع سابقاً: ${formatNumber(paid)} من أصل ${formatNumber(original)}</div>` : ''}
+n                    </div>
+n                `;
+n            }).join('');
+n        }
+
+n        window.validateRepayAmount = function() {
+n            const input = document.getElementById('repayAmount');
+n            const validation = document.getElementById('repayValidation');
+n            const submitBtn = document.getElementById('repaySubmitBtn');
+n            
+n            const amount = parseFormattedNumber('repayAmount');
+n            const totalPending = currentCustomerDebts.reduce((sum, d) => sum + d.amount, 0);
+n            
+n            if (amount <= 0) {
+n                validation.textContent = 'المبلغ يجب أن يكون أكبر من صفر';
+n                validation.className = 'text-xs mt-1 text-center text-red-500';
+n                submitBtn.disabled = true;
+n                submitBtn.classList.add('opacity-50');
+n            } else if (amount > totalPending) {
+n                validation.textContent = `المبلغ يتجاوز المستحق (${formatNumber(totalPending)} ج)`;
+n                validation.className = 'text-xs mt-1 text-center text-red-500';
+n                submitBtn.disabled = true;
+n                submitBtn.classList.add('opacity-50');
+n            } else {
+n                const remaining = totalPending - amount;
+n                if (remaining === 0) {
+n                    validation.textContent = 'سيتم تسديد المبلغ كاملاً ✅';
+n                    validation.className = 'text-xs mt-1 text-center text-emerald-600 font-bold';
+n                } else {
+n                    validation.textContent = `المتبقي بعد التسديد: ${formatNumber(remaining)} ج`;
+n                    validation.className = 'text-xs mt-1 text-center text-amber-600';
+n                }
+n                submitBtn.disabled = false;
+n                submitBtn.classList.remove('opacity-50');
+n            }
+n        };
+
+n        // ==========================================
+n        // معالجة التسديد - الإصلاح الرئيسي
+n        // ==========================================
+n        window.handleRepaySubmit = async function(e) {
+n            e.preventDefault();
+n            
+n            const customer = document.getElementById('repayCustomerName').textContent;
+n            const amount = parseFormattedNumber('repayAmount');
+n            const method = document.getElementById('repayMethod').value;
+n            const note = document.getElementById('repayNote').value;
+n            
+n            console.log('بدء عملية التسديد:', { customer, amount, method, note }); // للتصحيح
+n            
+n            const totalPending = currentCustomerDebts.reduce((sum, d) => sum + d.amount, 0);
+n            
+n            if (amount <= 0) {
+n                showWarning('المبلغ يجب أن يكون أكبر من صفر');
+n                return;
+n            }
+n            
+n            if (amount > totalPending) {
+n                showWarning('المبلغ المسدد أكبر من المجموع المستحق!');
+n                return;
+n            }
+n            
+n            const timestamp = Date.now();
+n            const uid = Date.now().toString(36).toUpperCase().slice(-6);
+n            
+n            // تحديث الرصيد - إصلاح هنا
+n            const balanceUpdate = {};
+n            if (method === 'كاش') {
+n                balanceUpdate.cash = (balances.cash || 0) + amount;
+n                console.log('تحديث رصيد الكاش:', balanceUpdate.cash); // للتصحيح
+n            } else {
+n                balanceUpdate.bank = (balances.bank || 0) + amount;
+n                console.log('تحديث رصيد البنك:', balanceUpdate.bank); // للتصحيح
+n            }
+n            
+n            // توزيع المبلغ على الديون حسب FIFO
+n            let remainingAmount = amount;
+n            const debtsToUpdate = [];
+n            const fullyPaidDebts = [];
+n            
+n            for (const debt of currentCustomerDebts) {
+n                if (remainingAmount <= 0) break;
+n                
+n                const debtRemaining = debt.amount;
+n                const paymentForThisDebt = Math.min(remainingAmount, debtRemaining);
+n                const newRemaining = debtRemaining - paymentForThisDebt;
+n                const previousPartial = debt.partialPayment || 0;
+n                const totalPaidForDebt = previousPartial + paymentForThisDebt;
+n                const originalAmount = debt.originalAmount || debtRemaining;
+n                
+n                if (newRemaining === 0) {
+n                    // تسديد كامل
+n                    debtsToUpdate.push({
+n                        id: debt.id,
+n                        updates: {
+n                            status: 'paid',
+n                            paidAt: timestamp,
+n                            paidAmount: totalPaidForDebt,
+n                            paidMethod: method,
+n                            paidNote: note || null,
+n                            remaining: 0,
+n                            amount: 0,
+n                            originalAmount: originalAmount,
+n                            partialPayment: totalPaidForDebt,
+n                            finalPaymentAt: timestamp
+n                        }
+n                    });
+n                    fullyPaidDebts.push(debt.id);
+n                } else {
+n                    // تسديد جزئي
+n                    debtsToUpdate.push({
+n                        id: debt.id,
+n                        updates: {
+n                            amount: newRemaining,
+n                            originalAmount: originalAmount,
+n                            partialPayment: totalPaidForDebt,
+n                            lastPaymentAt: timestamp,
+n                            status: 'pending',
+n                            lastPaymentMethod: method,
+n                            lastPaymentNote: note || 'سداد جزئي'
+n                        }
+n                    });
+n                }
+n                
+n                // إضافة سجل الدفع
+n                await push(ref(database, `debts/${debt.id}/payments`), {
+n                    amount: paymentForThisDebt,
+n                    method: method,
+n                    date: timestamp,
+n                    note: note || (newRemaining === 0 ? 'سداد كامل' : 'سداد جزئي'),
+n                    remainingAfter: newRemaining
+n                });
+n                
+n                remainingAmount -= paymentForThisDebt;
+n            }
+n            
+n            // تنفيذ جميع التحديثات
+n            const updates = {};
+n            
+n            // 1. تحديث الرصيد
+n            updates['balances'] = balanceUpdate;
+n            
+n            // 2. تحديث الديون
+n            debtsToUpdate.forEach(({ id, updates: debtUpdates }) => {
+n                Object.entries(debtUpdates).forEach(([key, value]) => {
+n                    updates[`debts/${id}/${key}`] = value;
+n                });
+n            });
+n            
+n            // 3. تسجيل العملية
+n            const transactionRef = push(ref(database, 'transactions'));
+n            updates[`transactions/${transactionRef.key}`] = {
+n                type: amount === totalPending ? 'debt_full_repayment' : 'debt_partial_repayment',
+n                title: amount === totalPending ? `تسديد كامل - ${customer}` : `تسديد جزئي - ${customer}`,
+n                amount: amount,
+n                timestamp,
+n                uid,
+n                payment: method,
+n                customer,
+n                note: note || (amount === totalPending ? 'تسديد كامل للمجموع' : 'تسديد جزئي من المجموع'),
+n                totalPending,
+n                remainingAfter: totalPending - amount,
+n                affectedDebts: debtsToUpdate.map(d => d.id),
+n                fullyPaidDebts: fullyPaidDebts
+n            };
+n            
+n            try {
+n                await update(ref(database), updates);
+n                console.log('تم التسديد بنجاح'); // للتصحيح
+                
+n                if (amount === totalPending) {
+n                    showSuccess(`تم تسديد جميع ديون ${customer} بالكامل بمبلغ ${formatNumber(amount)} جنيه ✅`);
+n                } else {
+n                    showSuccess(`تم تسديد ${formatNumber(amount)} ج من ديون ${customer}، المتبقي: ${formatNumber(totalPending - amount)} ج`);
+n                }
+n                
+n                closeModal('repay');
+n            } catch (error) {
+n                console.error('خطأ في التسديد:', error);
+n                showWarning('حدث خطأ أثناء التسديد، يرجى المحاولة مرة أخرى');
+n            }
+n        };
+
+n        window.handleAddDebtSubmit = async function(e) {
+n            e.preventDefault();
+n            
+n            const customer = document.getElementById('newDebtCustomer').value.trim();
+n            const amount = parseFormattedNumber('newDebtAmount');
+n            const reason = document.getElementById('newDebtReason').value;
+n            
+n            if (!customer) {
+n                showWarning('الرجاء إدخال اسم الزبون');
+n                return;
+n            }
+n            
+n            if (amount <= 0) {
+n                showWarning('المبلغ يجب أن يكون أكبر من صفر');
+n                return;
+n            }
+n            
+n            const timestamp = Date.now();
+n            const uid = Date.now().toString(36).toUpperCase().slice(-6);
+n            
+n            await push(ref(database, 'debts'), {
+n                type: 'manual',
+n                customer,
+n                amount: amount,
+n                originalAmount: amount,
+n                note: reason || 'دين يدوي',
+n                status: 'pending',
+n                createdAt: timestamp,
+n                uid,
+n                partialPayment: 0,
+n                payments: {}
+n            });
+n            
+n            closeModal('addDebt');
+n            showSuccess(`تم إضافة دين ${customer} بمبلغ ${formatNumber(amount)} جنيه`);
+n        };
+
+n        window.exportDebts = function() {
+n            const headers = ['الرقم', 'التاريخ', 'الزبون', 'المبلغ الأصلي', 'المدفوع', 'المتبقي', 'الحالة', 'القسم', 'الملاحظة'];
+n            const rows = allDebts.map(d => {
+n                const original = d.originalAmount || d.amount;
+n                const paid = d.partialPayment || 0;
+n                const remaining = d.status === 'paid' ? 0 : d.amount;
+n                
+n                return [
+n                    d.operationNumber || d.uid || d.id.slice(-6),
+n                    d.createdAt ? new Date(d.createdAt).toLocaleDateString('ar-SA') : '',
+n                    d.customer,
+n                    original,
+n                    paid,
+n                    remaining,
+n                    d.status === 'paid' ? 'مسدد' : 'مستحق',
+n                    d.dept || '-',
+n                    d.note || ''
+n                ];
+n            });
+n            
+n            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+n            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+n            const link = document.createElement('a');
+n            link.href = URL.createObjectURL(blob);
+n            link.download = `ديون_الزبائن_${new Date().toISOString().split('T')[0]}.csv`;
+n            link.click();
+n        };
+
+n        // Close modals on outside click
+n        document.querySelectorAll('.modal').forEach(modal => {
+n            modal.addEventListener('click', function(e) {
+n                if (e.target === this) {
+n                    const type = this.id.replace('Modal', '');
+n                    closeModal(type);
+n                }
+n            });
+n        });
+n    </script>
 </body>
 </html>
