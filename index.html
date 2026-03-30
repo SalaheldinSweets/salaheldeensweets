@@ -114,11 +114,6 @@
             transform: translateX(-50%) translateY(0);
         }
         
-        .warning-toast::before {
-            content: '⚠️ ';
-            font-size: 20px;
-        }
-        
         .operation-number {
             font-family: 'Courier New', monospace;
             font-weight: bold;
@@ -132,6 +127,19 @@
             border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
+        }
+
+        /* منع الضغط المتكرر */
+        .btn-disabled {
+            opacity: 0.6;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        /* تنسيق خاصم بنكك */
+        .bank-fee-row {
+            background: #fee2e2;
+            border-right: 3px solid #ef4444;
         }
     </style>
 </head>
@@ -384,6 +392,13 @@
                     <input type="hidden" id="salesPayment" value="كاش">
                 </div>
 
+                <!-- التاريخ والوقت (اختياري) -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري - الافتراضي الآن)</label>
+                    <input type="datetime-local" id="salesDateTime" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-emerald-500 focus:outline-none">
+                </div>
+
                 <!-- المبلغ -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المبلغ الإجمالي</label>
@@ -396,7 +411,7 @@
                     <div class="text-xs text-slate-400 mt-1">⚠️ أدخل المبلغ الكلي (وليس الصافي)</div>
                 </div>
 
-                <button type="submit" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">
+                <button type="submit" id="salesSubmitBtn" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">
                     ✅ تأكيد المبيعات
                 </button>
             </form>
@@ -460,6 +475,13 @@
                     <div class="text-xs text-amber-600 mt-1">⚠️ سيتم تسجيل هذا المبلغ كدين على هذا الشخص</div>
                 </div>
 
+                <!-- التاريخ والوقت -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري)</label>
+                    <input type="datetime-local" id="creditSalesDateTime" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-amber-500 focus:outline-none">
+                </div>
+
                 <!-- المبلغ -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المبلغ الإجمالي</label>
@@ -480,7 +502,7 @@
                         placeholder="مثال: فطيرة جبنة، عصير مانجو...">
                 </div>
 
-                <button type="submit" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
+                <button type="submit" id="creditSalesSubmitBtn" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
                     ✅ تأكيد البيع الآجل
                 </button>
             </form>
@@ -532,6 +554,14 @@
                     <input type="hidden" id="expensePayment" value="كاش">
                 </div>
 
+                <!-- تنبيه خصم بنكك -->
+                <div id="bankFeeWarning" class="hidden bg-red-50 border border-red-200 rounded-xl p-3 text-red-800 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span>⚠️</span>
+                        <span class="font-bold">سيتم خصم 60 جنيه إضافية كدمغة بنكك</span>
+                    </div>
+                </div>
+
                 <!-- المورد -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المورد / الطرف</label>
@@ -556,8 +586,16 @@
                         <option value="كهرباء">
                         <option value="ماء">
                         <option value="إيجار">
+                        <option value="عيش">
                     </datalist>
-                    <div class="text-xs text-slate-400 mt-1">💡 يتوحّد تلقائياً: "قرفة" = "قرفه"</div>
+                    <div class="text-xs text-slate-400 mt-1">💡 اكتب "عيش" للحصول على اقتراح "عيش"</div>
+                </div>
+
+                <!-- التاريخ والوقت -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري)</label>
+                    <input type="datetime-local" id="expenseDateTime" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-red-500 focus:outline-none">
                 </div>
 
                 <!-- المبلغ -->
@@ -569,6 +607,15 @@
                         oninput="formatNumberInput(this)"
                         onkeypress="return isNumberKey(event)"
                         required>
+                </div>
+
+                <!-- عرض الدمغة -->
+                <div id="bankFeeDisplay" class="hidden bg-red-50 rounded-xl p-3 border border-red-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-red-700 font-bold">💳 خصم بنكك (دمغة)</span>
+                        <span class="text-red-700 font-bold">60 جنيه</span>
+                    </div>
+                    <div class="text-xs text-red-600 mt-1">سيتم خصمها تلقائياً من رصيد البنك</div>
                 </div>
 
                 <!-- تحذير التكرار -->
@@ -647,6 +694,13 @@
                     <input type="hidden" id="transferTo" value="بنكك">
                 </div>
 
+                <!-- التاريخ والوقت -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري)</label>
+                    <input type="datetime-local" id="transferDateTime" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-amber-500 focus:outline-none">
+                </div>
+
                 <!-- المبلغ -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المبلغ</label>
@@ -664,7 +718,7 @@
                     <div>✓ تُطرح من حساب المتوقع في الدرج</div>
                 </div>
 
-                <button type="submit" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
+                <button type="submit" id="transferSubmitBtn" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
                     ✅ تأكيد التبديل المحايد
                 </button>
             </form>
@@ -713,6 +767,9 @@
         let operationCounter = 0;
         let currentDateKey = '';
 
+        // ثوابت النظام
+        const BANK_FEE = 60; // دمغة بنكك
+
         window.formatNumber = function(num) {
             if (num === null || num === undefined || isNaN(num)) return '0';
             return parseInt(num).toLocaleString('en-US');
@@ -749,13 +806,29 @@
             }, 3000);
         };
 
-        // الحصول على مفتاح اليوم (YYYY-MM-DD)
+        // الحصول على مفتاح اليوم (YYYY-MM-DD) - من 6ص إلى 6ص
         function getTodayKey() {
             const now = new Date();
+            const hours = now.getHours();
+            
+            // إذا كان الوقت قبل 6 صباحاً، نعتبره من اليوم السابق
+            if (hours < 6) {
+                now.setDate(now.getDate() - 1);
+            }
+            
             return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         }
 
-        // التحقق من إعادة التعيين اليومية (6:00 صباحاً)
+        // الحصول على التimestamp مع إمكانية التخصيص
+        function getTimestamp(inputId) {
+            const input = document.getElementById(inputId);
+            if (input && input.value) {
+                return new Date(input.value).getTime();
+            }
+            return Date.now();
+        }
+
+        // التحقق من إعادة التعييل اليومية (6:00 صباحاً)
         async function checkDailyReset() {
             const todayKey = getTodayKey();
             const lastResetKey = localStorage.getItem('lastResetDate');
@@ -820,7 +893,7 @@
             currentUser = user;
             document.getElementById('userEmail').textContent = '👤 ' + user.email;
             
-            // التحقق من إعادة التعيين عند بدء التطبيق
+            // التحقق من إعادة التعييل عند بدء التطبيق
             checkDailyReset().then(() => {
                 initApp();
             });
@@ -858,10 +931,13 @@
                     });
                 });
                 
-                // تصفية عمليات اليوم فقط
+                // تصفية عمليات اليوم فقط (من 6ص إلى 6ص)
                 const todayKey = getTodayKey();
                 const todayStart = new Date();
-                todayStart.setHours(0, 0, 0, 0);
+                todayStart.setHours(6, 0, 0, 0);
+                if (todayStart.getTime() > Date.now()) {
+                    todayStart.setDate(todayStart.getDate() - 1);
+                }
                 const todayStartTimestamp = todayStart.getTime();
                 
                 transactions = txs
@@ -905,7 +981,7 @@
             updateClock();
             setInterval(updateClock, 1000);
             
-            // التحقق من إعادة التعيين كل دقيقة (عند الساعة 6:00)
+            // التحقق من إعادة التعييل كل دقيقة (عند الساعة 6:00)
             setInterval(() => {
                 const now = new Date();
                 if (now.getHours() === 6 && now.getMinutes() === 0) {
@@ -964,12 +1040,30 @@
                 const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
                 
                 let amountDisplay = '';
+                let extraRows = '';
+                
                 if (t.type === 'transfer') {
                     const transferAmount = formatNumber(t.transferAmount || 0);
                     amountDisplay = `<div class="text-left">
                         <div class="font-bold text-slate-700">${transferAmount}</div>
                         <div class="text-xs text-slate-600">${t.from} → ${t.to}</div>
                     </div>`;
+                } else if (t.type === 'shopExpense' || t.type === 'personalExpense') {
+                    // عرض المصروف الأساسي
+                    const baseAmount = Math.abs(t.amount);
+                    amountDisplay = `<div class="text-left font-bold">${formatNumber(baseAmount)}</div>`;
+                    
+                    // عرض الدمغة إن وجدت
+                    if (t.bankFee && t.bankFee > 0) {
+                        extraRows = `
+                            <div class="mt-1 pt-1 border-t border-red-200/50">
+                                <div class="flex justify-between items-center text-xs text-red-600">
+                                    <span>💳 خصم بنكك (دمغة)</span>
+                                    <span class="font-bold">${formatNumber(t.bankFee)}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
                 } else {
                     amountDisplay = `<div class="text-left font-bold">${formatNumber(Math.abs(t.amount))}</div>`;
                 }
@@ -993,6 +1087,7 @@
                                 <div class="text-xs opacity-75 flex items-center gap-2">
                                     ${time} ${opNum}
                                 </div>
+                                ${extraRows}
                             </div>
                         </div>
                         ${amountDisplay}
@@ -1018,6 +1113,16 @@
             const modal = document.getElementById(type + 'Modal');
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            // تعيين التاريخ/الوقت الافتراضي للحقول
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const defaultDateTime = now.toISOString().slice(0, 16);
+            
+            const dateTimeField = document.getElementById(type + 'DateTime');
+            if (dateTimeField) {
+                dateTimeField.value = defaultDateTime;
+            }
         };
 
         window.closeModal = function(type) {
@@ -1027,6 +1132,16 @@
             
             const form = document.getElementById(type + 'Form');
             if (form) form.reset();
+            
+            // إعادة تعيين الأزرار
+            document.querySelectorAll('.dept-btn, .credit-dept-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-amber-500', 'bg-amber-50');
+                b.classList.add('border-slate-200');
+            });
+            
+            // إخفاء تحذيرات بنكك
+            document.getElementById('bankFeeWarning')?.classList.add('hidden');
+            document.getElementById('bankFeeDisplay')?.classList.add('hidden');
             document.getElementById('duplicateWarning')?.classList.add('hidden');
         };
 
@@ -1081,6 +1196,17 @@
             btn.classList.remove('border-slate-200');
             btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
             document.getElementById('expensePayment').value = btn.dataset.value;
+            
+            // إظهار/إخفاء تحذير الدمغة
+            const warning = document.getElementById('bankFeeWarning');
+            const display = document.getElementById('bankFeeDisplay');
+            if (!isCash) {
+                warning?.classList.remove('hidden');
+                display?.classList.remove('hidden');
+            } else {
+                warning?.classList.add('hidden');
+                display?.classList.add('hidden');
+            }
         };
 
         window.selectFrom = function(btn) {
@@ -1109,7 +1235,9 @@
         };
 
         function normalizeText(text) {
-            return text.replace(/ة$/, 'ه').toLowerCase().trim();
+            if (!text) return '';
+            // إزالة "ال" التعريف من البداية وتوحيد التاء المربوطة
+            return text.replace(/^ال/, '').replace(/ة$/, 'ه').toLowerCase().trim();
         }
 
         function checkDuplicate(type, name, amount) {
@@ -1126,192 +1254,235 @@
             return operationCounter.toString().padStart(4, '0');
         }
 
+        // ==========================================
+        // معالجات الإرسال مع منع الضغط المتكرر
+        // ==========================================
+
         window.handleSalesSubmit = async function(e) {
             e.preventDefault();
             
-            const amount = parseFormattedNumber('salesAmount');
-            const payment = document.getElementById('salesPayment').value;
-            const dept = document.getElementById('salesDept').value;
+            const btn = document.getElementById('salesSubmitBtn');
+            if (btn.disabled) return; // منع الضغط المتكرر
+            btn.disabled = true;
+            btn.classList.add('btn-disabled');
             
-            if (!dept) {
-                showWarning('الرجاء اختيار القسم');
-                return;
-            }
+            try {
+                const amount = parseFormattedNumber('salesAmount');
+                const payment = document.getElementById('salesPayment').value;
+                const dept = document.getElementById('salesDept').value;
+                
+                if (!dept) {
+                    showWarning('الرجاء اختيار القسم');
+                    return;
+                }
 
-            if (amount <= 0) {
-                showWarning('المبلغ يجب أن يكون أكبر من صفر');
-                return;
-            }
+                if (amount <= 0) {
+                    showWarning('المبلغ يجب أن يكون أكبر من صفر');
+                    return;
+                }
 
-            const operationNumber = generateOperationNumber();
-            const uid = Date.now().toString(36).toUpperCase().slice(-6);
-            const timestamp = Date.now();
-            
-            const balanceUpdate = {};
-            if (payment === 'كاش') {
-                balanceUpdate.cash = balances.cash + amount;
-            } else {
-                balanceUpdate.bank = balances.bank + amount;
-            }
-            
-            // تحديث إحصائيات اليوم فقط
-            const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-            
-            await Promise.all([
-                update(ref(database, 'balances'), balanceUpdate),
-                update(ref(database, 'stats/today'), { 
-                    sales: (currentStats.sales || 0) + amount,
-                    shopExpenses: currentStats.shopExpenses || 0,
-                    personalExpenses: currentStats.personalExpenses || 0,
-                    lastUpdate: timestamp
-                }),
-                push(ref(database, 'transactions'), {
-                    type: 'sales',
-                    title: `مبيعات ${dept} (${payment})`,
-                    amount: amount,
-                    timestamp,
-                    uid,
-                    operationNumber,
-                    payment,
-                    dept,
-                    date: getTodayKey()
-                }),
-                set(ref(database, 'lastTransaction'), {
-                    time: timestamp,
-                    type: 'sales',
-                    amount: amount,
-                    name: dept
-                })
-            ]);
+                const timestamp = getTimestamp('salesDateTime');
+                const operationNumber = generateOperationNumber();
+                const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                
+                const balanceUpdate = {};
+                if (payment === 'كاش') {
+                    balanceUpdate.cash = balances.cash + amount;
+                } else {
+                    balanceUpdate.bank = balances.bank + amount;
+                }
+                
+                // تحديث إحصائيات اليوم فقط
+                const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                
+                await Promise.all([
+                    update(ref(database, 'balances'), balanceUpdate),
+                    update(ref(database, 'stats/today'), { 
+                        sales: (currentStats.sales || 0) + amount,
+                        shopExpenses: currentStats.shopExpenses || 0,
+                        personalExpenses: currentStats.personalExpenses || 0,
+                        lastUpdate: timestamp
+                    }),
+                    push(ref(database, 'transactions'), {
+                        type: 'sales',
+                        title: `مبيعات ${dept} (${payment})`,
+                        amount: amount,
+                        timestamp,
+                        uid,
+                        operationNumber,
+                        payment,
+                        dept,
+                        date: getTodayKey()
+                    }),
+                    set(ref(database, 'lastTransaction'), {
+                        time: timestamp,
+                        type: 'sales',
+                        amount: amount,
+                        name: dept
+                    })
+                ]);
 
-            closeModal('sales');
-            showWarning('✅ تم تسجيل المبيعات بنجاح');
+                closeModal('sales');
+                showWarning('✅ تم تسجيل المبيعات بنجاح');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
+            }
         };
 
         window.handleCreditSalesSubmit = async function(e) {
             e.preventDefault();
             
-            const amount = parseFormattedNumber('creditSalesAmount');
-            const dept = document.getElementById('creditSalesDept').value;
-            const customer = document.getElementById('creditCustomerName').value.trim();
-            const note = document.getElementById('creditSalesNote').value;
+            const btn = document.getElementById('creditSalesSubmitBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.classList.add('btn-disabled');
             
-            if (!dept) {
-                showWarning('الرجاء اختيار القسم');
-                return;
+            try {
+                const amount = parseFormattedNumber('creditSalesAmount');
+                const dept = document.getElementById('creditSalesDept').value;
+                const customer = document.getElementById('creditCustomerName').value.trim();
+                const note = document.getElementById('creditSalesNote').value;
+                
+                if (!dept) {
+                    showWarning('الرجاء اختيار القسم');
+                    return;
+                }
+
+                if (!customer) {
+                    showWarning('الرجاء إدخال اسم الزبون');
+                    document.getElementById('creditCustomerName').focus();
+                    return;
+                }
+
+                if (amount <= 0) {
+                    showWarning('المبلغ يجب أن يكون أكبر من صفر');
+                    return;
+                }
+
+                const timestamp = getTimestamp('creditSalesDateTime');
+                const operationNumber = generateOperationNumber();
+                const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                
+                // تحديث إحصائيات اليوم فقط
+                const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                
+                await Promise.all([
+                    update(ref(database, 'stats/today'), { 
+                        sales: (currentStats.sales || 0) + amount,
+                        shopExpenses: currentStats.shopExpenses || 0,
+                        personalExpenses: currentStats.personalExpenses || 0,
+                        lastUpdate: timestamp
+                    }),
+                    push(ref(database, 'transactions'), {
+                        type: 'sales',
+                        saleType: 'credit',
+                        title: `مبيعات آجلة - ${dept} (${customer})`,
+                        amount: amount,
+                        timestamp,
+                        uid,
+                        operationNumber,
+                        payment: 'آجل',
+                        dept,
+                        customer,
+                        note: note || null,
+                        date: getTodayKey()
+                    }),
+                    push(ref(database, 'debts'), {
+                        type: 'sale',
+                        customer,
+                        amount,
+                        dept,
+                        note: note || `مبيعات آجلة - ${dept}`,
+                        status: 'pending',
+                        createdAt: timestamp,
+                        linkedTransaction: uid,
+                        operationNumber: operationNumber + 'D',
+                        date: getTodayKey()
+                    }),
+                    set(ref(database, 'lastTransaction'), {
+                        time: timestamp,
+                        type: 'credit_sales',
+                        amount: amount,
+                        name: customer
+                    })
+                ]);
+
+                closeModal('creditSales');
+                showWarning(`✅ تم تسجيل المبيعات الآجلة وإضافة الدين على ${customer}`);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
             }
-
-            if (!customer) {
-                showWarning('الرجاء إدخال اسم الزبون');
-                document.getElementById('creditCustomerName').focus();
-                return;
-            }
-
-            if (amount <= 0) {
-                showWarning('المبلغ يجب أن يكون أكبر من صفر');
-                return;
-            }
-
-            const operationNumber = generateOperationNumber();
-            const uid = Date.now().toString(36).toUpperCase().slice(-6);
-            const timestamp = Date.now();
-            
-            // تحديث إحصائيات اليوم فقط
-            const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-            
-            await Promise.all([
-                update(ref(database, 'stats/today'), { 
-                    sales: (currentStats.sales || 0) + amount,
-                    shopExpenses: currentStats.shopExpenses || 0,
-                    personalExpenses: currentStats.personalExpenses || 0,
-                    lastUpdate: timestamp
-                }),
-                push(ref(database, 'transactions'), {
-                    type: 'sales',
-                    saleType: 'credit',
-                    title: `مبيعات آجلة - ${dept} (${customer})`,
-                    amount: amount,
-                    timestamp,
-                    uid,
-                    operationNumber,
-                    payment: 'آجل',
-                    dept,
-                    customer,
-                    note: note || null,
-                    date: getTodayKey()
-                }),
-                push(ref(database, 'debts'), {
-                    type: 'sale',
-                    customer,
-                    amount,
-                    dept,
-                    note: note || `مبيعات آجلة - ${dept}`,
-                    status: 'pending',
-                    createdAt: timestamp,
-                    linkedTransaction: uid,
-                    operationNumber: operationNumber + 'D',
-                    date: getTodayKey()
-                }),
-                set(ref(database, 'lastTransaction'), {
-                    time: timestamp,
-                    type: 'credit_sales',
-                    amount: amount,
-                    name: customer
-                })
-            ]);
-
-            closeModal('creditSales');
-            showWarning(`✅ تم تسجيل المبيعات الآجلة وإضافة الدين على ${customer}`);
         };
 
         window.handleExpenseSubmit = async function(e) {
             e.preventDefault();
             
-            const amount = parseFormattedNumber('expenseAmount');
-            const name = document.getElementById('expenseName').value;
-            const type = document.getElementById('expenseType').value;
-            const payment = document.getElementById('expensePayment').value;
-            const vendor = document.getElementById('expenseVendor').value;
+            const btn = document.getElementById('expenseSubmitBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.classList.add('btn-disabled');
             
-            const currentBalance = payment === 'كاش' ? balances.cash : balances.bank;
-            if (amount > currentBalance) {
-                showWarning(`⚠️ رصيد ${payment} غير كافٍ! المتوفر: ${formatNumber(currentBalance)}`);
-                return;
-            }
+            try {
+                const amount = parseFormattedNumber('expenseAmount');
+                const name = document.getElementById('expenseName').value.trim();
+                const type = document.getElementById('expenseType').value;
+                const payment = document.getElementById('expensePayment').value;
+                const vendor = document.getElementById('expenseVendor').value.trim();
+                
+                // توحيد الاسم (إزالة "ال" التعريف)
+                const normalizedName = name.replace(/^ال/, '');
+                
+                const currentBalance = payment === 'كاش' ? balances.cash : balances.bank;
+                const totalDeduction = payment === 'بنكك' ? amount + BANK_FEE : amount;
+                
+                if (totalDeduction > currentBalance) {
+                    showWarning(`⚠️ رصيد ${payment} غير كافٍ! المطلوب: ${formatNumber(totalDeduction)} (المتوفر: ${formatNumber(currentBalance)})`);
+                    return;
+                }
 
-            if (checkDuplicate(type, name, amount)) {
-                document.getElementById('duplicateWarning').classList.remove('hidden');
-                return;
-            }
+                if (checkDuplicate(type, normalizedName, amount)) {
+                    document.getElementById('duplicateWarning').classList.remove('hidden');
+                    return;
+                }
 
-            const operationNumber = generateOperationNumber();
-            const uid = Date.now().toString(36).toUpperCase().slice(-6);
-            const timestamp = Date.now();
-            
-            const balanceUpdate = {};
-            balanceUpdate[payment === 'كاش' ? 'cash' : 'bank'] = currentBalance - amount;
-            
-            // تحديث إحصائيات اليوم فقط
-            const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-            const statsUpdate = {
-                sales: currentStats.sales || 0,
-                lastUpdate: timestamp
-            };
-            
-            if (type === 'محل') {
-                statsUpdate.shopExpenses = (currentStats.shopExpenses || 0) + amount;
-                statsUpdate.personalExpenses = currentStats.personalExpenses || 0;
-            } else {
-                statsUpdate.shopExpenses = currentStats.shopExpenses || 0;
-                statsUpdate.personalExpenses = (currentStats.personalExpenses || 0) + amount;
-            }
+                const timestamp = getTimestamp('expenseDateTime');
+                const operationNumber = generateOperationNumber();
+                const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                
+                const balanceUpdate = {};
+                balanceUpdate[payment === 'كاش' ? 'cash' : 'bank'] = currentBalance - totalDeduction;
+                
+                // تحديث إحصائيات اليوم فقط
+                const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                const statsUpdate = {
+                    sales: currentStats.sales || 0,
+                    lastUpdate: timestamp
+                };
+                
+                if (type === 'محل') {
+                    statsUpdate.shopExpenses = (currentStats.shopExpenses || 0) + amount;
+                    statsUpdate.personalExpenses = currentStats.personalExpenses || 0;
+                } else {
+                    statsUpdate.shopExpenses = currentStats.shopExpenses || 0;
+                    statsUpdate.personalExpenses = (currentStats.personalExpenses || 0) + amount;
+                }
 
-            await Promise.all([
-                update(ref(database, 'balances'), balanceUpdate),
-                update(ref(database, 'stats/today'), statsUpdate),
-                push(ref(database, 'transactions'), {
+                // بناء العمليات
+                const updates = [];
+                
+                // 1. تحديث الرصيد
+                updates.push(update(ref(database, 'balances'), balanceUpdate));
+                
+                // 2. تحديث الإحصائيات
+                updates.push(update(ref(database, 'stats/today'), statsUpdate));
+                
+                // 3. تسجيل المصروف الأساسي
+                const mainTxRef = push(ref(database, 'transactions'));
+                updates.push(set(mainTxRef, {
                     type: type === 'محل' ? 'shopExpense' : 'personalExpense',
-                    title: `${type === 'محل' ? '🔴' : '🔵'} ${name} ${vendor ? '(' + vendor + ')' : ''}`,
+                    title: `${type === 'محل' ? '🔴' : '🔵'} ${normalizedName} ${vendor ? '(' + vendor + ')' : ''}`,
                     amount: -amount,
                     timestamp,
                     uid,
@@ -1319,69 +1490,104 @@
                     payment,
                     expenseType: type,
                     vendor: vendor || '',
-                    date: getTodayKey()
-                }),
-                set(ref(database, 'lastTransaction'), {
+                    date: getTodayKey(),
+                    bankFee: payment === 'بنكك' ? BANK_FEE : 0
+                }));
+                
+                // 4. تسجيل الدمغة منفصلة إذا كان بنكك
+                if (payment === 'بنكك') {
+                    const feeTxRef = push(ref(database, 'transactions'));
+                    updates.push(set(feeTxRef, {
+                        type: 'bankFee',
+                        title: '💳 خصم بنكك (دمغة)',
+                        amount: -BANK_FEE,
+                        timestamp: timestamp + 1, // لتجنب التطابق التام في الوقت
+                        uid: uid + 'F',
+                        operationNumber: operationNumber + 'F',
+                        payment: 'بنكك',
+                        expenseType: 'bankFee',
+                        linkedTo: mainTxRef.key,
+                        date: getTodayKey()
+                    }));
+                }
+                
+                // 5. تحديث آخر عملية
+                updates.push(set(ref(database, 'lastTransaction'), {
                     time: timestamp,
                     type: type,
                     amount: amount,
-                    name: name
-                })
-            ]);
+                    name: normalizedName
+                }));
+                
+                await Promise.all(updates);
 
-            closeModal('expenses');
-            showWarning('✅ تم تسجيل المصروف بنجاح');
+                closeModal('expenses');
+                showWarning('✅ تم تسجيل المصروف بنجاح');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
+            }
         };
 
         window.handleTransferSubmit = async function(e) {
             e.preventDefault();
             
-            const amount = parseFormattedNumber('transferAmount');
-            const from = document.getElementById('transferFrom').value;
-            const to = document.getElementById('transferTo').value;
+            const btn = document.getElementById('transferSubmitBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.classList.add('btn-disabled');
             
-            if (from === to) {
-                showWarning('لا يمكن التحويل لنفس الحساب!');
-                return;
-            }
+            try {
+                const amount = parseFormattedNumber('transferAmount');
+                const from = document.getElementById('transferFrom').value;
+                const to = document.getElementById('transferTo').value;
+                
+                if (from === to) {
+                    showWarning('لا يمكن التحويل لنفس الحساب!');
+                    return;
+                }
 
-            const currentBalance = from === 'كاش' ? balances.cash : balances.bank;
-            if (amount > currentBalance) {
-                showWarning(`⚠️ رصيد ${from} غير كافٍ! المتوفر: ${formatNumber(currentBalance)}`);
-                return;
-            }
-            
-            const operationNumber = generateOperationNumber();
-            const uid = Date.now().toString(36).toUpperCase().slice(-6);
-            const timestamp = Date.now();
-            
-            const balanceUpdate = {};
-            if (from === 'كاش') {
-                balanceUpdate.cash = balances.cash - amount;
-                balanceUpdate.bank = balances.bank + amount;
-            } else {
-                balanceUpdate.bank = balances.bank - amount;
-                balanceUpdate.cash = balances.cash + amount;
-            }
+                const currentBalance = from === 'كاش' ? balances.cash : balances.bank;
+                if (amount > currentBalance) {
+                    showWarning(`⚠️ رصيد ${from} غير كافٍ! المتوفر: ${formatNumber(currentBalance)}`);
+                    return;
+                }
+                
+                const timestamp = getTimestamp('transferDateTime');
+                const operationNumber = generateOperationNumber();
+                const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                
+                const balanceUpdate = {};
+                if (from === 'كاش') {
+                    balanceUpdate.cash = balances.cash - amount;
+                    balanceUpdate.bank = balances.bank + amount;
+                } else {
+                    balanceUpdate.bank = balances.bank - amount;
+                    balanceUpdate.cash = balances.cash + amount;
+                }
 
-            await Promise.all([
-                update(ref(database, 'balances'), balanceUpdate),
-                push(ref(database, 'transactions'), {
-                    type: 'transfer',
-                    title: `⇄ تبديل: ${from} → ${to}`,
-                    amount: 0,
-                    timestamp,
-                    uid,
-                    operationNumber,
-                    from,
-                    to,
-                    transferAmount: amount,
-                    date: getTodayKey()
-                })
-            ]);
+                await Promise.all([
+                    update(ref(database, 'balances'), balanceUpdate),
+                    push(ref(database, 'transactions'), {
+                        type: 'transfer',
+                        title: `⇄ تبديل: ${from} → ${to}`,
+                        amount: 0,
+                        timestamp,
+                        uid,
+                        operationNumber,
+                        from,
+                        to,
+                        transferAmount: amount,
+                        date: getTodayKey()
+                    })
+                ]);
 
-            closeModal('transfer');
-            showWarning('✅ تم التبديل بنجاح');
+                closeModal('transfer');
+                showWarning('✅ تم التبديل بنجاح');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
+            }
         };
 
         window.confirmDuplicate = function() {
@@ -1404,5 +1610,4 @@
             });
         });
     </script>
-</body>
-</html>
+</ ‌‍
