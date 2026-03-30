@@ -46,6 +46,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        /* ✅ تعديل: حاوية الرسم البياني الديناميكية */
         .chart-scroll-container {
             overflow-x: auto;
             overflow-y: hidden;
@@ -53,28 +54,35 @@
             scrollbar-width: thin;
             scrollbar-color: #cbd5e1 #f1f5f9;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 16px;
             background: #fff;
+            position: relative;
         }
         
         .chart-scroll-container::-webkit-scrollbar {
-            height: 8px;
+            height: 6px;
         }
         
         .chart-scroll-container::-webkit-scrollbar-track {
             background: #f1f5f9;
-            border-radius: 4px;
+            border-radius: 3px;
         }
         
         .chart-scroll-container::-webkit-scrollbar-thumb {
             background: #cbd5e1;
-            border-radius: 4px;
+            border-radius: 3px;
         }
         
+        /* ✅ تعديل: عرض ديناميكي بناءً على عدد النقاط */
         .chart-wrapper {
             position: relative;
-            height: 350px;
-            min-width: 1200px;
+            height: 320px;
+            min-width: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .chart-wrapper.expanded {
+            min-width: auto;
         }
         
         .transaction-row:hover {
@@ -129,14 +137,35 @@
             letter-spacing: 1px;
         }
         
-        .scroll-hint {
-            animation: bounce 2s infinite;
+        /* ✅ تعديل: مؤشر تمرير أنيق */
+        .scroll-indicator {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.9);
+            padding: 8px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            animation: pulse 2s infinite;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #64748b;
         }
         
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateX(0); }
-            40% { transform: translateX(-10px); }
-            60% { transform: translateX(-5px); }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; transform: translateY(-50%) translateX(0); }
+            50% { opacity: 1; transform: translateY(-50%) translateX(-5px); }
+        }
+        
+        /* ✅ تعديل: تحسين مظهر البطاقات */
+        .chart-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
     </style>
 </head>
@@ -203,31 +232,41 @@
                 </div>
             </div>
 
-            <!-- الرسم البياني بالفترتين (صباحي ومسائي) -->
-            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold text-slate-700">📈 تحليل المبيعات والمصروفات (حسب الفترة)</h3>
-                    <div class="flex items-center gap-2 text-xs text-slate-400 scroll-hint">
-                        <span>اسحب للتمرير</span>
-                        <span>←</span>
+            <!-- ✅ الرسم البياني المُحسَّن -->
+            <div class="chart-card rounded-2xl p-4 fade-in relative">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-700">📈 تحليل المبيعات والمصروفات</h3>
+                    <div class="flex items-center gap-3 text-xs">
+                        <div class="flex items-center gap-1">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                            <span class="text-slate-600">مبيعات</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="w-3 h-3 rounded-full bg-rose-400"></span>
+                            <span class="text-slate-600">مصروفات</span>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- شرح الفترات -->
-                <div class="flex gap-4 mb-3 text-xs">
+                <div class="flex gap-4 mb-3 text-xs bg-slate-50 p-2 rounded-lg">
                     <div class="flex items-center gap-1">
-                        <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                        <span class="text-slate-600">فترة صباحية (6ص - 3م)</span>
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        <span class="text-slate-600">☀️ صباحية (6ص-3م)</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
-                        <span class="text-slate-600">فترة مسائية (3م - 6ص)</span>
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        <span class="text-slate-600">🌙 مسائية (3م-6ص)</span>
                     </div>
                 </div>
                 
-                <!-- حاوية التمرير -->
+                <!-- حاوية التمرير الديناميكية -->
                 <div class="chart-scroll-container" id="chartScrollContainer">
-                    <div class="chart-wrapper">
+                    <div class="scroll-indicator" id="scrollHint" style="display: none;">
+                        <span>←</span>
+                        <span>اسحب</span>
+                    </div>
+                    <div class="chart-wrapper" id="chartWrapper">
                         <canvas id="mainChart"></canvas>
                     </div>
                 </div>
@@ -392,9 +431,6 @@
             });
         }
 
-        // ==========================================
-        // ✅ حساب الفترة الصحيح
-        // ==========================================
         function calculatePeriod(timestamp) {
             if (!timestamp) return 'غير محدد';
             const ts = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp;
@@ -403,7 +439,6 @@
             const minutes = date.getMinutes();
             const timeValue = hours + (minutes / 60);
             
-            // الفترة الصباحية: 6:00 - 15:00 (6 صباحاً - 3 عصراً)
             if (timeValue >= 6 && timeValue < 15) {
                 return 'صباحية';
             } else {
@@ -600,12 +635,12 @@
             }).join('');
         }
 
-        // ==========================================
-        // ✅ تعديل: رسم بياني بفترتين - عدم عرض الفترات المستقبلية
-        // ==========================================
+        // ✅ التعديل الرئيسي: رسم بياني محسّن بالكامل
         window.updateChart = function() {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            const now = new Date(); // الوقت الحالي
+            const now = new Date();
+            const chartWrapper = document.getElementById('chartWrapper');
+            const scrollHint = document.getElementById('scrollHint');
             
             // تجميع البيانات حسب اليوم والفترة
             const periodData = {};
@@ -621,7 +656,6 @@
                     day: '2-digit' 
                 });
                 
-                // حساب الفترة من الوقت الفعلي للعملية
                 const hours = date.getHours();
                 const minutes = date.getMinutes();
                 const timeValue = hours + (minutes / 60);
@@ -652,35 +686,32 @@
             const labels = [];
             const salesData = [];
             const expensesData = [];
-            const pointColors = [];
             const pointStyles = [];
+            const pointBackgroundColors = [];
+            const pointBorderColors = [];
             
             sortedDates.forEach(dateKey => {
                 const data = periodData[dateKey];
                 const d = data.dateObj;
                 const dayLabel = d.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
                 
-                // التحقق مما إذا كان هذا اليوم هو اليوم الحالي
                 const isToday = d.toDateString() === now.toDateString();
-                
-                // حساب الوقت الحالي
                 const currentHours = now.getHours();
                 const currentMinutes = now.getMinutes();
                 const currentTimeValue = currentHours + (currentMinutes / 60);
                 
-                // ✅ الفترة الصباحية: تُعرض إذا كانت تحتوي على بيانات
+                // الفترة الصباحية
                 const hasMorningData = data.صباحية.sales > 0 || data.صباحية.expenses > 0;
                 if (hasMorningData) {
                     labels.push(`${dayLabel} (ص)`);
                     salesData.push(data.صباحية.sales);
                     expensesData.push(data.صباحية.expenses);
-                    pointColors.push('#fbbf24');
                     pointStyles.push('circle');
+                    pointBackgroundColors.push('#fbbf24');
+                    pointBorderColors.push('#f59e0b');
                 }
                 
-                // ✅ الفترة المسائية: تُعرض فقط إذا:
-                // 1. ليست اليوم الحالي، أو
-                // 2. هي اليوم الحالي والوقت الحالي >= 15:00 (3 عصراً)
+                // الفترة المسائية
                 const hasEveningData = data.مسائية.sales > 0 || data.مسائية.expenses > 0;
                 const isEveningStarted = !isToday || (isToday && currentTimeValue >= 15);
                 
@@ -688,18 +719,37 @@
                     labels.push(`${dayLabel} (م)`);
                     salesData.push(data.مسائية.sales);
                     expensesData.push(data.مسائية.expenses);
-                    pointColors.push('#6366f1');
                     pointStyles.push('rectRot');
+                    pointBackgroundColors.push('#6366f1');
+                    pointBorderColors.push('#4f46e5');
                 }
             });
             
-            // حساب العرض المناسب
-            const chartWidth = Math.max(800, labels.length * 100);
-            document.querySelector('.chart-wrapper').style.width = chartWidth + 'px';
+            // ✅ حساب العرض الديناميكي: 50px لكل نقطة كحد أدنى
+            const pointCount = labels.length;
+            const minWidth = 320; // عرض الشاشة كحد أدنى
+            const widthPerPoint = 60; // عرض لكل نقطة
+            const calculatedWidth = Math.max(minWidth, pointCount * widthPerPoint);
+            
+            // تطبيق العرض الديناميكي
+            if (pointCount > 6) {
+                chartWrapper.style.width = calculatedWidth + 'px';
+                chartWrapper.classList.add('expanded');
+                scrollHint.style.display = 'flex';
+            } else {
+                chartWrapper.style.width = '100%';
+                chartWrapper.classList.remove('expanded');
+                scrollHint.style.display = 'none';
+            }
             
             if (chartInstance) {
                 chartInstance.destroy();
             }
+            
+            // ✅ إنشاء التدرج اللوني للتظليل
+            const salesGradient = ctx.createLinearGradient(0, 0, 0, 320);
+            salesGradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+            salesGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
             
             chartInstance = new Chart(ctx, {
                 type: 'line',
@@ -709,14 +759,15 @@
                         {
                             label: 'المبيعات',
                             data: salesData,
-                            borderColor: '#10b981',
-                            backgroundColor: pointColors,
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0,
+                            borderColor: '#10b981', // أخضر زمردي هادئ
+                            backgroundColor: salesGradient,
+                            borderWidth: 3,
+                            fill: true, // ✅ تظليل خفيف تحت الخط
+                            tension: 0.4, // ✅ خطوط منحنية وناعمة
                             pointRadius: 6,
                             pointHoverRadius: 8,
                             pointStyle: pointStyles,
+                            pointBackgroundColor: pointBackgroundColors,
                             pointBorderColor: '#fff',
                             pointBorderWidth: 2,
                             spanGaps: true
@@ -724,17 +775,21 @@
                         {
                             label: 'المصروفات',
                             data: expensesData,
-                            borderColor: '#ef4444',
-                            backgroundColor: pointColors.map(c => c === '#fbbf24' ? '#fcd34d' : '#818cf8'),
-                            borderWidth: 2,
+                            borderColor: '#f87171', // أحمر باهت هادئ
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
                             fill: false,
-                            tension: 0,
+                            tension: 0.4, // ✅ خطوط منحنية وناعمة
                             pointRadius: 6,
                             pointHoverRadius: 8,
                             pointStyle: pointStyles,
+                            pointBackgroundColor: pointBackgroundColors.map(c => 
+                                c === '#fbbf24' ? '#fcd34d' : '#818cf8'
+                            ),
                             pointBorderColor: '#fff',
                             pointBorderWidth: 2,
-                            spanGaps: true
+                            spanGaps: true,
+                            borderDash: [5, 5] // خط متقطع للتمييز
                         }
                     ]
                 },
@@ -745,22 +800,32 @@
                         legend: {
                             display: true,
                             position: 'top',
+                            align: 'end',
                             labels: {
-                                font: { family: 'Cairo', size: 12 },
-                                usePointStyle: true
+                                font: { family: 'Cairo', size: 11 },
+                                usePointStyle: true,
+                                padding: 15,
+                                boxWidth: 8
                             }
                         },
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(0,0,0,0.9)',
-                            titleFont: { family: 'Cairo', size: 13 },
+                            backgroundColor: 'rgba(255,255,255,0.95)',
+                            titleColor: '#1e293b',
+                            bodyColor: '#475569',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            titleFont: { family: 'Cairo', size: 13, weight: 'bold' },
                             bodyFont: { family: 'Cairo', size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: true,
                             callbacks: {
                                 title: function(context) {
                                     const label = context[0].label;
                                     const period = label.includes('(ص)') ? '☀️ فترة صباحية' : '🌙 فترة مسائية';
-                                    return label.replace(' (ص)', '').replace(' (م)', '') + ' - ' + period;
+                                    return label.replace(' (ص)', '').replace(' (م)', '') + '\n' + period;
                                 },
                                 label: function(context) {
                                     return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' ج';
@@ -770,30 +835,20 @@
                     },
                     scales: {
                         y: {
+                            display: false, // ✅ إخفاء المحور الرأسي لتقليل الزحام
                             beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0,0,0,0.05)'
-                            },
-                            ticks: {
-                                font: { family: 'Cairo', size: 11 },
-                                callback: function(value) {
-                                    return value.toLocaleString();
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: 'المبلغ (جنية)',
-                                font: { family: 'Cairo', size: 12 }
-                            }
+                            grid: { display: false }
                         },
                         x: {
                             grid: {
-                                color: 'rgba(0,0,0,0.03)'
+                                color: 'rgba(0,0,0,0.03)',
+                                drawBorder: false
                             },
                             ticks: {
                                 font: { family: 'Cairo', size: 10 },
-                                maxRotation: 60,
+                                maxRotation: 45,
                                 minRotation: 45,
+                                color: '#64748b',
                                 callback: function(value, index, values) {
                                     const label = this.getLabelForValue(value);
                                     if (label.includes('(ص)')) {
@@ -812,11 +867,13 @@
                 }
             });
             
-            // التمرير التلقائي إلى آخر فترة
+            // التمرير التلقائي إلى آخر فترة إذا كان هناك تمرير
             setTimeout(() => {
                 const container = document.getElementById('chartScrollContainer');
-                container.scrollLeft = container.scrollWidth;
-            }, 200);
+                if (container.scrollWidth > container.clientWidth) {
+                    container.scrollLeft = container.scrollWidth;
+                }
+            }, 300);
         };
 
         window.exportToCSV = function() {
