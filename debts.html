@@ -143,35 +143,22 @@
             50% { opacity: 0.7; }
         }
         
-        /* إضافة أنماط جديدة لاختيار الدين */
-        .debt-selector {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 8px;
+        .debt-item {
+            transition: all 0.3s ease;
         }
         
-        .debt-option {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
+        .debt-item.paid {
+            opacity: 0.6;
+            background: #d1fae5;
         }
         
-        .debt-option:hover {
-            background: #f1f5f9;
-        }
-        
-        .debt-option.selected {
-            border-color: #10b981;
-            background: #ecfdf5;
-        }
-        
-        .debt-option:last-child {
-            margin-bottom: 0;
+        .debt-item.paid::after {
+            content: "✅";
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
         }
     </style>
 </head>
@@ -359,13 +346,13 @@
 
     </div>
 
-    <!-- مودال تسديد الدين - محسّن -->
+    <!-- مودال تسديد الدين العام -->
     <div id="repayModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('repay')">
         <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
             <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
             
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-emerald-800">💵 تسديد دين</h2>
+                <h2 class="text-xl font-bold text-emerald-800">💵 تسديد دين عام</h2>
                 <button onclick="closeModal('repay')" class="text-slate-400 text-2xl">&times;</button>
             </div>
 
@@ -373,33 +360,32 @@
                 <div class="flex items-start gap-2">
                     <span class="text-lg">💡</span>
                     <div>
-                        <div class="font-semibold mb-1">تسديد دين الزبون</div>
-                        <div class="text-xs">اختر الدين المراد تسديده ثم أدخل المبلغ</div>
+                        <div class="font-semibold mb-1">تسديد من مجموع الديون</div>
+                        <div class="text-xs">يتم توزيع المبلغ على الديون حسب الأقدمية</div>
                     </div>
                 </div>
             </div>
 
             <form id="repayForm" class="space-y-4" onsubmit="handleRepaySubmit(event)">
-                <!-- اختيار الدين (جديد) -->
-                <div id="debtSelectorContainer">
-                    <label class="block text-sm text-slate-600 mb-1">اختر الدين *</label>
-                    <div id="debtSelector" class="debt-selector bg-slate-50">
-                        <!-- تُملأ ديناميكياً -->
-                    </div>
-                    <input type="hidden" id="selectedDebtId" required>
-                </div>
-
                 <!-- معلومات الزبون -->
                 <div class="bg-slate-100 rounded-xl p-3 text-center">
                     <div class="text-xs text-slate-600 mb-1">الزبون</div>
                     <div class="text-lg font-bold text-slate-800" id="repayCustomerName">---</div>
-                    <input type="hidden" id="repayOriginalAmount">
+                    <input type="hidden" id="repayCustomerId">
                 </div>
 
-                <!-- المبلغ المتبقي -->
+                <!-- المبلغ الإجمالي المستحق -->
                 <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-200">
-                    <div class="text-xs text-amber-600 mb-1">المبلغ المستحق للدين المختار</div>
-                    <div class="text-2xl font-bold text-amber-700" id="repayRemainingAmount">0</div>
+                    <div class="text-xs text-amber-600 mb-1">إجمالي المبلغ المستحق</div>
+                    <div class="text-2xl font-bold text-amber-700" id="repayTotalAmount">0</div>
+                </div>
+
+                <!-- قائمة الديون المفصلة -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                    <div class="text-xs text-slate-600 mb-2 font-semibold">تفاصيل الديون:</div>
+                    <div id="repayDebtsList" class="space-y-2 max-h-40 overflow-y-auto">
+                        <!-- تُملأ ديناميكياً -->
+                    </div>
                 </div>
 
                 <!-- طريقة التسديد -->
@@ -424,9 +410,10 @@
                     <input type="text" id="repayAmount" 
                         class="formatted-input w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-emerald-500 focus:outline-none" 
                         placeholder="0" 
-                        oninput="formatNumberInput(this)"
+                        oninput="formatNumberInput(this); validateRepayAmount()"
                         onkeypress="return isNumberKey(event)"
                         required>
+                    <div id="repayValidation" class="text-xs mt-1 text-center"></div>
                 </div>
 
                 <!-- ملاحظة -->
@@ -434,10 +421,10 @@
                     <label class="block text-sm text-slate-600 mb-1">ملاحظة (اختياري)</label>
                     <input type="text" id="repayNote" 
                         class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none" 
-                        placeholder="مثال: جزء من السداد، سداد كامل...">
+                        placeholder="مثال: تسديد جزئي، تسديد كامل...">
                 </div>
 
-                <button type="submit" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">
+                <button type="submit" id="repaySubmitBtn" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">
                     ✅ تأكيد التسديد
                 </button>
             </form>
@@ -547,7 +534,7 @@
         let filteredDebts = [];
         let debtorsSummary = {};
         let currentFilter = 'all';
-        let currentCustomerDebts = []; // لتخزين ديون الزبون الحالي
+        let currentCustomerDebts = []; // ديون الزبون الحالي المرتبة حسب الأقدمية
 
         // ==========================================
         // UTILITY FUNCTIONS
@@ -654,13 +641,13 @@
                             paid: 0,
                             pending: 0,
                             count: 0,
-                            debts: [] // تخزين معرفات الديون
+                            debts: [] // مصفوفة معرفات الديون
                         };
                     }
                     
                     debtorsSummary[customer].total += (debt.originalAmount || debt.amount);
                     debtorsSummary[customer].count++;
-                    debtorsSummary[customer].debts.push(debt.id);
+                    debtorsSummary[customer].debts.push(debt);
                     
                     if (debt.status === 'paid') {
                         debtorsSummary[customer].paid += (debt.originalAmount || debt.amount);
@@ -801,7 +788,7 @@
                         ${hasPending ? `
                             <button onclick="event.stopPropagation(); openRepayModal('${name}')" 
                                 class="w-full mt-3 bg-emerald-500 text-white rounded-lg py-2 text-sm font-bold btn-press hover:bg-emerald-600 transition">
-                                💵 تسديد الدين
+                                💵 تسديد من المجموع
                             </button>
                         ` : ''}
                     </div>
@@ -833,7 +820,7 @@
                 }
                 
                 return `
-                    <div class="flex justify-between items-center p-3 rounded-xl ${statusClass} border border-slate-100">
+                    <div class="flex justify-between items-center p-3 rounded-xl ${statusClass} border border-slate-100 relative ${isPaid ? 'paid' : ''}">
                         <div class="flex items-center gap-2 flex-1">
                             <span>${icon}</span>
                             <div class="flex-1">
@@ -884,12 +871,6 @@
                 
                 const form = document.getElementById(type + 'Form');
                 if (form) form.reset();
-                
-                // إعادة تعيين اختيار الدين
-                if (type === 'repay') {
-                    document.getElementById('selectedDebtId').value = '';
-                    currentCustomerDebts = [];
-                }
             }
         };
 
@@ -905,121 +886,113 @@
         };
 
         // ==========================================
-        // DEBT OPERATIONS - محسّنة
+        // DEBT OPERATIONS - التسديد العام
         // ==========================================
         
-        // 🆕 دالة جديدة: فتح مودال التسديد مع اختيار الدين
         window.openRepayModal = function(customerName) {
             document.getElementById('repayCustomerName').textContent = customerName;
             
-            // جلب جميع الديون المستحقة لهذا الزبون
-            currentCustomerDebts = allDebts.filter(d => 
-                d.customer === customerName && d.status === 'pending'
-            );
+            // جلب جميع الديون المستحقة لهذا الزبون وترتيبها حسب الأقدمية (FIFO)
+            currentCustomerDebts = allDebts
+                .filter(d => d.customer === customerName && d.status === 'pending')
+                .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); // الأقدم أولاً
             
             if (currentCustomerDebts.length === 0) {
                 showWarning('لا توجد ديون مستحقة لهذا الزبون');
                 return;
             }
             
-            // إذا كان هناك دين واحد فقط، اختره تلقائياً
-            if (currentCustomerDebts.length === 1) {
-                selectDebt(currentCustomerDebts[0].id);
-            } else {
-                // عرض قائمة اختيار الديون
-                renderDebtSelector(currentCustomerDebts);
-            }
+            // حساب المجموع الكلي
+            const totalPending = currentCustomerDebts.reduce((sum, d) => sum + d.amount, 0);
+            document.getElementById('repayTotalAmount').textContent = formatNumber(totalPending);
+            
+            // عرض قائمة الديون المفصلة
+            renderRepayDebtsList(currentCustomerDebts);
+            
+            // تعبئة المبلغ تلقائياً بالمجموع الكلي
+            document.getElementById('repayAmount').value = formatNumber(totalPending);
+            validateRepayAmount();
             
             openModal('repay');
         };
 
-        // 🆕 دالة جديدة: عرض قائمة الديون للاختيار
-        function renderDebtSelector(debts) {
-            const container = document.getElementById('debtSelector');
+        function renderRepayDebtsList(debts) {
+            const container = document.getElementById('repayDebtsList');
             
-            container.innerHTML = debts.map(debt => {
+            container.innerHTML = debts.map((debt, index) => {
                 const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
-                const amount = debt.amount;
-                const original = debt.originalAmount || amount;
-                const partial = debt.partialPayment || 0;
+                const original = debt.originalAmount || debt.amount;
+                const remaining = debt.amount;
+                const paid = debt.partialPayment || 0;
                 
                 return `
-                    <div class="debt-option" onclick="selectDebt('${debt.id}')" id="debt-option-${debt.id}">
+                    <div class="debt-item bg-white rounded-lg p-2 border border-slate-200 text-sm relative" id="repay-debt-item-${debt.id}">
                         <div class="flex justify-between items-center">
                             <div>
-                                <div class="font-bold text-slate-800">${date}</div>
-                                <div class="text-sm text-slate-600">${debt.note || debt.dept || 'دين'}</div>
-                                ${partial > 0 ? `<div class="text-xs text-emerald-600">مدفوع سابقاً: ${formatNumber(partial)} ج</div>` : ''}
+                                <span class="font-bold text-slate-700">${index + 1}.</span>
+                                <span class="text-slate-600">${date}</span>
                             </div>
-                            <div class="text-left">
-                                <div class="text-lg font-bold text-amber-600">${formatNumber(amount)} ج</div>
-                                ${original !== amount ? `<div class="text-xs text-slate-400">من أصل: ${formatNumber(original)}</div>` : ''}
-                            </div>
+                            <div class="text-amber-600 font-bold">${formatNumber(remaining)} ج</div>
                         </div>
+                        ${paid > 0 ? `<div class="text-xs text-emerald-600">مدفوع سابقاً: ${formatNumber(paid)} من أصل ${formatNumber(original)}</div>` : ''}
                     </div>
                 `;
             }).join('');
         }
 
-        // 🆕 دالة جديدة: اختيار دين محدد
-        window.selectDebt = function(debtId) {
-            // إزالة التحديد السابق
-            document.querySelectorAll('.debt-option').forEach(el => {
-                el.classList.remove('selected');
-            });
+        window.validateRepayAmount = function() {
+            const input = document.getElementById('repayAmount');
+            const validation = document.getElementById('repayValidation');
+            const submitBtn = document.getElementById('repaySubmitBtn');
             
-            // إضافة التحديد الجديد
-            const option = document.getElementById(`debt-option-${debtId}`);
-            if (option) {
-                option.classList.add('selected');
-            }
+            const amount = parseFormattedNumber('repayAmount');
+            const totalPending = currentCustomerDebts.reduce((sum, d) => sum + d.amount, 0);
             
-            // حفظ الاختيار
-            document.getElementById('selectedDebtId').value = debtId;
-            
-            // تحديث المعلومات المعروضة
-            const debt = allDebts.find(d => d.id === debtId);
-            if (debt) {
-                document.getElementById('repayRemainingAmount').textContent = formatNumber(debt.amount);
-                document.getElementById('repayOriginalAmount').value = debt.amount;
-                document.getElementById('repayAmount').value = debt.amount; // تعبئة المبلغ تلقائياً
+            if (amount <= 0) {
+                validation.textContent = 'المبلغ يجب أن يكون أكبر من صفر';
+                validation.className = 'text-xs mt-1 text-center text-red-500';
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50');
+            } else if (amount > totalPending) {
+                validation.textContent = `المبلغ يتجاوز المستحق (${formatNumber(totalPending)} ج)`;
+                validation.className = 'text-xs mt-1 text-center text-red-500';
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50');
+            } else {
+                const remaining = totalPending - amount;
+                if (remaining === 0) {
+                    validation.textContent = 'سيتم تسديد المبلغ كاملاً ✅';
+                    validation.className = 'text-xs mt-1 text-center text-emerald-600 font-bold';
+                } else {
+                    validation.textContent = `المتبقي بعد التسديد: ${formatNumber(remaining)} ج`;
+                    validation.className = 'text-xs mt-1 text-center text-amber-600';
+                }
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50');
             }
         };
 
         // ==========================================
-        // الإصلاح الرئيسي: تسديد الديون الجزئية والكاملة
+        // الإصلاح الرئيسي: تسديد عام من المجموع الكلي
         // ==========================================
         window.handleRepaySubmit = async function(e) {
             e.preventDefault();
             
-            const debtId = document.getElementById('selectedDebtId').value;
             const customer = document.getElementById('repayCustomerName').textContent;
             const amount = parseFormattedNumber('repayAmount');
             const method = document.getElementById('repayMethod').value;
             const note = document.getElementById('repayNote').value;
             
-            // التحقق من اختيار الدين
-            if (!debtId) {
-                showWarning('الرجاء اختيار الدين المراد تسديده');
-                return;
-            }
-            
-            // جلب معلومات الدين المحدد
-            const currentDebt = allDebts.find(d => d.id === debtId);
-            if (!currentDebt) {
-                showWarning('الدين غير موجود');
-                return;
-            }
-            
-            const originalAmount = currentDebt.amount; // المبلغ الحالي المتبقي
+            // التحقق من المبلغ
+            const totalPending = currentCustomerDebts.reduce((sum, d) => sum + d.amount, 0);
             
             if (amount <= 0) {
                 showWarning('المبلغ يجب أن يكون أكبر من صفر');
                 return;
             }
             
-            if (amount > originalAmount) {
-                showWarning('المبلغ المسدد أكبر من المبلغ المستحق!');
+            if (amount > totalPending) {
+                showWarning('المبلغ المسدد أكبر من المجموع المستحق!');
                 return;
             }
             
@@ -1034,94 +1007,104 @@
                 balanceUpdate.bank = balances.bank + amount;
             }
             
-            // حساب المتبقي
-            const remaining = originalAmount - amount;
-            const previousPartial = currentDebt.partialPayment || 0;
-            const totalPaid = previousPartial + amount;
-            const fullOriginalAmount = currentDebt.originalAmount || originalAmount;
+            // توزيع المبلغ على الديون حسب FIFO (الأقدم أولاً)
+            let remainingAmount = amount;
+            const debtsToUpdate = [];
+            const fullyPaidDebts = []; // لتتبع الديون المسددة بالكامل لوضع ✅
             
-            // إذا كان السداد كامل
-            if (remaining === 0) {
-                await Promise.all([
-                    // 1. تحديث الرصيد
-                    update(ref(database, 'balances'), balanceUpdate),
-                    
-                    // 2. تحديث حالة الدين إلى مسدد بالكامل
-                    update(ref(database, `debts/${debtId}`), {
-                        status: 'paid',
-                        paidAt: timestamp,
-                        paidAmount: totalPaid, // إجمالي المدفوع
-                        paidMethod: method,
-                        paidNote: note || null,
-                        remaining: 0,
-                        amount: 0, // صفر المتبقي
-                        // الاحتفاظ بالمعلومات التاريخية
-                        originalAmount: fullOriginalAmount,
-                        partialPayment: totalPaid,
-                        finalPaymentAt: timestamp
-                    }),
-                    
-                    // 3. تسجيل عملية التسديد
-                    push(ref(database, 'transactions'), {
-                        type: 'debt_repayment',
-                        title: `تسديد دين كامل - ${customer}`,
-                        amount: amount,
-                        timestamp,
-                        uid,
-                        payment: method,
-                        customer,
-                        note: note || 'سداد كامل',
-                        linkedDebt: debtId,
-                        totalDebtAmount: fullOriginalAmount
-                    })
-                ]);
+            for (const debt of currentCustomerDebts) {
+                if (remainingAmount <= 0) break;
                 
-                showSuccess(`تم تسديد دين ${customer} بالكامل بمبلغ ${formatNumber(amount)} جنيه`);
-            } 
-            // إذا كان السداد جزئي
-            else {
-                await Promise.all([
-                    // 1. تحديث الرصيد
-                    update(ref(database, 'balances'), balanceUpdate),
-                    
-                    // 2. تحديث الدين بالمبلغ المتبقي (الإصلاح الرئيسي!)
-                    update(ref(database, `debts/${debtId}`), {
-                        amount: remaining,  // <-- المبلغ الجديد هو المتبقي فقط!
-                        originalAmount: fullOriginalAmount, // حفظ المبلغ الأصلي للتاريخ
-                        partialPayment: totalPaid,
-                        lastPaymentAt: timestamp,
-                        status: 'pending',  // <-- يبقى مستحق!
-                        lastPaymentMethod: method,
-                        lastPaymentNote: note || 'سداد جزئي'
-                    }),
-                    
-                    // 3. إضافة سجل الدفع الجزئي
-                    push(ref(database, `debts/${debtId}/payments`), {
-                        amount: amount,
-                        method: method,
-                        date: timestamp,
-                        note: note || 'سداد جزئي',
-                        remainingAfter: remaining
-                    }),
-                    
-                    // 4. تسجيل عملية السداد الجزئي
-                    push(ref(database, 'transactions'), {
-                        type: 'debt_partial_repayment',
-                        title: `تسديد دين جزئي - ${customer}`,
-                        amount: amount,
-                        timestamp,
-                        uid,
-                        payment: method,
-                        customer,
-                        note: note || `سداد جزئي، المتبقي: ${formatNumber(remaining)} ج`,
-                        linkedDebt: debtId,
-                        remainingAmount: remaining,
-                        totalPaid: totalPaid,
-                        originalAmount: fullOriginalAmount
-                    })
-                ]);
+                const debtRemaining = debt.amount;
+                const paymentForThisDebt = Math.min(remainingAmount, debtRemaining);
+                const newRemaining = debtRemaining - paymentForThisDebt;
+                const previousPartial = debt.partialPayment || 0;
+                const totalPaidForDebt = previousPartial + paymentForThisDebt;
+                const originalAmount = debt.originalAmount || debtRemaining;
                 
-                showSuccess(`تم تسديد جزء من دين ${customer}: ${formatNumber(amount)} ج، المتبقي: ${formatNumber(remaining)} ج`);
+                if (newRemaining === 0) {
+                    // تسديد كامل لهذا الدين
+                    debtsToUpdate.push({
+                        id: debt.id,
+                        updates: {
+                            status: 'paid',
+                            paidAt: timestamp,
+                            paidAmount: totalPaidForDebt,
+                            paidMethod: method,
+                            paidNote: note || null,
+                            remaining: 0,
+                            amount: 0,
+                            originalAmount: originalAmount,
+                            partialPayment: totalPaidForDebt,
+                            finalPaymentAt: timestamp
+                        }
+                    });
+                    fullyPaidDebts.push(debt.id);
+                } else {
+                    // تسديد جزئي
+                    debtsToUpdate.push({
+                        id: debt.id,
+                        updates: {
+                            amount: newRemaining,
+                            originalAmount: originalAmount,
+                            partialPayment: totalPaidForDebt,
+                            lastPaymentAt: timestamp,
+                            status: 'pending',
+                            lastPaymentMethod: method,
+                            lastPaymentNote: note || 'سداد جزئي'
+                        }
+                    });
+                }
+                
+                // إضافة سجل الدفع لهذا الدين
+                await push(ref(database, `debts/${debt.id}/payments`), {
+                    amount: paymentForThisDebt,
+                    method: method,
+                    date: timestamp,
+                    note: note || (newRemaining === 0 ? 'سداد كامل' : 'سداد جزئي'),
+                    remainingAfter: newRemaining
+                });
+                
+                remainingAmount -= paymentForThisDebt;
+            }
+            
+            // تنفيذ جميع التحديثات في معاملة واحدة
+            const updates = {};
+            
+            // 1. تحديث الرصيد
+            updates['balances'] = balanceUpdate;
+            
+            // 2. تحديث الديون
+            debtsToUpdate.forEach(({ id, updates: debtUpdates }) => {
+                Object.entries(debtUpdates).forEach(([key, value]) => {
+                    updates[`debts/${id}/${key}`] = value;
+                });
+            });
+            
+            // 3. تسجيل العملية الرئيسية
+            const transactionRef = push(ref(database, 'transactions'));
+            updates[`transactions/${transactionRef.key}`] = {
+                type: amount === totalPending ? 'debt_full_repayment' : 'debt_partial_repayment',
+                title: amount === totalPending ? `تسديد كامل - ${customer}` : `تسديد جزئي - ${customer}`,
+                amount: amount,
+                timestamp,
+                uid,
+                payment: method,
+                customer,
+                note: note || (amount === totalPending ? 'تسديد كامل للمجموع' : 'تسديد جزئي من المجموع'),
+                totalPending,
+                remainingAfter: totalPending - amount,
+                affectedDebts: debtsToUpdate.map(d => d.id),
+                fullyPaidDebts: fullyPaidDebts
+            };
+            
+            await update(ref(database), updates);
+            
+            // رسالة النجاح
+            if (amount === totalPending) {
+                showSuccess(`تم تسديد جميع ديون ${customer} بالكامل بمبلغ ${formatNumber(amount)} جنيه ✅`);
+            } else {
+                showSuccess(`تم تسديد ${formatNumber(amount)} ج من ديون ${customer}، المتبقي: ${formatNumber(totalPending - amount)} ج`);
             }
             
             closeModal('repay');
@@ -1151,13 +1134,13 @@
                 type: 'manual',
                 customer,
                 amount: amount,
-                originalAmount: amount, // حفظ المبلغ الأصلي
+                originalAmount: amount,
                 note: reason || 'دين يدوي',
                 status: 'pending',
                 createdAt: timestamp,
                 uid,
                 partialPayment: 0,
-                payments: {} // مصفوفة للمدفوعات الجزئية
+                payments: {}
             });
             
             closeModal('addDebt');
@@ -1168,7 +1151,7 @@
             const summary = debtorsSummary[name];
             if (!summary) return;
             
-            const debts = allDebts.filter(d => d.customer === name);
+            const debts = allDebts.filter(d => d.customer === name).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             
             let details = `👤 ${name}\n\n`;
             details += `إجمالي الديون: ${formatNumber(summary.total)} ج\n`;
