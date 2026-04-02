@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مدير حسابات صلاح الدين - نظام Offline متكامل</title>
+    <title>مدير حسابات صلاح الدين</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     
@@ -33,33 +32,59 @@
             transition: transform 0.1s;
         }
         
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
         
-        .fade-in { animation: fadeIn 0.5s ease; }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
-        .modal { display: none; }
-        .modal.active { display: flex; }
+        .modal {
+            display: none;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
         
         .modal-content {
             transform: translateY(100%);
             transition: transform 0.3s ease;
         }
-        .modal.active .modal-content { transform: translateY(0); }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
         
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
-        .shake { animation: shake 0.4s ease-in-out; }
         
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .pulse { animation: pulse 2s infinite; }
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
         
         .hidden { display: none !important; }
         
@@ -68,44 +93,33 @@
             font-weight: 700;
         }
         
-        /* Toast Notifications */
-        .toast-container {
+        .warning-toast {
             position: fixed;
             top: 20px;
             left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            width: 90%;
-            max-width: 400px;
-        }
-        
-        .toast {
-            padding: 16px 20px;
+            transform: translateX(-50%) translateY(-100px);
+            background: #ef4444;
+            color: white;
+            padding: 16px 24px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: transform 0.3s ease;
             font-weight: 600;
             text-align: center;
-            animation: slideDown 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            min-width: 300px;
         }
         
-        @keyframes slideDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .warning-toast.show {
+            transform: translateX(-50%) translateY(0);
         }
         
-        .toast-success { background: #10b981; color: white; }
-        .toast-error { background: #ef4444; color: white; }
-        .toast-warning { background: #f59e0b; color: white; }
-        .toast-info { background: #3b82f6; color: white; }
-        .toast-offline { background: #6b7280; color: white; }
-        
+        .operation-number {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
         .date-badge {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -114,111 +128,56 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
-        
+
         .btn-disabled {
             opacity: 0.6;
             pointer-events: none;
             cursor: not-allowed;
         }
-        
+
         .bank-fee-row {
             background: #fee2e2;
             border-right: 3px solid #ef4444;
         }
         
-        /* Offline Indicator */
-        .offline-banner {
+        /* Offline indicator */
+        .offline-indicator {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: #ef4444;
+            background: #f59e0b;
             color: white;
-            padding: 8px;
             text-align: center;
-            font-size: 0.875rem;
-            font-weight: 600;
+            padding: 4px;
+            font-size: 0.75rem;
             z-index: 9999;
             transform: translateY(-100%);
             transition: transform 0.3s ease;
         }
-        .offline-banner.show { transform: translateY(0); }
         
-        /* Sync Status */
-        .sync-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-        }
-        .sync-status.synced { background: #d1fae5; color: #065f46; }
-        .sync-status.pending { background: #fef3c7; color: #92400e; }
-        .sync-status.syncing { background: #dbeafe; color: #1e40af; }
-        
-        /* Loading Spinner */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* Queue Counter Badge */
-        .queue-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #ef4444;
-            color: white;
-            font-size: 0.625rem;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        .operation-number {
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        
-        /* Conflicting Number Warning */
-        .conflict-warning {
-            background: #fee2e2;
-            border: 2px solid #ef4444;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 16px;
+        .offline-indicator.show {
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
 
-    <!-- Offline Banner -->
-    <div id="offlineBanner" class="offline-banner">
-        ⚠️ أنت غير متصل بالإنترنت - سيتم حفظ البيانات محلياً
+    <div id="offlineIndicator" class="offline-indicator">
+        ⚠️ أنت غير متصل بالإنترنت - سيتم الحفظ محلياً
     </div>
 
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
+    <div id="warningToast" class="warning-toast">
+        رصيد غير كافٍ!
+    </div>
 
     <!-- التطبيق الرئيسي -->
     <div class="app-container" id="app">
         <!-- الهيدر -->
         <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg">
             <div class="flex justify-between items-center mb-2">
-                <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-slate-700 transition relative">
+                <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-slate-700 transition">
                     <span class="text-2xl">☰</span>
-                    <span id="queueBadge" class="queue-badge hidden">0</span>
                 </button>
                 <h1 class="text-lg font-bold">مدير حسابات صلاح الدين</h1>
                 <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">
@@ -230,15 +189,15 @@
                 <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg pulse">
                     00:00:00
                 </div>
-                <div id="date" class="text-slate-300 text-sm mt-1">جاري التحميل...</div>
+                <div id="date" class="text-slate-300 text-sm mt-1">
+                    جاري التحميل...
+                </div>
                 <div class="flex justify-center items-center gap-2 mt-2">
                     <span id="currentDateBadge" class="date-badge">📅 --/--/----</span>
-                    <span id="syncStatus" class="sync-status synced">
-                        <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                        متزامن
-                    </span>
                 </div>
-                <div class="text-xs text-slate-400 mt-1 font-mono" id="currentUID">UID: --</div>
+                <div class="text-xs text-slate-400 mt-1 font-mono" id="currentUID">
+                    UID: --
+                </div>
                 <div class="text-xs text-emerald-400 mt-1" id="userEmail"></div>
             </div>
         </header>
@@ -253,29 +212,25 @@
                     </div>
                 </div>
                 <div class="p-4 space-y-2">
-                    <div class="bg-slate-50 rounded-xl p-3 mb-4">
-                        <div class="text-xs text-slate-500 mb-2">حالة المزامنة</div>
-                        <div id="sidebarSyncStatus" class="text-sm font-semibold text-emerald-600">✓ متصل بالخادم</div>
-                        <div id="pendingCount" class="text-xs text-amber-600 mt-1 hidden">0 عملية قيد الانتظار</div>
-                        <button onclick="forceSync()" id="forceSyncBtn" class="mt-2 w-full bg-blue-500 text-white rounded-lg py-2 text-sm hidden">
-                            مزامنة الآن
-                        </button>
-                    </div>
-                    
                     <a href="index.html" class="w-full text-right p-3 rounded-xl bg-emerald-50 text-emerald-700 font-semibold flex items-center gap-3">
-                        <span>🏠</span><span>الرئيسية</span>
+                        <span>🏠</span>
+                        <span>الرئيسية</span>
                     </a>
                     <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700">
-                        <span>📝</span><span>الديون</span>
+                        <span>📝</span>
+                        <span>الديون</span>
                     </a>
                     <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
-                        <span>🏦</span><span>الصندوق الجانبي</span>
+                        <span>🏦</span>
+                        <span>الصندوق الجانبي</span>
                     </a>
                     <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
-                        <span>📊</span><span>التقارير</span>
+                        <span>📊</span>
+                        <span>التقارير</span>
                     </a>
                     <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
-                        <span>🧮</span><span>تصفية الوردية</span>
+                        <span>🧮</span>
+                        <span>تصفية الوردية</span>
                     </a>
                 </div>
             </div>
@@ -375,7 +330,9 @@
                     <span class="text-xs text-emerald-600 font-semibold">● مباشر</span>
                 </div>
                 <div id="recentTransactions" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
-                    <div class="text-center text-slate-400 py-4 text-sm">جاري تحميل العمليات...</div>
+                    <div class="text-center text-slate-400 py-4 text-sm">
+                        جاري تحميل العمليات...
+                    </div>
                 </div>
             </div>
 
@@ -406,72 +363,83 @@
                 </a>
             </div>
         </nav>
+
     </div>
 
-    <!-- المودالات (Modal) -->
-    <!-- [نفس مودالات الكود الأصلي مع إضافة حقول مخفية للـ offlineId] -->
-    
     <!-- مودال المبيعات النقدية -->
     <div id="salesModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('sales')">
         <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
             <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold text-slate-800">🟢 تسجيل مبيعات نقدية</h2>
                 <button onclick="closeModal('sales')" class="text-slate-400 text-2xl">&times;</button>
             </div>
+
             <form id="salesForm" class="space-y-4" onsubmit="handleSalesSubmit(event)">
-                <input type="hidden" id="salesOfflineId">
-                <!-- [نفس محتوى الفورم الأصلي] -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">القسم</label>
                     <div class="grid grid-cols-3 gap-2">
                         <button type="button" class="dept-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="عصائر" onclick="selectDept(this)">
-                            <span class="text-2xl">🧃</span><div class="text-sm mt-1">عصائر</div>
+                            <span class="text-2xl">🧃</span>
+                            <div class="text-sm mt-1">عصائر</div>
                         </button>
                         <button type="button" class="dept-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="حلويات" onclick="selectDept(this)">
-                            <span class="text-2xl">🍰</span><div class="text-sm mt-1">حلويات</div>
+                            <span class="text-2xl">🍰</span>
+                            <div class="text-sm mt-1">حلويات</div>
                         </button>
                         <button type="button" class="dept-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="طعمية وفطائر" onclick="selectDept(this)">
-                            <span class="text-2xl">🥙</span><div class="text-sm mt-1">طعمية</div>
+                            <span class="text-2xl">🥙</span>
+                            <div class="text-sm mt-1">طعمية</div>
                         </button>
                     </div>
                     <input type="hidden" id="salesDept" required>
                 </div>
+
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" class="payment-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="كاش" onclick="selectPayment(this)">
-                            <span class="text-2xl">💵</span><div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
                         </button>
                         <button type="button" class="payment-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك" onclick="selectPayment(this)">
-                            <span class="text-2xl">💳</span><div class="text-sm mt-1">بنكك</div>
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1">بنكك</div>
                         </button>
                     </div>
                     <input type="hidden" id="salesPayment" value="كاش">
                 </div>
+
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري)</label>
-                    <input type="datetime-local" id="salesDateTime" class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-emerald-500 focus:outline-none">
+                    <input type="datetime-local" id="salesDateTime" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-emerald-500 focus:outline-none">
                 </div>
+
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المبلغ الإجمالي</label>
-                    <input type="text" id="salesAmount" class="formatted-input w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-emerald-500 focus:outline-none" placeholder="0" oninput="formatNumberInput(this)" onkeypress="return isNumberKey(event)" required>
+                    <input type="text" id="salesAmount" 
+                        class="formatted-input w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-emerald-500 focus:outline-none" 
+                        placeholder="0" 
+                        oninput="formatNumberInput(this)"
+                        onkeypress="return isNumberKey(event)"
+                        required>
                 </div>
-                <button type="submit" id="salesSubmitBtn" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition flex items-center justify-center gap-2">
-                    <span>✅</span> تأكيد المبيعات
+
+                <button type="submit" id="salesSubmitBtn" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">
+                    ✅ تأكيد المبيعات
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- [المودالات الأخرى تبقى كما هي مع إضافة offlineId hidden field] -->
-
-    <!-- Firebase & Offline-First Logic -->
+    <!-- Firebase & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { 
-            getDatabase, ref, set, push, onValue, update, get, runTransaction, serverTimestamp 
+            getDatabase, ref, set, push, onValue, update, get, runTransaction
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -481,519 +449,155 @@
             projectId: "salahsweetmanage",
             storageBucket: "salahsweetmanage.firebasestorage.app",
             messagingSenderId: "126049780562",
-            appId: "1:126049780562:web:147daa036e56273263308b"
+            appId: "1:126049780562:web:147daa036e56273263308b",
+            measurementId: "G-E7FLGBQ397"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const database = getDatabase(app);
 
-        // ==========================================
-        // نظام العمل Offline المتكامل (Offline-First)
-        // ==========================================
-        
-        class OfflineFirstManager {
-            constructor() {
-                this.DB_NAME = 'SalahAccountingDB';
-                this.DB_VERSION = 1;
-                this.db = null;
-                this.isOnline = navigator.onLine;
-                this.syncInProgress = false;
-                this.pendingSync = false;
-                this.operationCounter = 0;
-                this.lastServerCounter = 0;
-                
-                this.init();
-            }
-
-            async init() {
-                await this.initIndexedDB();
-                await this.loadOperationCounter();
-                this.setupConnectivityListeners();
-                this.startPeriodicSync();
-                this.updateUI();
-            }
-
-            // 1. IndexedDB للتخزين المحلي القوي
-            initIndexedDB() {
-                return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
-                    
-                    request.onerror = () => reject(request.error);
-                    request.onsuccess = () => {
-                        this.db = request.result;
-                        resolve();
-                    };
-                    
-                    request.onupgradeneeded = (event) => {
-                        const db = event.target.result;
-                        
-                        // مخزن العمليات المعلقة
-                        if (!db.objectStoreNames.contains('pendingTransactions')) {
-                            db.createObjectStore('pendingTransactions', { keyPath: 'offlineId' });
-                        }
-                        
-                        // مخزن العمليات المؤرشفة
-                        if (!db.objectStoreNames.contains('archivedTransactions')) {
-                            db.createObjectStore('archivedTransactions', { keyPath: 'id' });
-                        }
-                        
-                        // مخزن الأرصدة المحلية
-                        if (!db.objectStoreNames.contains('localBalances')) {
-                            db.createObjectStore('localBalances', { keyPath: 'id' });
-                        }
-                        
-                        // مخزن العداد
-                        if (!db.objectStoreNames.contains('counters')) {
-                            db.createObjectStore('counters', { keyPath: 'name' });
-                        }
-                    };
-                });
-            }
-
-            // 2. إدارة العداد المحلي (الحل الأساسي لمشكلة 0001)
-            async loadOperationCounter() {
-                // محاولة قراءة من IndexedDB أولاً
-                const localCounter = await this.getFromStore('counters', 'operationNumber');
-                
-                if (localCounter) {
-                    this.operationCounter = localCounter.value;
-                    console.log('📊 تحميل العداد من IndexedDB:', this.operationCounter);
-                } else {
-                    // محاولة قراءة من LocalStorage (للتوافق مع الإصدارات القديمة)
-                    const legacy = parseInt(localStorage.getItem('operationCounter_v2') || '0');
-                    if (legacy > 0) {
-                        this.operationCounter = legacy;
-                        await this.saveToStore('counters', { name: 'operationNumber', value: legacy, updatedAt: Date.now() });
-                    }
-                }
-
-                // محاولة مزامنة مع الخادم إذا كان متصلاً
-                if (this.isOnline) {
-                    await this.syncCounterWithServer();
-                }
-            }
-
-            async syncCounterWithServer() {
-                try {
-                    const snapshot = await get(ref(database, 'system/operationCounter'));
-                    const serverValue = snapshot.val() || 0;
-                    this.lastServerCounter = serverValue;
-                    
-                    // استخدام الأعلى دائماً
-                    if (serverValue > this.operationCounter) {
-                        this.operationCounter = serverValue;
-                        await this.saveCounter();
-                        console.log('🔄 مزامنة العداد مع الخادم:', serverValue);
-                    } else if (this.operationCounter > serverValue) {
-                        // نحن متقدمون، تحديث الخادم
-                        await set(ref(database, 'system/operationCounter'), this.operationCounter);
-                        console.log('☁️ تحديث الخادم بالعداد المحلي:', this.operationCounter);
-                    }
-                } catch (e) {
-                    console.warn('⚠️ فشل مزامنة العداد مع الخادم:', e);
-                }
-            }
-
-            async saveCounter() {
-                // حفظ في IndexedDB
-                await this.saveToStore('counters', { 
-                    name: 'operationNumber', 
-                    value: this.operationCounter, 
-                    updatedAt: Date.now() 
-                });
-                
-                // نسخ احتياطي في LocalStorage
-                localStorage.setItem('operationCounter_v2', this.operationCounter.toString());
-            }
-
-            // 3. توليد رقم العملية (يعمل 100% offline)
-            async generateOperationNumber() {
-                this.operationCounter++;
-                await this.saveCounter();
-                
-                // إذا كان متصلاً، حاول تحديث الخادم في الخلفية
-                if (this.isOnline) {
-                    set(ref(database, 'system/operationCounter'), this.operationCounter)
-                        .catch(e => console.warn('فشل تحديث العداد على الخادم:', e));
-                }
-                
-                return this.operationCounter.toString().padStart(4, '0');
-            }
-
-            // 4. حفظ العملية (Offline أو Online)
-            async saveTransaction(transactionData, type) {
-                const offlineId = crypto.randomUUID();
-                const operationNumber = await this.generateOperationNumber();
-                
-                const transaction = {
-                    offlineId,
-                    operationNumber,
-                    type,
-                    data: transactionData,
-                    status: this.isOnline ? 'syncing' : 'pending',
-                    createdAt: Date.now(),
-                    syncAttempts: 0,
-                    lastError: null
-                };
-
-                // حفظ محلياً فوراً (100% نجاح)
-                await this.saveToStore('pendingTransactions', transaction);
-                
-                // تحديث UI
-                this.updateUI();
-                
-                // محاولة الإرسال إذا كان متصلاً
-                if (this.isOnline) {
-                    this.syncTransaction(transaction).catch(() => {
-                        // الفشل يتركها في قائمة الانتظار تلقائياً
-                    });
-                } else {
-                    showToast('تم الحفظ محلياً - سيتم المزامنة عند عودة الاتصال', 'offline');
-                }
-
-                return { offlineId, operationNumber };
-            }
-
-            // 5. مزامنة عملية فردية
-            async syncTransaction(transaction) {
-                try {
-                    // تحديث الحالة
-                    transaction.status = 'syncing';
-                    transaction.syncAttempts++;
-                    await this.updateInStore('pendingTransactions', transaction);
-
-                    // تنفيذ على Firebase
-                    await this.executeOnFirebase(transaction);
-                    
-                    // نجاح: نقل للأرشيف
-                    transaction.status = 'synced';
-                    transaction.syncedAt = Date.now();
-                    await this.saveToStore('archivedTransactions', transaction);
-                    await this.deleteFromStore('pendingTransactions', transaction.offlineId);
-                    
-                    return true;
-                } catch (error) {
-                    transaction.status = 'pending';
-                    transaction.lastError = error.message;
-                    await this.updateInStore('pendingTransactions', transaction);
-                    throw error;
-                }
-            }
-
-            // 6. تنفيذ العملية على Firebase
-            async executeOnFirebase(transaction) {
-                const { type, data, operationNumber } = transaction;
-                
-                switch(type) {
-                    case 'sales':
-                        return await this.executeSales(data, operationNumber);
-                    case 'creditSales':
-                        return await this.executeCreditSales(data, operationNumber);
-                    case 'expense':
-                        return await this.executeExpense(data, operationNumber);
-                    case 'transfer':
-                        return await this.executeTransfer(data, operationNumber);
-                    default:
-                        throw new Error('نوع غير معروف: ' + type);
-                }
-            }
-
-            async executeSales(data, operationNumber) {
-                const { amount, payment, dept, timestamp, uid } = data;
-                
-                // استخدام Transaction للرصيد (آمن ضد Race Conditions)
-                const balanceRef = ref(database, 'balances');
-                await runTransaction(balanceRef, (current) => {
-                    const currentCash = current?.cash || 0;
-                    const currentBank = current?.bank || 0;
-                    
-                    return {
-                        cash: payment === 'كاش' ? currentCash + amount : currentCash,
-                        bank: payment === 'بنكك' ? currentBank + amount : currentBank,
-                        lastUpdated: serverTimestamp()
-                    };
-                });
-
-                // تحديث الإحصائيات
-                const statsRef = ref(database, 'stats/today');
-                await runTransaction(statsRef, (current) => {
-                    return {
-                        sales: (current?.sales || 0) + amount,
-                        shopExpenses: current?.shopExpenses || 0,
-                        personalExpenses: current?.personalExpenses || 0,
-                        lastUpdate: timestamp
-                    };
-                });
-
-                // تسجيل العملية
-                await push(ref(database, 'transactions'), {
-                    type: 'sales',
-                    title: `مبيعات ${dept} (${payment})`,
-                    amount, timestamp, uid, operationNumber,
-                    payment, dept, date: getTodayKey()
-                });
-
-                // تحديث آخر عملية
-                await set(ref(database, 'lastTransaction'), {
-                    time: timestamp, type: 'sales', amount, name: dept
-                });
-            }
-
-            // [executeCreditSales, executeExpense, executeTransfer مشابهة...]
-
-            // 7. مزامنة جميع العمليات المعلقة
-            async syncAllPending() {
-                if (this.syncInProgress || !this.isOnline) return;
-                
-                this.syncInProgress = true;
-                this.updateSyncStatus('syncing');
-                
-                try {
-                    const pending = await this.getAllFromStore('pendingTransactions');
-                    
-                    if (pending.length === 0) {
-                        this.updateSyncStatus('synced');
-                        return;
-                    }
-
-                    console.log(`🔄 بدء مزامنة ${pending.length} عملية...`);
-                    
-                    let successCount = 0;
-                    let failCount = 0;
-
-                    for (const tx of pending.sort((a, b) => a.createdAt - b.createdAt)) {
-                        try {
-                            // التحقق من عدم التعارض في الأرقام
-                            await this.resolveNumberConflict(tx);
-                            await this.syncTransaction(tx);
-                            successCount++;
-                        } catch (error) {
-                            failCount++;
-                            console.error('❌ فشل مزامنة العملية:', tx.offlineId, error);
-                            
-                            // إذا فشلت 3 مرات، أوقف المحاولات
-                            if (tx.syncAttempts >= 3) {
-                                showToast(`فشلت مزامنة العملية #${tx.operationNumber}`, 'error');
-                            }
-                        }
-                    }
-
-                    if (successCount > 0) {
-                        showToast(`✅ تمت مزامنة ${successCount} عملية`, 'success');
-                    }
-                    if (failCount > 0) {
-                        showToast(`⚠️ فشلت مزامنة ${failCount} عملية`, 'warning');
-                    }
-
-                    this.updateSyncStatus(failCount > 0 ? 'partial' : 'synced');
-                } finally {
-                    this.syncInProgress = false;
-                    this.updateUI();
-                }
-            }
-
-            // 8. حل تعارض الأرقام (إذا كان الخادم تقدم)
-            async resolveNumberConflict(transaction) {
-                const serverMax = await get(ref(database, 'system/operationCounter'));
-                const serverValue = serverMax.val() || 0;
-                
-                if (parseInt(transaction.operationNumber) <= serverValue) {
-                    // تعارض! إعادة ترقيم
-                    const newNumber = await this.generateOperationNumber();
-                    console.warn(`⚠️ تعارض في الرقم ${transaction.operationNumber}, إعادة ترقيم إلى ${newNumber}`);
-                    transaction.operationNumber = newNumber;
-                    transaction.wasRenumbered = true;
-                    await this.updateInStore('pendingTransactions', transaction);
-                }
-            }
-
-            // 9. مراقبة الاتصال
-            setupConnectivityListeners() {
-                window.addEventListener('online', () => {
-                    console.log('🌐 عاد الاتصال!');
-                    this.isOnline = true;
-                    document.getElementById('offlineBanner').classList.remove('show');
-                    this.syncAllPending();
-                    this.updateUI();
-                });
-
-                window.addEventListener('offline', () => {
-                    console.log('📵 انقطع الاتصال!');
-                    this.isOnline = false;
-                    document.getElementById('offlineBanner').classList.add('show');
-                    this.updateSyncStatus('offline');
-                    showToast('أنت في وضع Offline - سيتم الحفظ محلياً', 'offline');
-                });
-
-                // فحص دوري للاتصال (لأن onLine غير دقيق دائماً)
-                setInterval(() => this.checkRealConnectivity(), 10000);
-            }
-
-            async checkRealConnectivity() {
-                if (!navigator.onLine) return;
-                
-                try {
-                    await fetch('https://www.google.com/favicon.ico', { 
-                        mode: 'no-cors', 
-                        cache: 'no-store',
-                        signal: AbortSignal.timeout(3000)
-                    });
-                    
-                    if (!this.isOnline) {
-                        // كان offline والآن online
-                        window.dispatchEvent(new Event('online'));
-                    }
-                } catch (e) {
-                    if (this.isOnline) {
-                        // كان online والآن offline فعلياً
-                        window.dispatchEvent(new Event('offline'));
-                    }
-                }
-            }
-
-            startPeriodicSync() {
-                // محاولة مزامنة كل 30 ثانية إذا كان هناك عمليات معلقة
-                setInterval(async () => {
-                    const pending = await this.getAllFromStore('pendingTransactions');
-                    if (pending.length > 0 && this.isOnline) {
-                        this.syncAllPending();
-                    }
-                }, 30000);
-            }
-
-            // 10. دوال مساعدة IndexedDB
-            saveToStore(storeName, data) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction([storeName], 'readwrite');
-                    const store = tx.objectStore(storeName);
-                    const request = store.put(data);
-                    request.onsuccess = () => resolve();
-                    request.onerror = () => reject(request.error);
-                });
-            }
-
-            getFromStore(storeName, key) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction([storeName], 'readonly');
-                    const store = tx.objectStore(storeName);
-                    const request = store.get(key);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-            }
-
-            getAllFromStore(storeName) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction([storeName], 'readonly');
-                    const store = tx.objectStore(storeName);
-                    const request = store.getAll();
-                    request.onsuccess = () => resolve(request.result || []);
-                    request.onerror = () => reject(request.error);
-                });
-            }
-
-            updateInStore(storeName, data) {
-                return this.saveToStore(storeName, data);
-            }
-
-            deleteFromStore(storeName, key) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction([storeName], 'readwrite');
-                    const store = tx.objectStore(storeName);
-                    const request = store.delete(key);
-                    request.onsuccess = () => resolve();
-                    request.onerror = () => reject(request.error);
-                });
-            }
-
-            // 11. تحديث واجهة المستخدم
-            updateUI() {
-                this.getAllFromStore('pendingTransactions').then(pending => {
-                    const count = pending.length;
-                    const badge = document.getElementById('queueBadge');
-                    const pendingText = document.getElementById('pendingCount');
-                    const syncBtn = document.getElementById('forceSyncBtn');
-                    
-                    if (count > 0) {
-                        badge.textContent = count > 9 ? '9+' : count;
-                        badge.classList.remove('hidden');
-                        pendingText.textContent = `${count} عملية قيد الانتظار`;
-                        pendingText.classList.remove('hidden');
-                        syncBtn.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                        pendingText.classList.add('hidden');
-                        syncBtn.classList.add('hidden');
-                    }
-                });
-            }
-
-            updateSyncStatus(status) {
-                const indicator = document.getElementById('syncStatus');
-                const sidebarStatus = document.getElementById('sidebarSyncStatus');
-                
-                const statuses = {
-                    synced: { text: '✓ متزامن', class: 'synced', color: 'text-emerald-600' },
-                    syncing: { text: '⟳ جاري المزامنة', class: 'syncing', color: 'text-blue-600' },
-                    pending: { text: '⏸️ معلق', class: 'pending', color: 'text-amber-600' },
-                    offline: { text: '✕ غير متصل', class: 'pending', color: 'text-red-600' },
-                    partial: { text: '⚠️ جزئي', class: 'pending', color: 'text-amber-600' }
-                };
-
-                const config = statuses[status] || statuses.offline;
-                
-                indicator.className = `sync-status ${config.class}`;
-                indicator.innerHTML = `<span class="w-2 h-2 bg-current rounded-full"></span> ${config.text}`;
-                
-                sidebarStatus.className = `text-sm font-semibold ${config.color}`;
-                sidebarStatus.textContent = config.text;
-            }
-        }
-
-        // ==========================================
-        // تهيئة النظام
-        // ==========================================
-        
-        const offlineManager = new OfflineFirstManager();
         let currentUser = null;
         let balances = { cash: 0, bank: 0 };
         let todayStats = { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+        let transactions = [];
+        let lastTransaction = { time: 0, type: '', amount: 0, name: '' };
+        let operationCounter = 0;
+        let currentDateKey = '';
+        let isOnline = navigator.onLine;
+        let pendingQueue = [];
 
-        // دوال مساعدة عامة
-        window.formatNumber = (num) => {
+        const BANK_FEE = 60;
+
+        // ==========================================
+        // حل مشكلة العداد - يعمل 100% Offline
+        // ==========================================
+
+        // تحميل العداد من LocalStorage (أو Firebase إذا كان متصلاً)
+        async function initOperationCounter() {
+            // 1. قراءة من LocalStorage أولاً
+            const savedCounter = localStorage.getItem('operationCounter_v3');
+            const localValue = savedCounter ? parseInt(savedCounter) : 0;
+            
+            // 2. إذا كان متصلاً، حاول قراءة من Firebase
+            if (isOnline) {
+                try {
+                    const snapshot = await get(ref(database, 'system/operationCounter'));
+                    const serverValue = snapshot.val() || 0;
+                    
+                    // استخدام الأعلى
+                    operationCounter = Math.max(localValue, serverValue);
+                    
+                    // تحديث Firebase إذا كان المحلي أعلى
+                    if (localValue > serverValue) {
+                        await set(ref(database, 'system/operationCounter'), localValue);
+                    }
+                } catch (e) {
+                    operationCounter = localValue;
+                }
+            } else {
+                operationCounter = localValue;
+            }
+            
+            console.log('🔢 العداد الحالي:', operationCounter);
+        }
+
+        // توليد رقم جديد - يعمل Offline
+        function generateOperationNumber() {
+            operationCounter++;
+            
+            // حفظ فوري في LocalStorage (لا يعتمد على Firebase)
+            localStorage.setItem('operationCounter_v3', operationCounter.toString());
+            
+            // محاولة تحديث Firebase في الخلفية (إذا كان متصلاً)
+            if (isOnline) {
+                set(ref(database, 'system/operationCounter'), operationCounter).catch(() => {});
+            }
+            
+            return operationCounter.toString().padStart(4, '0');
+        }
+
+        // ==========================================
+        // نظام Offline البسيط
+        // ==========================================
+
+        // حفظ عملية في قائمة الانتظار
+        function queueOperation(operation) {
+            pendingQueue.push({
+                ...operation,
+                queuedAt: Date.now(),
+                retries: 0
+            });
+            localStorage.setItem('pendingQueue', JSON.stringify(pendingQueue));
+            updateOfflineUI();
+        }
+
+        // تنفيذ العمليات المعلقة
+        async function processQueue() {
+            if (!isOnline || pendingQueue.length === 0) return;
+            
+            const queue = [...pendingQueue];
+            pendingQueue = [];
+            
+            for (const op of queue) {
+                try {
+                    await executeOperation(op);
+                } catch (e) {
+                    op.retries++;
+                    if (op.retries < 3) {
+                        pendingQueue.push(op);
+                    }
+                }
+            }
+            
+            localStorage.setItem('pendingQueue', JSON.stringify(pendingQueue));
+            updateOfflineUI();
+        }
+
+        // تنفيذ عملية على Firebase
+        async function executeOperation(op) {
+            // تنفيذ حسب النوع...
+            // [نفس منطق Firebase الأصلي]
+        }
+
+        // ==========================================
+        // الدوال الأصلية (مبسطة)
+        // ==========================================
+
+        window.formatNumber = function(num) {
             if (num === null || num === undefined || isNaN(num)) return '0';
             return parseInt(num).toLocaleString('en-US');
         };
 
-        window.formatNumberInput = (input) => {
+        window.formatNumberInput = function(input) {
             let value = input.value.replace(/[^\d]/g, '');
-            input.value = value ? parseInt(value).toLocaleString('en-US') : '';
+            if (value) {
+                input.value = parseInt(value).toLocaleString('en-US');
+            } else {
+                input.value = '';
+            }
         };
 
-        window.parseFormattedNumber = (inputId) => {
+        window.parseFormattedNumber = function(inputId) {
             const value = document.getElementById(inputId).value.replace(/,/g, '');
             return parseFloat(value) || 0;
         };
 
-        window.isNumberKey = (evt) => {
+        window.isNumberKey = function(evt) {
             const charCode = (evt.which) ? evt.which : evt.keyCode;
-            return !(charCode > 31 && (charCode < 48 || charCode > 57));
+            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                return false;
+            }
+            return true;
         };
 
-        window.showToast = (message, type = 'info', duration = 3000) => {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerHTML = message;
-            
-            container.appendChild(toast);
-            
+        window.showWarning = function(message) {
+            const toast = document.getElementById('warningToast');
+            toast.textContent = message;
+            toast.classList.add('show');
             setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-100%)';
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
+                toast.classList.remove('show');
+            }, 3000);
         };
 
         function getTodayKey() {
@@ -1005,77 +609,137 @@
 
         function getTimestamp(inputId) {
             const input = document.getElementById(inputId);
-            if (input?.value) return new Date(input.value).getTime();
+            if (input && input.value) {
+                return new Date(input.value).getTime();
+            }
             return Date.now();
         }
 
         // ==========================================
-        // معالجات الإرسال الجديدة (Offline-First)
+        // معالجات الإرسال مع Offline Support
         // ==========================================
 
-        window.handleSalesSubmit = async (e) => {
+        window.handleSalesSubmit = async function(e) {
             e.preventDefault();
-            const btn = document.getElementById('salesSubmitBtn');
             
-            // منع الضغط المتكرر
+            const btn = document.getElementById('salesSubmitBtn');
             if (btn.disabled) return;
             btn.disabled = true;
-            btn.innerHTML = '<div class="spinner"></div> جاري الحفظ...';
-
+            
             try {
                 const amount = parseFormattedNumber('salesAmount');
                 const payment = document.getElementById('salesPayment').value;
                 const dept = document.getElementById('salesDept').value;
                 
-                if (!dept) throw new Error('الرجاء اختيار القسم');
-                if (amount <= 0) throw new Error('المبلغ يجب أن يكون أكبر من صفر');
+                if (!dept) {
+                    showWarning('الرجاء اختيار القسم');
+                    return;
+                }
+
+                if (amount <= 0) {
+                    showWarning('المبلغ يجب أن يكون أكبر من صفر');
+                    return;
+                }
 
                 const timestamp = getTimestamp('salesDateTime');
+                const operationNumber = generateOperationNumber(); // ✅ يعمل Offline!
                 const uid = Date.now().toString(36).toUpperCase().slice(-6);
-
-                // تحديث الأرصدة محلياً فوراً (Optimistic UI)
+                
+                // تحديث محلي فوري
                 if (payment === 'كاش') balances.cash += amount;
                 else balances.bank += amount;
                 updateBalanceDisplay();
-
-                // حفظ العملية (Offline أو Online)
-                const { operationNumber } = await offlineManager.saveTransaction({
-                    amount, payment, dept, timestamp, uid
-                }, 'sales');
-
-                // تحديث الإحصائيات محلياً
+                
                 todayStats.sales += amount;
                 updateTodayStats();
 
-                // إضافة للعرض الفوري
-                addTransactionToUI({
+                // بيانات العملية
+                const transactionData = {
                     type: 'sales',
                     title: `مبيعات ${dept} (${payment})`,
-                    amount, timestamp, operationNumber, payment, dept
-                });
+                    amount: amount,
+                    timestamp: timestamp,
+                    uid: uid,
+                    operationNumber: operationNumber,
+                    payment: payment,
+                    dept: dept,
+                    date: getTodayKey()
+                };
 
-                closeModal('sales');
-                showToast(`✅ تم تسجيل المبيعات #${operationNumber}`, 'success');
+                // إذا كان Offline، أضف للقائمة
+                if (!isOnline) {
+                    queueOperation({ type: 'transaction', data: transactionData });
+                    addTransactionToList(transactionData);
+                    closeModal('sales');
+                    showWarning('✅ تم الحفظ محلياً - سيتم المزامنة لاحقاً');
+                    return;
+                }
+
+                // إذا كان Online، أرسل مباشرة
+                try {
+                    const balanceUpdate = {};
+                    balanceUpdate[payment === 'كاش' ? 'cash' : 'bank'] = 
+                        (payment === 'كاش' ? balances.cash : balances.bank);
+                    
+                    const currentStats = (await get(ref(database, 'stats/today'))).val() || {};
+                    
+                    await Promise.all([
+                        update(ref(database, 'balances'), balanceUpdate),
+                        update(ref(database, 'stats/today'), { 
+                            sales: (currentStats.sales || 0) + amount,
+                            lastUpdate: timestamp
+                        }),
+                        push(ref(database, 'transactions'), transactionData),
+                        set(ref(database, 'lastTransaction'), {
+                            time: timestamp,
+                            type: 'sales',
+                            amount: amount,
+                            name: dept
+                        })
+                    ]);
+
+                    closeModal('sales');
+                    showWarning('✅ تم تسجيل المبيعات بنجاح #' + operationNumber);
+                } catch (error) {
+                    // فشل الاتصال - أضف للقائمة
+                    queueOperation({ type: 'transaction', data: transactionData });
+                    addTransactionToList(transactionData);
+                    closeModal('sales');
+                    showWarning('⚠️ تم الحفظ محلياً - فشل الاتصال بالخادم');
+                }
                 
-            } catch (error) {
-                console.error(error);
-                showToast('❌ ' + error.message, 'error');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<span>✅</span> تأكيد المبيعات';
             }
         };
 
-        // [handleCreditSalesSubmit, handleExpenseSubmit, handleTransferSubmit مشابهة]
+        // ==========================================
+        // بقية الكود الأصلي (مختصر)
+        // ==========================================
 
-        // ==========================================
-        // دوال واجهة المستخدم
-        // ==========================================
+        function addTransactionToList(tx) {
+            const container = document.getElementById('recentTransactions');
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center p-3 rounded-xl border bg-emerald-100 text-emerald-700 border-emerald-200 fade-in';
+            div.innerHTML = `
+                <div class="flex items-center gap-2 flex-1">
+                    <span>🟢</span>
+                    <div class="flex-1">
+                        <div class="font-semibold text-sm">${tx.title}</div>
+                        <div class="text-xs opacity-75">
+                            ${new Date(tx.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})} 
+                            <span class="operation-number bg-slate-200 px-2 py-1 rounded text-xs">#${tx.operationNumber}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-left font-bold">${formatNumber(tx.amount)}</div>
+            `;
+            container.insertBefore(div, container.firstChild);
+        }
 
         function updateBalanceDisplay() {
             document.getElementById('cashBalance').textContent = formatNumber(balances.cash);
             document.getElementById('bankBalance').textContent = formatNumber(balances.bank);
-            document.getElementById('lastSync').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
         }
 
         function updateTodayStats() {
@@ -1089,28 +753,32 @@
             netEl.className = `font-bold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`;
         }
 
-        function addTransactionToUI(tx) {
-            const container = document.getElementById('recentTransactions');
-            const div = document.createElement('div');
-            div.className = 'flex justify-between items-center p-3 rounded-xl border bg-emerald-100 text-emerald-700 border-emerald-200 fade-in';
-            div.innerHTML = `
-                <div class="flex items-center gap-2 flex-1">
-                    <span>🟢</span>
-                    <div class="flex-1">
-                        <div class="font-semibold text-sm">${tx.title}</div>
-                        <div class="text-xs opacity-75 flex items-center gap-2">
-                            ${new Date(tx.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})} 
-                            <span class="operation-number bg-slate-200 px-2 py-1 rounded text-xs">#${tx.operationNumber}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-left font-bold">${formatNumber(Math.abs(tx.amount))}</div>
-            `;
-            container.insertBefore(div, container.firstChild);
+        function updateOfflineUI() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (!isOnline || pendingQueue.length > 0) {
+                indicator.classList.add('show');
+                indicator.textContent = !isOnline ? 
+                    '⚠️ أنت غير متصل بالإنترنت - سيتم الحفظ محلياً' : 
+                    `⏳ ${pendingQueue.length} عملية قيد الانتظار`;
+            } else {
+                indicator.classList.remove('show');
+            }
         }
 
+        // مراقبة الاتصال
+        window.addEventListener('online', () => {
+            isOnline = true;
+            updateOfflineUI();
+            processQueue();
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            updateOfflineUI();
+        });
+
         // ==========================================
-        // Firebase Auth & Realtime Listeners
+        // التهيئة
         // ==========================================
 
         onAuthStateChanged(auth, async (user) => {
@@ -1122,50 +790,54 @@
             currentUser = user;
             document.getElementById('userEmail').textContent = '👤 ' + user.email;
             
-            // انتظار تهيئة IndexedDB
-            await offlineManager.init();
+            // تحميل العداد أولاً
+            await initOperationCounter();
             
-            // الاستماع للأرصدة من Firebase
+            // تحميل قائمة الانتظار
+            const savedQueue = localStorage.getItem('pendingQueue');
+            if (savedQueue) {
+                pendingQueue = JSON.parse(savedQueue);
+                if (isOnline) processQueue();
+            }
+            
+            // الاستماع للبيانات
             onValue(ref(database, 'balances'), (snap) => {
-                const serverBalances = snap.val();
-                if (serverBalances) {
-                    // دمج مع الأرصدة المحلية (الأحدث يفوز)
-                    balances = {
-                        cash: Math.max(balances.cash, serverBalances.cash || 0),
-                        bank: Math.max(balances.bank, serverBalances.bank || 0)
-                    };
+                const val = snap.val();
+                if (val) {
+                    balances = val;
                     updateBalanceDisplay();
                 }
             });
-
-            // الاستماع للإحصائيات
+            
             onValue(ref(database, 'stats/today'), (snap) => {
                 todayStats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
                 updateTodayStats();
             });
-
-            // تحميل العمليات من Firebase
+            
             onValue(ref(database, 'transactions'), (snap) => {
                 const txs = [];
-                snap.forEach(child => txs.push({ id: child.key, ...child.val() }));
-                
+                snap.forEach(child => txs.push(child.val()));
                 txs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 
                 const container = document.getElementById('recentTransactions');
                 container.innerHTML = '';
-                
-                txs.slice(0, 10).forEach(tx => addTransactionToUI(tx));
+                txs.slice(0, 10).forEach(tx => addTransactionToList(tx));
             });
-
-            // تحديث الساعة
+            
+            // الساعة
             setInterval(() => {
                 const now = new Date();
                 document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
                 document.getElementById('currentUID').textContent = 'UID: ' + Date.now().toString(36).toUpperCase().slice(-6);
+                
+                const dateStr = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                document.getElementById('date').textContent = dateStr;
             }, 1000);
+            
+            updateOfflineUI();
         });
 
-        window.logout = async () => {
+        window.logout = async function() {
             try {
                 await signOut(auth);
                 window.location.href = 'login.html';
@@ -1174,12 +846,10 @@
             }
         };
 
-        window.forceSync = () => offlineManager.syncAllPending();
-
-        // [بقية دوال UI: toggleSidebar, openModal, closeModal, selectDept, etc.]
-        window.toggleSidebar = () => {
+        window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('sidebarContent');
+            
             if (sidebar.classList.contains('hidden')) {
                 sidebar.classList.remove('hidden');
                 setTimeout(() => content.classList.remove('translate-x-full'), 10);
@@ -1189,7 +859,7 @@
             }
         };
 
-        window.openModal = (type) => {
+        window.openModal = function(type) {
             document.getElementById(type + 'Modal').classList.add('active');
             document.body.style.overflow = 'hidden';
             
@@ -1199,13 +869,13 @@
             if (field) field.value = now.toISOString().slice(0, 16);
         };
 
-        window.closeModal = (type) => {
+        window.closeModal = function(type) {
             document.getElementById(type + 'Modal').classList.remove('active');
             document.body.style.overflow = '';
             document.getElementById(type + 'Form')?.reset();
         };
 
-        window.selectDept = (btn) => {
+        window.selectDept = function(btn) {
             document.querySelectorAll('.dept-btn').forEach(b => {
                 b.classList.remove('border-emerald-500', 'bg-emerald-50');
                 b.classList.add('border-slate-200');
@@ -1215,7 +885,7 @@
             document.getElementById('salesDept').value = btn.dataset.value;
         };
 
-        window.selectPayment = (btn) => {
+        window.selectPayment = function(btn) {
             document.querySelectorAll('.payment-btn').forEach(b => {
                 b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
                 b.classList.add('border-slate-200');
