@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -141,6 +140,23 @@
         .bank-fee-row {
             background: #fee2e2;
             border-right: 3px solid #ef4444;
+        }
+
+        /* وسم التاريخ القديم */
+        .old-date-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-right: 4px;
+        }
+
+        /* خط مشطوب للتحويلات */
+        .transfer-strikethrough {
+            text-decoration: line-through;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -742,7 +758,7 @@
             onValue, 
             update, 
             get,
-            remove
+            runTransaction
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -762,14 +778,65 @@
 
         let currentUser = null;
         let balances = { cash: 0, bank: 0 };
-        let todayStats = { sales: 0, shopExpenses: 0, personalExpenses: 0 };
         let transactions = [];
         let lastTransaction = { time: 0, type: '', amount: 0, name: '' };
-        let operationCounter = 0;
-        let currentDateKey = '';
 
         // ثوابت النظام
         const BANK_FEE = 60; // دمغة بنكك
+
+        // ==========================================
+        // دوال مساعدة للتواريخ
+        // ==========================================
+
+        // الحصول على مفتاح اليوم (YYYY-MM-DD) - من 6ص إلى 6ص
+        function getTodayKey() {
+            const now = new Date();
+            const hours = now.getHours();
+            
+            // إذا كان الوقت قبل 6 صباحاً، نعتبره من اليوم السابق
+            if (hours < 6) {
+                now.setDate(now.getDate() - 1);
+            }
+            
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        // التحقق مما إذا كان التاريخ ينتمي لليوم الحالي (6ص إلى 6ص)
+        function isToday(timestamp) {
+            const date = new Date(timestamp);
+            const todayKey = getTodayKey();
+            const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            return dateKey === todayKey;
+        }
+
+        // الحصول على بداية اليوم (6:00 صباحاً)
+        function getTodayStart() {
+            const now = new Date();
+            const start = new Date(now);
+            start.setHours(6, 0, 0, 0);
+            
+            // إذا كان الوقت الحالي قبل 6 صباحاً، نرجع لبداية اليوم السابق
+            if (now.getHours() < 6) {
+                start.setDate(start.getDate() - 1);
+            }
+            
+            return start.getTime();
+        }
+
+        // الحصول على نهاية اليوم (5:59:59 صباحاً اليوم التالي)
+        function getTodayEnd() {
+            const start = getTodayStart();
+            return start + (24 * 60 * 60 * 1000) - 1;
+        }
+
+        // تنسيق الرقم بـ 5 خانات
+        function formatOperationNumber(num) {
+            return num.toString().padStart(5, '0');
+        }
+
+        // ==========================================
+        // دوال التنسيق
+        // ==========================================
 
         window.formatNumber = function(num) {
             if (num === null || num === undefined || isNaN(num)) return '0';
@@ -807,19 +874,6 @@
             }, 3000);
         };
 
-        // الحصول على مفتاح اليوم (YYYY-MM-DD) - من 6ص إلى 6ص
-        function getTodayKey() {
-            const now = new Date();
-            const hours = now.getHours();
-            
-            // إذا كان الوقت قبل 6 صباحاً، نعتبره من اليوم السابق
-            if (hours < 6) {
-                now.setDate(now.getDate() - 1);
-            }
-            
-            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        }
-
         // الحصول على التimestamp مع إمكانية التخصيص
         function getTimestamp(inputId) {
             const input = document.getElementById(inputId);
@@ -829,55 +883,9 @@
             return Date.now();
         }
 
-        // التحقق من إعادة التعييل اليومية (6:00 صباحاً)
-        async function checkDailyReset() {
-            const todayKey = getTodayKey();
-            const lastResetKey = localStorage.getItem('lastResetDate');
-            
-            if (lastResetKey !== todayKey) {
-                // حفظ إحصائيات الأمس في الأرشيف
-                if (lastResetKey) {
-                    const yesterdayStats = await get(ref(database, 'stats/today')).val();
-                    if (yesterdayStats) {
-                        await set(ref(database, `stats/history/${lastResetKey}`), yesterdayStats);
-                    }
-                }
-                
-                // إعادة تعيين إحصائيات اليوم
-                await set(ref(database, 'stats/today'), {
-                    sales: 0,
-                    shopExpenses: 0,
-                    personalExpenses: 0,
-                    date: todayKey,
-                    resetAt: Date.now()
-                });
-                
-                localStorage.setItem('lastResetDate', todayKey);
-                currentDateKey = todayKey;
-                
-                // تحديث الواجهة
-                updateDateDisplay();
-            }
-        }
-
-        function updateDateDisplay() {
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('ar-SA', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-            const shortDate = now.toLocaleDateString('ar-SA', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric' 
-            });
-            
-            document.getElementById('date').textContent = dateStr;
-            document.getElementById('currentDateBadge').textContent = `📅 ${shortDate}`;
-            document.getElementById('todayDateBadge').textContent = `📅 ${shortDate}`;
-        }
+        // ==========================================
+        // المصادقة والتهيئة
+        // ==========================================
 
         onAuthStateChanged(auth, (user) => {
             if (!user) {
@@ -894,10 +902,7 @@
             currentUser = user;
             document.getElementById('userEmail').textContent = '👤 ' + user.email;
             
-            // التحقق من إعادة التعييل عند بدء التطبيق
-            checkDailyReset().then(() => {
-                initApp();
-            });
+            initApp();
         });
 
         window.logout = async function() {
@@ -918,11 +923,11 @@
             
             // مراقبة إحصائيات اليوم فقط
             onValue(ref(database, 'stats/today'), (snap) => {
-                todayStats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-                updateTodayStats();
+                const stats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                updateTodayStats(stats);
             });
             
-            // مراقبة العمليات
+            // مراقبة العمليات - نجلب كل العمليات لحساب الإحصائيات ولكن نعرض فقط آخر 12
             onValue(ref(database, 'transactions'), (snap) => {
                 const txs = [];
                 snap.forEach((child) => {
@@ -932,27 +937,11 @@
                     });
                 });
                 
-                // تصفية عمليات اليوم فقط (من 6ص إلى 6ص)
-                const todayKey = getTodayKey();
-                const todayStart = new Date();
-                todayStart.setHours(6, 0, 0, 0);
-                if (todayStart.getTime() > Date.now()) {
-                    todayStart.setDate(todayStart.getDate() - 1);
-                }
-                const todayStartTimestamp = todayStart.getTime();
-                
-                transactions = txs
-                    .filter(t => t.timestamp >= todayStartTimestamp)
-                    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-                    .slice(0, 10);
-                
-                const maxOpNum = txs.reduce((max, tx) => {
-                    const num = parseInt(tx.operationNumber) || 0;
-                    return num > max ? num : max;
-                }, 0);
-                operationCounter = maxOpNum;
+                // ترتيب حسب الوقت تنازلياً
+                transactions = txs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 
                 updateTransactionsList();
+                calculateTodayStatsFromTransactions();
             });
             
             // مراقبة آخر عملية (للكشف عن التكرار)
@@ -981,23 +970,42 @@
             // تحديث الساعة والتاريخ
             updateClock();
             setInterval(updateClock, 1000);
-            
-            // التحقق من إعادة التعييل كل دقيقة (عند الساعة 6:00)
-            setInterval(() => {
-                const now = new Date();
-                if (now.getHours() === 6 && now.getMinutes() === 0) {
-                    checkDailyReset();
-                }
-            }, 60000);
+            updateDateDisplay();
         }
 
-        function updateTodayStats() {
-            document.getElementById('todaySales').textContent = formatNumber(todayStats.sales || 0);
-            document.getElementById('todayExpenses').textContent = formatNumber(todayStats.shopExpenses || 0);
-            document.getElementById('todayPersonal').textContent = formatNumber(todayStats.personalExpenses || 0);
+        // حساب إحصائيات اليوم من العمليات مباشرة
+        function calculateTodayStatsFromTransactions() {
+            const todayStart = getTodayStart();
+            const todayEnd = getTodayEnd();
+            
+            let sales = 0;
+            let shopExpenses = 0;
+            let personalExpenses = 0;
+            
+            transactions.forEach(t => {
+                // فقط العمليات التي تحدثت اليوم (من 6ص إلى 6ص)
+                if (t.timestamp >= todayStart && t.timestamp <= todayEnd) {
+                    if (t.type === 'sales') {
+                        sales += Math.abs(t.amount || 0);
+                    } else if (t.type === 'shopExpense') {
+                        shopExpenses += Math.abs(t.amount || 0);
+                    } else if (t.type === 'personalExpense') {
+                        personalExpenses += Math.abs(t.amount || 0);
+                    }
+                }
+            });
+            
+            // تحديث العرض
+            updateTodayStats({ sales, shopExpenses, personalExpenses });
+        }
+
+        function updateTodayStats(stats) {
+            document.getElementById('todaySales').textContent = formatNumber(stats.sales || 0);
+            document.getElementById('todayExpenses').textContent = formatNumber(stats.shopExpenses || 0);
+            document.getElementById('todayPersonal').textContent = formatNumber(stats.personalExpenses || 0);
             
             // حساب الصافي
-            const net = (todayStats.sales || 0) - (todayStats.shopExpenses || 0) - (todayStats.personalExpenses || 0);
+            const net = (stats.sales || 0) - (stats.shopExpenses || 0) - (stats.personalExpenses || 0);
             const netElement = document.getElementById('todayNet');
             netElement.textContent = formatNumber(net);
             netElement.className = `font-bold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`;
@@ -1015,11 +1023,30 @@
             document.getElementById('currentUID').textContent = 'UID: ' + Date.now().toString(36).toUpperCase().slice(-6);
         }
 
+        function updateDateDisplay() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ar-SA', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            const shortDate = now.toLocaleDateString('ar-SA', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+            });
+            
+            document.getElementById('date').textContent = dateStr;
+            document.getElementById('currentDateBadge').textContent = `📅 ${shortDate}`;
+            document.getElementById('todayDateBadge').textContent = `📅 ${shortDate}`;
+        }
+
         function updateTransactionsList() {
             const container = document.getElementById('recentTransactions');
             
             if (transactions.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">لا توجد عمليات اليوم</div>';
+                container.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">لا توجد عمليات</div>';
                 return;
             }
             
@@ -1027,34 +1054,42 @@
                 sales: 'bg-emerald-100 text-emerald-700 border-emerald-200',
                 shopExpense: 'bg-red-100 text-red-700 border-red-200',
                 personalExpense: 'bg-blue-100 text-blue-700 border-blue-200',
-                transfer: 'bg-slate-100 text-slate-700 border-slate-200'
+                transfer: 'bg-slate-100 text-slate-700 border-slate-200',
+                bankFee: 'bg-red-50 text-red-600 border-red-200'
             };
             
             const emojis = {
                 sales: '🟢',
                 shopExpense: '🔴',
                 personalExpense: '🔵',
-                transfer: '⇄'
+                transfer: '⇄',
+                bankFee: '💳'
             };
             
-            container.innerHTML = transactions.map(t => {
+            // أخذ آخر 12 عملية
+            const recentTxs = transactions.slice(0, 12);
+            const todayStart = getTodayStart();
+            
+            container.innerHTML = recentTxs.map(t => {
                 const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                const isOld = t.timestamp < todayStart;
+                const oldBadge = isOld ? '<span class="old-date-badge">تاريخ قديم</span>' : '';
                 
                 let amountDisplay = '';
                 let extraRows = '';
+                let titleClass = '';
                 
                 if (t.type === 'transfer') {
                     const transferAmount = formatNumber(t.transferAmount || 0);
                     amountDisplay = `<div class="text-left">
-                        <div class="font-bold text-slate-700">${transferAmount}</div>
+                        <div class="font-bold text-slate-700 transfer-strikethrough">${transferAmount}</div>
                         <div class="text-xs text-slate-600">${t.from} → ${t.to}</div>
                     </div>`;
+                    titleClass = 'transfer-strikethrough';
                 } else if (t.type === 'shopExpense' || t.type === 'personalExpense') {
-                    // عرض المصروف الأساسي
                     const baseAmount = Math.abs(t.amount);
                     amountDisplay = `<div class="text-left font-bold">${formatNumber(baseAmount)}</div>`;
                     
-                    // عرض الدمغة إن وجدت
                     if (t.bankFee && t.bankFee > 0) {
                         extraRows = `
                             <div class="mt-1 pt-1 border-t border-red-200/50">
@@ -1065,6 +1100,8 @@
                             </div>
                         `;
                     }
+                } else if (t.type === 'bankFee') {
+                    amountDisplay = `<div class="text-left font-bold text-red-600">${formatNumber(Math.abs(t.amount))}</div>`;
                 } else {
                     amountDisplay = `<div class="text-left font-bold">${formatNumber(Math.abs(t.amount))}</div>`;
                 }
@@ -1084,9 +1121,9 @@
                         <div class="flex items-center gap-2 flex-1">
                             <span>${emoji}</span>
                             <div class="flex-1">
-                                <div class="font-semibold text-sm">${t.title}</div>
-                                <div class="text-xs opacity-75 flex items-center gap-2">
-                                    ${time} ${opNum}
+                                <div class="font-semibold text-sm ${titleClass}">${t.title}</div>
+                                <div class="text-xs opacity-75 flex items-center gap-2 flex-wrap">
+                                    ${time} ${opNum} ${oldBadge}
                                 </div>
                                 ${extraRows}
                             </div>
@@ -1096,6 +1133,10 @@
                 `;
             }).join('');
         }
+
+        // ==========================================
+        // واجهة المستخدم
+        // ==========================================
 
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
@@ -1237,7 +1278,6 @@
 
         function normalizeText(text) {
             if (!text) return '';
-            // إزالة "ال" التعريف من البداية وتوحيد التاء المربوطة
             return text.replace(/^ال/, '').replace(/ة$/, 'ه').toLowerCase().trim();
         }
 
@@ -1250,20 +1290,35 @@
                    (now - lastTransaction.time) < 60000;
         }
 
-        function generateOperationNumber() {
-            operationCounter++;
-            return operationCounter.toString().padStart(4, '0');
+        // ==========================================
+        // توليد رقم العملية الذري
+        // ==========================================
+
+        async function generateOperationNumber() {
+            const counterRef = ref(database, 'system/operationCounter');
+            
+            try {
+                const result = await runTransaction(counterRef, (current) => {
+                    return (current || 0) + 1;
+                });
+                
+                return formatOperationNumber(result.snapshot.val());
+            } catch (error) {
+                console.error('Error generating operation number:', error);
+                // في حالة الخطأ، نستخدم الوقت كبديل
+                return formatOperationNumber(Date.now() % 100000);
+            }
         }
 
         // ==========================================
-        // معالجات الإرسال مع منع الضغط المتكرر
+        // معالجات الإرسال
         // ==========================================
 
         window.handleSalesSubmit = async function(e) {
             e.preventDefault();
             
             const btn = document.getElementById('salesSubmitBtn');
-            if (btn.disabled) return; // منع الضغط المتكرر
+            if (btn.disabled) return;
             btn.disabled = true;
             btn.classList.add('btn-disabled');
             
@@ -1283,7 +1338,7 @@
                 }
 
                 const timestamp = getTimestamp('salesDateTime');
-                const operationNumber = generateOperationNumber();
+                const operationNumber = await generateOperationNumber();
                 const uid = Date.now().toString(36).toUpperCase().slice(-6);
                 
                 const balanceUpdate = {};
@@ -1293,38 +1348,46 @@
                     balanceUpdate.bank = balances.bank + amount;
                 }
                 
-                // تحديث إحصائيات اليوم فقط
-                const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                const isTodayTransaction = isToday(timestamp);
+                const updates = [];
                 
-                await Promise.all([
-                    update(ref(database, 'balances'), balanceUpdate),
-                    update(ref(database, 'stats/today'), { 
+                // تحديث الأرصدة دائماً
+                updates.push(update(ref(database, 'balances'), balanceUpdate));
+                
+                // تحديث إحصائيات اليوم فقط إذا كانت العملية لليوم الحالي
+                if (isTodayTransaction) {
+                    const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                    updates.push(update(ref(database, 'stats/today'), { 
                         sales: (currentStats.sales || 0) + amount,
-                        shopExpenses: currentStats.shopExpenses || 0,
-                        personalExpenses: currentStats.personalExpenses || 0,
                         lastUpdate: timestamp
-                    }),
-                    push(ref(database, 'transactions'), {
-                        type: 'sales',
-                        title: `مبيعات ${dept} (${payment})`,
-                        amount: amount,
-                        timestamp,
-                        uid,
-                        operationNumber,
-                        payment,
-                        dept,
-                        date: getTodayKey()
-                    }),
-                    set(ref(database, 'lastTransaction'), {
-                        time: timestamp,
-                        type: 'sales',
-                        amount: amount,
-                        name: dept
-                    })
-                ]);
+                    }));
+                }
+                
+                // تسجيل العملية
+                updates.push(push(ref(database, 'transactions'), {
+                    type: 'sales',
+                    title: `مبيعات ${dept} (${payment})`,
+                    amount: amount,
+                    timestamp,
+                    uid,
+                    operationNumber,
+                    payment,
+                    dept,
+                    date: getTodayKey(),
+                    isOldDate: !isTodayTransaction
+                }));
+                
+                updates.push(set(ref(database, 'lastTransaction'), {
+                    time: timestamp,
+                    type: 'sales',
+                    amount: amount,
+                    name: dept
+                }));
+                
+                await Promise.all(updates);
 
                 closeModal('sales');
-                showWarning('✅ تم تسجيل المبيعات بنجاح');
+                showWarning(isTodayTransaction ? '✅ تم تسجيل المبيعات بنجاح' : '✅ تم تسجيل المبيعات (تاريخ قديم)');
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('btn-disabled');
@@ -1362,52 +1425,61 @@
                 }
 
                 const timestamp = getTimestamp('creditSalesDateTime');
-                const operationNumber = generateOperationNumber();
+                const operationNumber = await generateOperationNumber();
                 const uid = Date.now().toString(36).toUpperCase().slice(-6);
                 
-                // تحديث إحصائيات اليوم فقط
-                const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                const isTodayTransaction = isToday(timestamp);
+                const updates = [];
                 
-                await Promise.all([
-                    update(ref(database, 'stats/today'), { 
+                // تحديث إحصائيات اليوم فقط إذا كانت العملية لليوم الحالي
+                if (isTodayTransaction) {
+                    const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                    updates.push(update(ref(database, 'stats/today'), { 
                         sales: (currentStats.sales || 0) + amount,
-                        shopExpenses: currentStats.shopExpenses || 0,
-                        personalExpenses: currentStats.personalExpenses || 0,
                         lastUpdate: timestamp
-                    }),
-                    push(ref(database, 'transactions'), {
-                        type: 'sales',
-                        saleType: 'credit',
-                        title: `مبيعات آجلة - ${dept} (${customer})`,
-                        amount: amount,
-                        timestamp,
-                        uid,
-                        operationNumber,
-                        payment: 'آجل',
-                        dept,
-                        customer,
-                        note: note || null,
-                        date: getTodayKey()
-                    }),
-                    push(ref(database, 'debts'), {
-                        type: 'sale',
-                        customer,
-                        amount,
-                        dept,
-                        note: note || `مبيعات آجلة - ${dept}`,
-                        status: 'pending',
-                        createdAt: timestamp,
-                        linkedTransaction: uid,
-                        operationNumber: operationNumber + 'D',
-                        date: getTodayKey()
-                    }),
-                    set(ref(database, 'lastTransaction'), {
-                        time: timestamp,
-                        type: 'credit_sales',
-                        amount: amount,
-                        name: customer
-                    })
-                ]);
+                    }));
+                }
+                
+                // تسجيل العملية
+                const txRef = push(ref(database, 'transactions'));
+                updates.push(set(txRef, {
+                    type: 'sales',
+                    saleType: 'credit',
+                    title: `مبيعات آجلة - ${dept} (${customer})`,
+                    amount: amount,
+                    timestamp,
+                    uid,
+                    operationNumber,
+                    payment: 'آجل',
+                    dept,
+                    customer,
+                    note: note || null,
+                    date: getTodayKey(),
+                    isOldDate: !isTodayTransaction
+                }));
+                
+                // تسجيل الدين
+                updates.push(push(ref(database, 'debts'), {
+                    type: 'sale',
+                    customer,
+                    amount,
+                    dept,
+                    note: note || `مبيعات آجلة - ${dept}`,
+                    status: 'pending',
+                    createdAt: timestamp,
+                    linkedTransaction: uid,
+                    operationNumber: operationNumber + 'D',
+                    date: getTodayKey()
+                }));
+                
+                updates.push(set(ref(database, 'lastTransaction'), {
+                    time: timestamp,
+                    type: 'credit_sales',
+                    amount: amount,
+                    name: customer
+                }));
+                
+                await Promise.all(updates);
 
                 closeModal('creditSales');
                 showWarning(`✅ تم تسجيل المبيعات الآجلة وإضافة الدين على ${customer}`);
@@ -1432,7 +1504,6 @@
                 const payment = document.getElementById('expensePayment').value;
                 const vendor = document.getElementById('expenseVendor').value.trim();
                 
-                // توحيد الاسم (إزالة "ال" التعريف)
                 const normalizedName = name.replace(/^ال/, '');
                 
                 const currentBalance = payment === 'كاش' ? balances.cash : balances.bank;
@@ -1449,37 +1520,38 @@
                 }
 
                 const timestamp = getTimestamp('expenseDateTime');
-                const operationNumber = generateOperationNumber();
+                const operationNumber = await generateOperationNumber();
                 const uid = Date.now().toString(36).toUpperCase().slice(-6);
                 
                 const balanceUpdate = {};
                 balanceUpdate[payment === 'كاش' ? 'cash' : 'bank'] = currentBalance - totalDeduction;
                 
-                // تحديث إحصائيات اليوم فقط
-                const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-                const statsUpdate = {
-                    sales: currentStats.sales || 0,
-                    lastUpdate: timestamp
-                };
-                
-                if (type === 'محل') {
-                    statsUpdate.shopExpenses = (currentStats.shopExpenses || 0) + amount;
-                    statsUpdate.personalExpenses = currentStats.personalExpenses || 0;
-                } else {
-                    statsUpdate.shopExpenses = currentStats.shopExpenses || 0;
-                    statsUpdate.personalExpenses = (currentStats.personalExpenses || 0) + amount;
-                }
-
-                // بناء العمليات
+                const isTodayTransaction = isToday(timestamp);
                 const updates = [];
                 
-                // 1. تحديث الرصيد
+                // تحديث الأرصدة دائماً
                 updates.push(update(ref(database, 'balances'), balanceUpdate));
                 
-                // 2. تحديث الإحصائيات
-                updates.push(update(ref(database, 'stats/today'), statsUpdate));
+                // تحديث إحصائيات اليوم فقط إذا كانت العملية لليوم الحالي
+                if (isTodayTransaction) {
+                    const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                    const statsUpdate = {
+                        sales: currentStats.sales || 0,
+                        lastUpdate: timestamp
+                    };
+                    
+                    if (type === 'محل') {
+                        statsUpdate.shopExpenses = (currentStats.shopExpenses || 0) + amount;
+                        statsUpdate.personalExpenses = currentStats.personalExpenses || 0;
+                    } else {
+                        statsUpdate.shopExpenses = currentStats.shopExpenses || 0;
+                        statsUpdate.personalExpenses = (currentStats.personalExpenses || 0) + amount;
+                    }
+                    
+                    updates.push(update(ref(database, 'stats/today'), statsUpdate));
+                }
                 
-                // 3. تسجيل المصروف الأساسي
+                // تسجيل المصروف الأساسي
                 const mainTxRef = push(ref(database, 'transactions'));
                 updates.push(set(mainTxRef, {
                     type: type === 'محل' ? 'shopExpense' : 'personalExpense',
@@ -1492,27 +1564,28 @@
                     expenseType: type,
                     vendor: vendor || '',
                     date: getTodayKey(),
-                    bankFee: payment === 'بنكك' ? BANK_FEE : 0
+                    bankFee: payment === 'بنكك' ? BANK_FEE : 0,
+                    isOldDate: !isTodayTransaction
                 }));
                 
-                // 4. تسجيل الدمغة منفصلة إذا كان بنكك
+                // تسجيل الدمغة منفصلة إذا كان بنكك
                 if (payment === 'بنكك') {
                     const feeTxRef = push(ref(database, 'transactions'));
                     updates.push(set(feeTxRef, {
                         type: 'bankFee',
                         title: '💳 خصم بنكك (دمغة)',
                         amount: -BANK_FEE,
-                        timestamp: timestamp + 1, // لتجنب التطابق التام في الوقت
+                        timestamp: timestamp + 1,
                         uid: uid + 'F',
                         operationNumber: operationNumber + 'F',
                         payment: 'بنكك',
                         expenseType: 'bankFee',
                         linkedTo: mainTxRef.key,
-                        date: getTodayKey()
+                        date: getTodayKey(),
+                        isOldDate: !isTodayTransaction
                     }));
                 }
                 
-                // 5. تحديث آخر عملية
                 updates.push(set(ref(database, 'lastTransaction'), {
                     time: timestamp,
                     type: type,
@@ -1555,7 +1628,7 @@
                 }
                 
                 const timestamp = getTimestamp('transferDateTime');
-                const operationNumber = generateOperationNumber();
+                const operationNumber = await generateOperationNumber();
                 const uid = Date.now().toString(36).toUpperCase().slice(-6);
                 
                 const balanceUpdate = {};
@@ -1566,6 +1639,8 @@
                     balanceUpdate.bank = balances.bank - amount;
                     balanceUpdate.cash = balances.cash + amount;
                 }
+
+                const isTodayTransaction = isToday(timestamp);
 
                 await Promise.all([
                     update(ref(database, 'balances'), balanceUpdate),
@@ -1579,7 +1654,8 @@
                         from,
                         to,
                         transferAmount: amount,
-                        date: getTodayKey()
+                        date: getTodayKey(),
+                        isOldDate: !isTodayTransaction
                     })
                 ]);
 
