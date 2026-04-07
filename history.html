@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إدارة السجلات - مدير حسابات صلاح الدين</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f8fafc;
+            min-height: 100vh;
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .transaction-card {
+            transition: all 0.2s ease;
+            border-right: 4px solid transparent;
+        }
+        
+        .transaction-card:hover {
+            transform: translateX(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .type-sales { border-right-color: #10b981; }
+        .type-expense { border-right-color: #ef4444; }
+        .type-transfer { border-right-color: #f59e0b; }
+        .type-safe { border-right-color: #8b5cf6; }
+        .type-bank { border-right-color: #3b82f6; }
+        
+        .filter-chip {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .filter-chip.active {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+        
+        .filter-chip:not(.active):hover {
+            background: #f1f5f9;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .search-input {
+            background: #f1f5f9;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .search-input:focus {
+            background: white;
+            border-color: #10b981;
+            outline: none;
+        }
+        
+        .stats-pill {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .operation-number {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        .old-badge {
+            background: #f59e0b;
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .btn-action {
+            transition: all 0.2s;
+        }
+        
+        .btn-action:hover {
+            transform: scale(1.05);
+        }
+        
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        
+        .date-group {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f8fafc;
+            padding: 8px 16px;
+            font-weight: 700;
+            color: #475569;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- الهيدر -->
+        <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg sticky top-0 z-40">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="p-2 rounded-lg hover:bg-slate-700 transition">
+                    <i class="fas fa-arrow-right text-xl"></i>
+                </a>
+                <div class="text-center">
+                    <h1 class="text-lg font-bold">🗂️ إدارة السجلات</h1>
+                    <p class="text-xs text-slate-400">تعديل • حذف • بحث متقدم</p>
+                </div>
+                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition">
+                    <i class="fas fa-sign-out-alt text-xl"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- المحتوى -->
+        <main class="p-4 space-y-4 pb-24">
+            
+            <!-- إحصائيات سريعة -->
+            <div class="grid grid-cols-4 gap-2 fade-in">
+                <div class="stats-pill rounded-xl p-3 text-white text-center">
+                    <div class="text-xs opacity-75">الكل</div>
+                    <div class="text-lg font-bold" id="statTotal">0</div>
+                </div>
+                <div class="bg-emerald-500 rounded-xl p-3 text-white text-center">
+                    <div class="text-xs opacity-75">مبيعات</div>
+                    <div class="text-lg font-bold" id="statSales">0</div>
+                </div>
+                <div class="bg-red-500 rounded-xl p-3 text-white text-center">
+                    <div class="text-xs opacity-75">مصروفات</div>
+                    <div class="text-lg font-bold" id="statExpenses">0</div>
+                </div>
+                <div class="bg-amber-500 rounded-xl p-3 text-white text-center">
+                    <div class="text-xs opacity-75">تبديل</div>
+                    <div class="text-lg font-bold" id="statTransfer">0</div>
+                </div>
+            </div>
+
+            <!-- البحث المتقدم -->
+            <div class="glass-effect rounded-2xl p-4 shadow-md space-y-4 fade-in">
+                <div class="relative">
+                    <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput" placeholder="ابحث برقم العملية، الاسم، المبلغ..." 
+                        class="search-input w-full rounded-xl p-3 pr-12 text-right"
+                        oninput="debouncedSearch()">
+                </div>
+
+                <!-- فلاتر النوع -->
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleTypeFilter('all')" class="filter-chip active px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white" data-type="all">
+                        الكل
+                    </button>
+                    <button onclick="toggleTypeFilter('sales')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-emerald-600" data-type="sales">
+                        💰 مبيعات
+                    </button>
+                    <button onclick="toggleTypeFilter('expenses')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-red-600" data-type="expenses">
+                        💸 مصروفات
+                    </button>
+                    <button onclick="toggleTypeFilter('transfer')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-amber-600" data-type="transfer">
+                        🔄 تبديل
+                    </button>
+                    <button onclick="toggleTypeFilter('safe')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-purple-600" data-type="safe">
+                        🏦 خزنة
+                    </button>
+                    <button onclick="toggleTypeFilter('bank')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-blue-600" data-type="bank">
+                        💳 بنكك
+                    </button>
+                </div>
+
+                <!-- فلاتر التاريخ -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">من تاريخ</label>
+                        <input type="date" id="dateFrom" onchange="applyFilters()" class="w-full border border-slate-200 rounded-xl p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">إلى تاريخ</label>
+                        <input type="date" id="dateTo" onchange="applyFilters()" class="w-full border border-slate-200 rounded-xl p-2 text-sm">
+                    </div>
+                </div>
+
+                <!-- خيارات إضافية -->
+                <div class="flex gap-2">
+                    <button onclick="resetFilters()" class="flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+                        <i class="fas fa-undo ml-1"></i> إعادة ضبط
+                    </button>
+                    <button onclick="exportResults()" class="flex-1 py-2 rounded-xl text-sm font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition">
+                        <i class="fas fa-download ml-1"></i> تصدير
+                    </button>
+                </div>
+            </div>
+
+            <!-- نتائج البحث -->
+            <div class="bg-white rounded-2xl shadow-md overflow-hidden fade-in">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700">📋 النتائج</h3>
+                    <span class="text-sm text-slate-500" id="resultsCount">جاري التحميل...</span>
+                </div>
+                
+                <div id="transactionsList" class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto hide-scrollbar">
+                    <div class="p-8 text-center text-slate-400">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>جاري تحميل السجلات...</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- شريط التنقل السفلي -->
+        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0 z-40">
+            <div class="flex justify-around items-center">
+                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
+                    <i class="fas fa-home text-xl"></i>
+                    <span class="text-xs mt-1">الرئيسية</span>
+                </a>
+                <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
+                    <i class="fas fa-chart-bar text-xl"></i>
+                    <span class="text-xs mt-1">التقارير</span>
+                </a>
+                <a href="records.html" class="flex flex-col items-center p-2 text-emerald-600">
+                    <i class="fas fa-database text-xl"></i>
+                    <span class="text-xs mt-1 font-semibold">السجلات</span>
+                </a>
+                <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
+                    <i class="fas fa-calculator text-xl"></i>
+                    <span class="text-xs mt-1">الوردية</span>
+                </a>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- مودال التعديل -->
+    <div id="editModal" class="modal" onclick="closeEditModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">✏️ تعديل العملية</h2>
+                    <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="editForm" onsubmit="handleEditSubmit(event)" class="space-y-4">
+                    <input type="hidden" id="editId">
+                    <input type="hidden" id="editOldType">
+                    <input type="hidden" id="editOldAmount">
+                    <input type="hidden" id="editOldPayment">
+
+                    <!-- رقم العملية (للعرض فقط) -->
+                    <div class="bg-slate-50 rounded-xl p-3 text-center">
+                        <span class="text-xs text-slate-500">رقم العملية</span>
+                        <div class="operation-number text-lg font-bold text-slate-700" id="editOpNumber">--</div>
+                    </div>
+
+                    <!-- النوع -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">النوع</label>
+                        <select id="editType" onchange="onEditTypeChange()" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                            <option value="sales">💰 مبيعات</option>
+                            <option value="shopExpense">💸 مصروف محل</option>
+                            <option value="personalExpense">👤 مصروف شخصي</option>
+                            <option value="transfer">🔄 تبديل</option>
+                            <option value="safe">🏦 خزنة</option>
+                        </select>
+                    </div>
+
+                    <!-- القسم (للمبيعات) -->
+                    <div id="editDeptContainer">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">القسم</label>
+                        <select id="editDept" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                            <option value="عصائر">🧃 عصائر</option>
+                            <option value="حلويات">🍰 حلويات</option>
+                            <option value="طعمية وفطائر">🥙 طعمية وفطائر</option>
+                        </select>
+                    </div>
+
+                    <!-- طريقة الدفع -->
+                    <div id="editPaymentContainer">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">طريقة الدفع</label>
+                        <select id="editPayment" onchange="onEditPaymentChange()" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                            <option value="كاش">💵 كاش</option>
+                            <option value="بنكك">💳 بنكك</option>
+                        </select>
+                        <div id="editBankFeeWarning" class="hidden mt-2 bg-red-50 text-red-700 text-sm p-2 rounded-lg">
+                            ⚠️ سيتم خصم 60 جنيه كدمغة بنكك
+                        </div>
+                    </div>
+
+                    <!-- المبلغ -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">المبلغ</label>
+                        <input type="number" id="editAmount" required min="0" step="0.01"
+                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-center font-bold text-lg focus:border-emerald-500 focus:outline-none">
+                    </div>
+
+                    <!-- التاريخ والوقت -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">التاريخ والوقت</label>
+                        <input type="datetime-local" id="editDateTime" required
+                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                    </div>
+
+                    <!-- البيان/التفاصيل -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">البيان / التفاصيل</label>
+                        <input type="text" id="editNote" 
+                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none"
+                            placeholder="أدخل تفاصيل إضافية...">
+                    </div>
+
+                    <!-- تحذير -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-800 text-sm">
+                        <i class="fas fa-exclamation-triangle ml-1"></i>
+                        <strong>تنبيه:</strong> سيتم إعادة حساب جميع الأرصدة المرتبطة بهذه العملية تلقائياً.
+                    </div>
+
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" onclick="closeEditModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                            إلغاء
+                        </button>
+                        <button type="submit" id="editSubmitBtn" class="flex-1 py-3 rounded-xl font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition btn-action">
+                            <i class="fas fa-save ml-1"></i> حفظ التعديلات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال الحذف -->
+    <div id="deleteModal" class="modal" onclick="closeDeleteModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-trash-alt text-2xl text-red-500"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2">⚠️ تأكيد الحذف</h2>
+                <p class="text-slate-600 mb-6">هل أنت متأكد من حذف هذه العملية؟<br>سيتم إعادة حساب جميع الأرصدة المرتبطة.</p>
+                
+                <input type="hidden" id="deleteId">
+                
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                        إلغاء
+                    </button>
+                    <button onclick="confirmDelete()" class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition btn-action">
+                        <i class="fas fa-trash ml-1"></i> نعم، احذف
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged,
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getDatabase, 
+            ref, 
+            onValue,
+            update,
+            remove,
+            get,
+            runTransaction
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+            authDomain: "salahsweetmanage.firebaseapp.com",
+            databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+            projectId: "salahsweetmanage",
+            storageBucket: "salahsweetmanage.firebasestorage.app",
+            messagingSenderId: "126049780562",
+            appId: "1:126049780562:web:147daa036e56273263308b",
+            measurementId: "G-E7FLGBQ397"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        let allTransactions = [];
+        let filteredTransactions = [];
+        let currentFilters = {
+            types: ['all'],
+            search: '',
+            dateFrom: null,
+            dateTo: null
+        };
+        let balances = { cash: 0, bank: 0 };
+
+        // ==========================================
+        // المصادقة والتهيئة
+        // ==========================================
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user || !user.emailVerified) {
+                window.location.href = 'login.html';
+                return;
+            }
+            initApp();
+        });
+
+        window.logout = async function() {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        };
+
+        function initApp() {
+            // تحميل الأرصدة
+            onValue(ref(database, 'balances'), (snap) => {
+                balances = snap.val() || { cash: 0, bank: 0 };
+            });
+
+            // تحميل العمليات
+            onValue(ref(database, 'transactions'), (snap) => {
+                const txs = [];
+                snap.forEach((child) => {
+                    const tx = child.val();
+                    txs.push({ 
+                        id: child.key,
+                        ...tx,
+                        calculatedPeriod: calculatePeriod(tx.timestamp)
+                    });
+                });
+                
+                // ترتيب حسب الرقم التنازلي (الأحدث فوق)
+                allTransactions = txs.sort((a, b) => {
+                    const numA = parseInt(a.operationNumber) || 0;
+                    const numB = parseInt(b.operationNumber) || 0;
+                    return numB - numA;
+                });
+                
+                applyFilters();
+                updateStats();
+            });
+
+            // تعيين تواريخ افتراضية
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateTo').value = today;
+        }
+
+        // ==========================================
+        // دوال مساعدة
+        // ==========================================
+
+        function calculatePeriod(timestamp) {
+            if (!timestamp) return 'غير محدد';
+            const date = new Date(timestamp);
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const timeValue = hours + (minutes / 60);
+            return (timeValue >= 6 && timeValue < 15) ? 'صباحية' : 'مسائية';
+        }
+
+        function formatNumber(num) {
+            if (!num || isNaN(num)) return '0';
+            return parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return '--/--/----';
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('ar-SA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '--:--';
+            return new Date(timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function getTodayStart() {
+            const now = new Date();
+            const start = new Date(now);
+            start.setHours(6, 0, 0, 0);
+            if (now.getHours() < 6) {
+                start.setDate(start.getDate() - 1);
+            }
+            return start.getTime();
+        }
+
+        // ==========================================
+        // الفلاتر والبحث
+        // ==========================================
+
+        window.toggleTypeFilter = function(type) {
+            const chip = document.querySelector(`[data-type="${type}"]`);
+            
+            if (type === 'all') {
+                // إذا اخترنا الكل، نلغي الباقي
+                currentFilters.types = ['all'];
+                document.querySelectorAll('.filter-chip').forEach(c => {
+                    c.classList.toggle('active', c.dataset.type === 'all');
+                });
+            } else {
+                // إذا اخترنا نوع محدد
+                const index = currentFilters.types.indexOf(type);
+                if (index > -1) {
+                    currentFilters.types.splice(index, 1);
+                    chip.classList.remove('active');
+                } else {
+                    // إزالة "الكل" إذا كانت موجودة
+                    const allIndex = currentFilters.types.indexOf('all');
+                    if (allIndex > -1) {
+                        currentFilters.types.splice(allIndex, 1);
+                        document.querySelector('[data-type="all"]').classList.remove('active');
+                    }
+                    currentFilters.types.push(type);
+                    chip.classList.add('active');
+                }
+                
+                // إذا لم يتبق شيء، نرجع للكل
+                if (currentFilters.types.length === 0) {
+                    currentFilters.types = ['all'];
+                    document.querySelector('[data-type="all"]').classList.add('active');
+                }
+            }
+            
+            applyFilters();
+        };
+
+        let searchTimeout;
+        window.debouncedSearch = function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentFilters.search = document.getElementById('searchInput').value.toLowerCase();
+                applyFilters();
+            }, 300);
+        };
+
+        window.applyFilters = function() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            
+            currentFilters.dateFrom = dateFrom ? new Date(dateFrom).getTime() : null;
+            currentFilters.dateTo = dateTo ? new Date(dateTo).setHours(23, 59, 59, 999) : null;
+
+            filteredTransactions = allTransactions.filter(tx => {
+                // فلتر النوع
+                if (!currentFilters.types.includes('all')) {
+                    let txType = tx.type;
+                    if (txType === 'shopExpense' || txType === 'personalExpense') txType = 'expenses';
+                    if (!currentFilters.types.includes(txType)) return false;
+                }
+
+                // فلتر التاريخ
+                if (currentFilters.dateFrom && tx.timestamp < currentFilters.dateFrom) return false;
+                if (currentFilters.dateTo && tx.timestamp > currentFilters.dateTo) return false;
+
+                // فلتر البحث
+                if (currentFilters.search) {
+                    const searchFields = [
+                        tx.operationNumber,
+                        tx.uid,
+                        tx.title,
+                        tx.dept,
+                        tx.customer,
+                        tx.vendor,
+                        tx.payment,
+                        tx.amount?.toString(),
+                        tx.transferAmount?.toString()
+                    ].filter(Boolean).join(' ').toLowerCase();
+                    
+                    if (!searchFields.includes(currentFilters.search)) return false;
+                }
+
+                return true;
+            });
+
+            renderTransactions();
+            updateStats();
+        };
+
+        window.resetFilters = function() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('dateFrom').value = '';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateTo').value = today;
+            
+            currentFilters = {
+                types: ['all'],
+                search: '',
+                dateFrom: null,
+                dateTo: null
+            };
+            
+            document.querySelectorAll('.filter-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.type === 'all');
+            });
+            
+            applyFilters();
+        };
+
+        function updateStats() {
+            const counts = {
+                total: filteredTransactions.length,
+                sales: 0,
+                expenses: 0,
+                transfer: 0,
+                safe: 0,
+                bank: 0
+            };
+
+            filteredTransactions.forEach(tx => {
+                if (tx.type === 'sales') counts.sales++;
+                else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') counts.expenses++;
+                else if (tx.type === 'transfer') counts.transfer++;
+                else if (tx.type === 'safe') counts.safe++;
+                else if (tx.type === 'bankFee' || tx.payment === 'بنكك') counts.bank++;
+            });
+
+            document.getElementById('statTotal').textContent = counts.total;
+            document.getElementById('statSales').textContent = counts.sales;
+            document.getElementById('statExpenses').textContent = counts.expenses;
+            document.getElementById('statTransfer').textContent = counts.transfer;
+        }
+
+        // ==========================================
+        // عرض العمليات
+        // ==========================================
+
+        function renderTransactions() {
+            const container = document.getElementById('transactionsList');
+            const countElement = document.getElementById('resultsCount');
+            
+            countElement.textContent = `${filteredTransactions.length} عملية`;
+
+            if (filteredTransactions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox text-4xl mb-3"></i>
+                        <p class="font-semibold">لا توجد نتائج</p>
+                        <p class="text-sm">جرب تغيير معايير البحث</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const todayStart = getTodayStart();
+            let currentDate = '';
+
+            container.innerHTML = filteredTransactions.map(tx => {
+                const txDate = formatDate(tx.timestamp);
+                const isOld = tx.timestamp < todayStart;
+                
+                // تجميع حسب التاريخ
+                let dateHeader = '';
+                if (txDate !== currentDate) {
+                    currentDate = txDate;
+                    const isToday = new Date(tx.timestamp).toDateString() === new Date().toDateString();
+                    dateHeader = `
+                        <div class="date-group">
+                            <i class="fas fa-calendar-alt text-slate-400"></i>
+                            <span>${txDate}</span>
+                            ${isToday ? '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs">اليوم</span>' : ''}
+                        </div>
+                    `;
+                }
+
+                const typeConfig = getTypeConfig(tx.type, tx.payment);
+                const amount = getTransactionAmount(tx);
+                
+                return dateHeader + `
+                    <div class="transaction-card p-4 ${typeConfig.className} fade-in group">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">${typeConfig.icon}</span>
+                                <div>
+                                    <div class="font-bold text-slate-800 flex items-center gap-2">
+                                        ${tx.title || typeConfig.label}
+                                        ${isOld ? '<span class="old-badge">تاريخ قديم</span>' : ''}
+                                    </div>
+                                    <div class="text-xs text-slate-500 flex items-center gap-2 mt-1">
+                                        <span class="operation-number bg-slate-100 px-2 py-0.5 rounded">#${tx.operationNumber || '---'}</span>
+                                        <span>${formatTime(tx.timestamp)}</span>
+                                        <span class="period-badge ${tx.calculatedPeriod === 'صباحية' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}">
+                                            ${tx.calculatedPeriod === 'صباحية' ? '☀️' : '🌙'} ${tx.calculatedPeriod}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-left">
+                                <div class="font-bold text-lg ${amount.color}">${amount.value}</div>
+                                ${amount.subtext ? `<div class="text-xs text-slate-500">${amount.subtext}</div>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+                            <div class="text-xs text-slate-500 flex gap-3">
+                                ${tx.dept ? `<span><i class="fas fa-tag ml-1"></i>${tx.dept}</span>` : ''}
+                                ${tx.payment ? `<span><i class="fas fa-wallet ml-1"></i>${tx.payment}</span>` : ''}
+                                ${tx.vendor ? `<span><i class="fas fa-store ml-1"></i>${tx.vendor}</span>` : ''}
+                            </div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="openEditModal('${tx.id}')" class="btn-action w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200" title="تعديل">
+                                    <i class="fas fa-edit text-sm"></i>
+                                </button>
+                                <button onclick="openDeleteModal('${tx.id}')" class="btn-action w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200" title="حذف">
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getTypeConfig(type, payment) {
+            const configs = {
+                sales: { icon: '💰', label: 'مبيعات', className: 'type-sales' },
+                shopExpense: { icon: '💸', label: 'مصروف محل', className: 'type-expense' },
+                personalExpense: { icon: '👤', label: 'مصروف شخصي', className: 'type-expense' },
+                transfer: { icon: '🔄', label: 'تبديل', className: 'type-transfer' },
+                safe: { icon: '🏦', label: 'خزنة', className: 'type-safe' },
+                bankFee: { icon: '💳', label: 'دمغة بنكك', className: 'type-bank' }
+            };
+            
+            if (payment === 'آجل') {
+                return { icon: '📝', label: 'مبيعات آجلة', className: 'type-sales' };
+            }
+            
+            return configs[type] || { icon: '❓', label: type, className: '' };
+        }
+
+        function getTransactionAmount(tx) {
+            if (tx.type === 'transfer') {
+                return {
+                    value: formatNumber(tx.transferAmount || 0) + ' ج',
+                    color: 'text-amber-600',
+                    subtext: `${tx.from || '?'} → ${tx.to || '?'}`
+                };
+            }
+            
+            const amount = Math.abs(tx.amount || 0);
+            const isIncome = tx.amount > 0;
+            
+            return {
+                value: formatNumber(amount) + ' ج',
+                color: isIncome ? 'text-emerald-600' : 'text-red-600',
+                subtext: tx.bankFee ? `شامل الدمغة: ${formatNumber(tx.bankFee)} ج` : ''
+            };
+        }
+
+        // ==========================================
+        // التعديل
+        // ==========================================
+
+        window.openEditModal = async function(id) {
+            const tx = allTransactions.find(t => t.id === id);
+            if (!tx) return;
+
+            document.getElementById('editId').value = id;
+            document.getElementById('editOldType').value = tx.type;
+            document.getElementById('editOldAmount').value = tx.amount || 0;
+            document.getElementById('editOldPayment').value = tx.payment || 'كاش';
+            document.getElementById('editOpNumber').textContent = tx.operationNumber || '---';
+            
+            // تعيين القيم
+            const typeSelect = document.getElementById('editType');
+            typeSelect.value = tx.type === 'shopExpense' || tx.type === 'personalExpense' ? tx.type : tx.type;
+            
+            document.getElementById('editDept').value = tx.dept || 'عصائر';
+            document.getElementById('editPayment').value = tx.payment || 'كاش';
+            document.getElementById('editAmount').value = Math.abs(tx.amount || tx.transferAmount || 0);
+            document.getElementById('editNote').value = tx.title || '';
+            
+            const date = new Date(tx.timestamp);
+            date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+            document.getElementById('editDateTime').value = date.toISOString().slice(0, 16);
+            
+            onEditTypeChange();
+            document.getElementById('editModal').classList.add('active');
+        };
+
+        window.onEditTypeChange = function() {
+            const type = document.getElementById('editType').value;
+            const isSales = type === 'sales';
+            const isTransfer = type === 'transfer';
+            const isExpense = type.includes('Expense');
+            
+            document.getElementById('editDeptContainer').style.display = isSales ? 'block' : 'none';
+            document.getElementById('editPaymentContainer').style.display = !isTransfer ? 'block' : 'none';
+        };
+
+        window.onEditPaymentChange = function() {
+            const payment = document.getElementById('editPayment').value;
+            document.getElementById('editBankFeeWarning').classList.toggle('hidden', payment !== 'بنكك');
+        };
+
+        window.closeEditModal = function(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById('editModal').classList.remove('active');
+        };
+
+        window.handleEditSubmit = async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('editSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin ml-1"></i> جاري الحفظ...';
+            
+            try {
+                const id = document.getElementById('editId').value;
+                const oldTx = allTransactions.find(t => t.id === id);
+                
+                const newType = document.getElementById('editType').value;
+                const newAmount = parseFloat(document.getElementById('editAmount').value) || 0;
+                const newPayment = document.getElementById('editPayment').value;
+                const newDateTime = new Date(document.getElementById('editDateTime').value).getTime();
+                const newDept = document.getElementById('editDept').value;
+                const newNote = document.getElementById('editNote').value;
+                
+                // حساب الفرق في الأرصدة
+                const oldAmount = Math.abs(parseFloat(document.getElementById('editOldAmount').value) || 0);
+                const oldType = document.getElementById('editOldType').value;
+                const oldPayment = document.getElementById('editOldPayment').value;
+                
+                // إعادة حساب الأرصدة
+                await recalculateBalances(oldTx, {
+                    type: newType,
+                    amount: newType === 'transfer' ? 0 : (newType === 'sales' ? newAmount : -newAmount),
+                    transferAmount: newType === 'transfer' ? newAmount : 0,
+                    payment: newPayment,
+                    from: newType === 'transfer' ? (newPayment === 'كاش' ? 'كاش' : 'بنكك') : null,
+                    to: newType === 'transfer' ? (newPayment === 'كاش' ? 'بنكك' : 'كاش') : null,
+                    timestamp: newDateTime,
+                    dept: newDept,
+                    title: newNote,
+                    calculatedPeriod: calculatePeriod(newDateTime)
+                });
+                
+                closeEditModal();
+                alert('✅ تم التعديل بنجاح وإعادة حساب الأرصدة');
+            } catch (error) {
+                console.error('Error updating:', error);
+                alert('❌ حدث خطأ أثناء التعديل: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save ml-1"></i> حفظ التعديلات';
+            }
+        };
+
+        // ==========================================
+        // الحذف
+        // ==========================================
+
+        window.openDeleteModal = function(id) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteModal').classList.add('active');
+        };
+
+        window.closeDeleteModal = function(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById('deleteModal').classList.remove('active');
+        };
+
+        window.confirmDelete = async function() {
+            const id = document.getElementById('deleteId').value;
+            const tx = allTransactions.find(t => t.id === id);
+            
+            if (!tx) {
+                closeDeleteModal();
+                return;
+            }
+            
+            try {
+                // إعادة حساب الأرصدة (عكس العملية)
+                await reverseTransaction(tx);
+                
+                // حذف العملية
+                await remove(ref(database, `transactions/${id}`));
+                
+                // حذف الدمغة المرتبطة إن وجدت
+                if (tx.bankFee && tx.bankFee > 0) {
+                    // البحث عن الدمغة المرتبطة وحذفها
+                    const feeTx = allTransactions.find(t => t.linkedTo === id && t.type === 'bankFee');
+                    if (feeTx) {
+                        await remove(ref(database, `transactions/${feeTx.id}`));
+                    }
+                }
+                
+                closeDeleteModal();
+                alert('✅ تم الحذف بنجاح وإعادة حساب الأرصدة');
+            } catch (error) {
+                console.error('Error deleting:', error);
+                alert('❌ حدث خطأ أثناء الحذف: ' + error.message);
+            }
+        };
+
+        // ==========================================
+        // إعادة حساب الأرصدة (النواة الأساسية)
+        // ==========================================
+
+        async function recalculateBalances(oldTx, newTx) {
+            // استخدام runTransaction لضمان الذرية
+            await runTransaction(ref(database, 'balances'), (currentBalances) => {
+                let { cash, bank } = currentBalances || { cash: 0, bank: 0 };
+                
+                // 1. عكس العملية القديمة
+                const oldAmount = Math.abs(oldTx.amount || 0);
+                const oldTransfer = oldTx.transferAmount || 0;
+                
+                if (oldTx.type === 'sales') {
+                    if (oldTx.payment === 'كاش') cash -= oldAmount;
+                    else bank -= oldAmount;
+                } else if (oldTx.type === 'shopExpense' || oldTx.type === 'personalExpense') {
+                    if (oldTx.payment === 'كاش') cash += oldAmount;
+                    else bank += oldAmount;
+                    
+                    // إرجاع الدمغة
+                    if (oldTx.bankFee) bank += oldTx.bankFee;
+                } else if (oldTx.type === 'transfer') {
+                    if (oldTx.from === 'كاش') {
+                        cash += oldTransfer;
+                        bank -= oldTransfer;
+                    } else {
+                        bank += oldTransfer;
+                        cash -= oldTransfer;
+                    }
+                }
+                
+                // 2. تطبيق العملية الجديدة
+                const newAmount = Math.abs(newTx.amount || 0);
+                const newTransfer = newTx.transferAmount || 0;
+                
+                if (newTx.type === 'sales') {
+                    if (newTx.payment === 'كاش') cash += newAmount;
+                    else bank += newAmount;
+                } else if (newTx.type === 'shopExpense' || newTx.type === 'personalExpense') {
+                    if (newTx.payment === 'كاش') cash -= newAmount;
+                    else bank -= newAmount + 60; // المبلغ + الدمغة
+                } else if (newTx.type === 'transfer') {
+                    if (newTx.from === 'كاش') {
+                        cash -= newTransfer;
+                        bank += newTransfer;
+                    } else {
+                        bank -= newTransfer;
+                        cash += newTransfer;
+                    }
+                }
+                
+                return { cash, bank };
+            });
+            
+            // تحديث العملية في قاعدة البيانات
+            const updates = {
+                ...newTx,
+                id: undefined // إزالة id من البيانات
+            };
+            
+            await update(ref(database, `transactions/${oldTx.id}`), updates);
+        }
+
+        async function reverseTransaction(tx) {
+            await runTransaction(ref(database, 'balances'), (currentBalances) => {
+                let { cash, bank } = currentBalances || { cash: 0, bank: 0 };
+                const amount = Math.abs(tx.amount || 0);
+                const transfer = tx.transferAmount || 0;
+                
+                if (tx.type === 'sales') {
+                    if (tx.payment === 'كاش') cash -= amount;
+                    else bank -= amount;
+                } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
+                    if (tx.payment === 'كاش') cash += amount;
+                    else bank += amount;
+                    
+                    if (tx.bankFee) bank += tx.bankFee;
+                } else if (tx.type === 'transfer') {
+                    if (tx.from === 'كاش') {
+                        cash += transfer;
+                        bank -= transfer;
+                    } else {
+                        bank += transfer;
+                        cash -= transfer;
+                    }
+                }
+                
+                return { cash, bank };
+            });
+        }
+
+        // ==========================================
+        // التصدير
+        // ==========================================
+
+        window.exportResults = function() {
+            const headers = ['رقم العملية', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل', 'الرصيد النقدي', 'رصيد البنك'];
+            
+            const rows = filteredTransactions.map(tx => {
+                const isOld = tx.timestamp < getTodayStart();
+                
+                return [
+                    tx.operationNumber || tx.id,
+                    formatDate(tx.timestamp),
+                    formatTime(tx.timestamp),
+                    tx.type,
+                    tx.calculatedPeriod,
+                    tx.dept || '-',
+                    tx.payment || '-',
+                    tx.amount || tx.transferAmount || 0,
+                    tx.title || '',
+                    isOld ? 'تاريخ قديم' : 'اليوم',
+                    ''
+                ];
+            });
+            
+            // إضافة صف الأرصدة الحالية
+            rows.push(['', '', '', '', '', '', '', '', '', 'الرصيد النقدي:', balances.cash]);
+            rows.push(['', '', '', '', '', '', '', '', '', 'رصيد البنك:', balances.bank]);
+            
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `سجلات_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        };
+
+    </script>
+</body>
+</html>
