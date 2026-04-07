@@ -142,7 +142,7 @@
             border-right: 3px solid #ef4444;
         }
 
-        /* وسم التاريخ القديم */
+        /* وسم التاريخ القديم - تنسيق محسن */
         .old-date-badge {
             background: #f59e0b;
             color: white;
@@ -151,12 +151,31 @@
             font-size: 0.7rem;
             font-weight: 700;
             margin-right: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         /* خط مشطوب للتحويلات */
         .transfer-strikethrough {
             text-decoration: line-through;
             opacity: 0.7;
+        }
+
+        /* تنسيق خاص للعمليات القديمة */
+        .old-transaction {
+            opacity: 0.8;
+            background: #f3f4f6 !important;
+            border-style: dashed !important;
+        }
+
+        .old-transaction .transaction-title {
+            color: #6b7280;
+        }
+
+        .old-transaction .transaction-amount {
+            text-decoration: line-through;
+            opacity: 0.6;
         }
     </style>
 </head>
@@ -323,9 +342,12 @@
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-slate-700">📝 آخر العمليات</h3>
-                    <span class="text-xs text-emerald-600 font-semibold">● مباشر</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-amber-600 font-semibold bg-amber-100 px-2 py-1 rounded-full">آخر 12 عملية</span>
+                        <span class="text-xs text-slate-400">الأحدث فوق</span>
+                    </div>
                 </div>
-                <div id="recentTransactions" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
+                <div id="recentTransactions" class="space-y-2 max-h-80 overflow-y-auto hide-scrollbar">
                     <div class="text-center text-slate-400 py-4 text-sm">
                         جاري تحميل العمليات...
                     </div>
@@ -927,7 +949,7 @@
                 updateTodayStats(stats);
             });
             
-            // مراقبة العمليات - نجلب كل العمليات لحساب الإحصائيات ولكن نعرض فقط آخر 12
+            // مراقبة العمليات - نجلب كل العمليات
             onValue(ref(database, 'transactions'), (snap) => {
                 const txs = [];
                 snap.forEach((child) => {
@@ -937,8 +959,8 @@
                     });
                 });
                 
-                // ترتيب حسب الوقت تنازلياً
-                transactions = txs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                // حفظ جميع العمليات
+                transactions = txs;
                 
                 updateTransactionsList();
                 calculateTodayStatsFromTransactions();
@@ -1042,6 +1064,9 @@
             document.getElementById('todayDateBadge').textContent = `📅 ${shortDate}`;
         }
 
+        // ==========================================
+        // دالة تحديث قائمة العمليات - معدلة
+        // ==========================================
         function updateTransactionsList() {
             const container = document.getElementById('recentTransactions');
             
@@ -1066,34 +1091,43 @@
                 bankFee: '💳'
             };
             
-            // أخذ آخر 12 عملية
-            const recentTxs = transactions.slice(0, 12);
-            const todayStart = getTodayStart();
+            // ترتيب العمليات حسب رقم العملية تنازلياً (الأكبر فوق)
+            const sortedTxs = [...transactions].sort((a, b) => {
+                const numA = parseInt(a.operationNumber) || 0;
+                const numB = parseInt(b.operationNumber) || 0;
+                return numB - numA; // تنازلي: الأكبر فوق
+            });
             
+            // أخذ آخر 12 عملية (بعد الترتيب حسب الرقم)
+            const recentTxs = sortedTxs.slice(0, 12);
+            const todayStart = getTodayStart();
+
             container.innerHTML = recentTxs.map(t => {
                 const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                const dateStr = t.timestamp ? new Date(t.timestamp).toLocaleDateString('ar-SA', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '--/--/----';
+                
+                // التحقق مما إذا كانت العملية قديمة (قبل اليوم الحالي)
                 const isOld = t.timestamp < todayStart;
-                const oldBadge = isOld ? '<span class="old-date-badge">تاريخ قديم</span>' : '';
                 
                 let amountDisplay = '';
                 let extraRows = '';
                 let titleClass = '';
                 
+                // تنسيق المبلغ حسب نوع العملية
                 if (t.type === 'transfer') {
                     const transferAmount = formatNumber(t.transferAmount || 0);
                     amountDisplay = `<div class="text-left">
-                        <div class="font-bold text-slate-700 transfer-strikethrough">${transferAmount}</div>
+                        <div class="font-bold text-slate-700 ${isOld ? 'line-through opacity-50' : ''}">${transferAmount}</div>
                         <div class="text-xs text-slate-600">${t.from} → ${t.to}</div>
                     </div>`;
-                    titleClass = 'transfer-strikethrough';
                 } else if (t.type === 'shopExpense' || t.type === 'personalExpense') {
                     const baseAmount = Math.abs(t.amount);
-                    amountDisplay = `<div class="text-left font-bold">${formatNumber(baseAmount)}</div>`;
+                    amountDisplay = `<div class="text-left font-bold ${isOld ? 'line-through opacity-50' : ''}">${formatNumber(baseAmount)}</div>`;
                     
                     if (t.bankFee && t.bankFee > 0) {
                         extraRows = `
                             <div class="mt-1 pt-1 border-t border-red-200/50">
-                                <div class="flex justify-between items-center text-xs text-red-600">
+                                <div class="flex justify-between items-center text-xs text-red-600 ${isOld ? 'line-through opacity-50' : ''}">
                                     <span>💳 خصم بنكك (دمغة)</span>
                                     <span class="font-bold">${formatNumber(t.bankFee)}</span>
                                 </div>
@@ -1101,9 +1135,9 @@
                         `;
                     }
                 } else if (t.type === 'bankFee') {
-                    amountDisplay = `<div class="text-left font-bold text-red-600">${formatNumber(Math.abs(t.amount))}</div>`;
+                    amountDisplay = `<div class="text-left font-bold text-red-600 ${isOld ? 'line-through opacity-50' : ''}">${formatNumber(Math.abs(t.amount))}</div>`;
                 } else {
-                    amountDisplay = `<div class="text-left font-bold">${formatNumber(Math.abs(t.amount))}</div>`;
+                    amountDisplay = `<div class="text-left font-bold ${isOld ? 'line-through opacity-50' : ''}">${formatNumber(Math.abs(t.amount))}</div>`;
                 }
                 
                 let emoji = emojis[t.type] || '⚪';
@@ -1114,21 +1148,32 @@
                     style = 'bg-amber-100 text-amber-700 border-amber-200';
                 }
                 
-                const opNum = t.operationNumber ? `<span class="operation-number bg-slate-200 px-2 py-1 rounded text-xs">#${t.operationNumber}</span>` : '';
+                // تعديل التنسيق للعمليات القديمة
+                let cardClass = `flex justify-between items-center p-3 rounded-xl border ${style} fade-in`;
+                if (isOld) {
+                    cardClass += ' old-transaction';
+                    style = 'bg-gray-100 text-gray-600 border-gray-300';
+                }
+                
+                const opNum = t.operationNumber ? `<span class="operation-number bg-slate-800 text-white px-2 py-1 rounded text-xs font-bold">#${t.operationNumber}</span>` : '';
+                
+                // وسم التاريخ القديم
+                const oldBadge = isOld ? `<span class="old-date-badge">📅 ${dateStr}</span>` : `<span class="text-slate-500 text-xs">${time}</span>`;
                 
                 return `
-                    <div class="flex justify-between items-center p-3 rounded-xl border ${style} fade-in">
+                    <div class="${cardClass}">
                         <div class="flex items-center gap-2 flex-1">
-                            <span>${emoji}</span>
+                            <span class="text-xl ${isOld ? 'grayscale' : ''}">${emoji}</span>
                             <div class="flex-1">
-                                <div class="font-semibold text-sm ${titleClass}">${t.title}</div>
-                                <div class="text-xs opacity-75 flex items-center gap-2 flex-wrap">
-                                    ${time} ${opNum} ${oldBadge}
+                                <div class="font-semibold text-sm transaction-title ${isOld ? 'text-slate-500' : ''}">${t.title}</div>
+                                <div class="text-xs opacity-75 flex items-center gap-2 flex-wrap mt-1">
+                                    ${opNum}
+                                    ${oldBadge}
                                 </div>
                                 ${extraRows}
                             </div>
                         </div>
-                        ${amountDisplay}
+                        <div class="transaction-amount">${amountDisplay}</div>
                     </div>
                 `;
             }).join('');
