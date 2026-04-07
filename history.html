@@ -54,10 +54,18 @@
         .transaction-card {
             transition: all 0.2s ease;
             border-right: 4px solid transparent;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .transaction-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
         
         .transaction-card:hover {
-            transform: translateX(-4px);
+            transform: translateX(-4px) scale(1.01);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
@@ -175,15 +183,57 @@
             gap: 8px;
         }
         
-        .loading-skeleton {
-            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
+        /* ✅ تعديل: مؤشر التحميل الكسول */
+        .loading-trigger {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 14px;
+            gap: 8px;
         }
         
-        @keyframes loading {
+        .loading-trigger i {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .skeleton-loader {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 12px;
+            height: 80px;
+            margin: 8px 0;
+        }
+        
+        @keyframes skeleton-loading {
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
+        }
+        
+        /* ✅ تعديل: placeholder للصور */
+        .lazy-image {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .lazy-image.loaded {
+            opacity: 1;
+        }
+        
+        .image-placeholder {
+            background: #f1f5f9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #cbd5e1;
         }
     </style>
 </head>
@@ -198,7 +248,7 @@
                 </a>
                 <div class="text-center">
                     <h1 class="text-lg font-bold">🗂️ إدارة السجلات</h1>
-                    <p class="text-xs text-slate-400">تعديل • حذف • بحث متقدم</p>
+                    <p class="text-xs text-slate-400">تعديل • حذف • بحث متقدم • تحميل كسول</p>
                 </div>
                 <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition">
                     <i class="fas fa-sign-out-alt text-xl"></i>
@@ -287,14 +337,27 @@
             <div class="bg-white rounded-2xl shadow-md overflow-hidden fade-in">
                 <div class="p-4 border-b border-slate-100 flex justify-between items-center">
                     <h3 class="font-bold text-slate-700">📋 النتائج</h3>
-                    <span class="text-sm text-slate-500" id="resultsCount">جاري التحميل...</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                            <i class="fas fa-layer-group ml-1"></i>
+                            تحميل كسول
+                        </span>
+                        <span class="text-sm text-slate-500" id="resultsCount">جاري التحميل...</span>
+                    </div>
                 </div>
                 
-                <div id="transactionsList" class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto hide-scrollbar">
+                <!-- ✅ حاوية قابلة للتمرير مع Intersection Observer -->
+                <div id="transactionsList" class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto hide-scrollbar relative">
                     <div class="p-8 text-center text-slate-400">
                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                         <p>جاري تحميل السجلات...</p>
                     </div>
+                </div>
+                
+                <!-- ✅ عنصر التحميل الكسول (المشغل) -->
+                <div id="lazyLoadingTrigger" class="loading-trigger hidden">
+                    <i class="fas fa-circle-notch"></i>
+                    <span>جاري تحميل المزيد...</span>
                 </div>
             </div>
 
@@ -479,8 +542,24 @@
         const auth = getAuth(app);
         const database = getDatabase(app);
 
+        // ==========================================
+        // ✅ إعدادات التحميل الكسول (Lazy Loading)
+        // ==========================================
+        const LAZY_LOAD_CONFIG = {
+            itemsPerPage: 15,        // عدد العناصر في كل دفعة
+            preloadThreshold: 0.8,    // نسبة الظهور قبل التحميل (80%)
+            maxLoadedItems: 100,      // الحد الأقصى للعناصر المحملة
+            enableVirtualScroll: true // تفعيل التمرير الافتراضي
+        };
+
         let allTransactions = [];
         let filteredTransactions = [];
+        let displayedTransactions = []; // العناصر المعروضة حالياً
+        let currentPage = 0;
+        let isLoading = false;
+        let hasMoreItems = true;
+        let lazyObserver = null;
+        
         let currentFilters = {
             types: ['all'],
             search: '',
@@ -531,6 +610,8 @@
                     return numB - numA;
                 });
                 
+                // إعادة تعيين حالة التحميل الكسول
+                resetLazyLoading();
                 applyFilters();
                 updateStats();
             });
@@ -538,6 +619,120 @@
             // تعيين تواريخ افتراضية
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('dateTo').value = today;
+            
+            // ✅ إعداد Intersection Observer للتحميل الكسول
+            setupLazyObserver();
+        }
+
+        // ==========================================
+        // ✅ إعداد Intersection Observer
+        // ==========================================
+        function setupLazyObserver() {
+            const options = {
+                root: document.getElementById('transactionsList'),
+                rootMargin: '0px 0px 100px 0px', // هامش سفلي للتحميل المبكر
+                threshold: LAZY_LOAD_CONFIG.preloadThreshold
+            };
+
+            lazyObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !isLoading && hasMoreItems) {
+                        loadMoreItems();
+                    }
+                });
+            }, options);
+
+            // مراقبة عنصر التحميل
+            const trigger = document.getElementById('lazyLoadingTrigger');
+            if (trigger) {
+                lazyObserver.observe(trigger);
+            }
+        }
+
+        function resetLazyLoading() {
+            currentPage = 0;
+            hasMoreItems = true;
+            isLoading = false;
+            displayedTransactions = [];
+            
+            // إخفاء مؤشر التحميل
+            const trigger = document.getElementById('lazyLoadingTrigger');
+            if (trigger) {
+                trigger.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // ✅ دالة التحميل الكسول الرئيسية
+        // ==========================================
+        async function loadMoreItems() {
+            if (isLoading || !hasMoreItems) return;
+            
+            isLoading = true;
+            showLoadingIndicator(true);
+            
+            // محاكاة تأخير الشبكة للاختبار (يمكن إزالته)
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            const start = currentPage * LAZY_LOAD_CONFIG.itemsPerPage;
+            const end = start + LAZY_LOAD_CONFIG.itemsPerPage;
+            const newItems = filteredTransactions.slice(start, end);
+            
+            if (newItems.length === 0) {
+                hasMoreItems = false;
+                showLoadingIndicator(false);
+                isLoading = false;
+                return;
+            }
+            
+            // إضافة العناصر الجديدة
+            displayedTransactions = [...displayedTransactions, ...newItems];
+            currentPage++;
+            
+            // التحقق من وجود المزيد
+            hasMoreItems = end < filteredTransactions.length && 
+                          displayedTransactions.length < LAZY_LOAD_CONFIG.maxLoadedItems;
+            
+            // عرض العناصر الجديدة فقط (append)
+            appendTransactions(newItems);
+            
+            showLoadingIndicator(false);
+            isLoading = false;
+            
+            // ✅ تفعيل الأنيميشن التدريجي للعناصر الجديدة
+            animateNewItems();
+        }
+
+        function showLoadingIndicator(show) {
+            const trigger = document.getElementById('lazyLoadingTrigger');
+            if (trigger) {
+                trigger.classList.toggle('hidden', !show || !hasMoreItems);
+                if (show && hasMoreItems) {
+                    trigger.innerHTML = `
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        <span>جاري تحميل المزيد...</span>
+                    `;
+                } else if (!hasMoreItems && displayedTransactions.length > 0) {
+                    trigger.innerHTML = `
+                        <i class="fas fa-check-circle text-emerald-500"></i>
+                        <span class="text-emerald-600">تم تحميل جميع السجلات</span>
+                    `;
+                    trigger.classList.remove('hidden');
+                }
+            }
+        }
+
+        function animateNewItems() {
+            // استخدام requestAnimationFrame للأنيميشن السلس
+            const cards = document.querySelectorAll('.transaction-card:not(.visible)');
+            
+            cards.forEach((card, index) => {
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        card.classList.add('visible');
+                    }, index * 50); // تأخير تدريجي 50ms لكل عنصر
+                });
+            });
         }
 
         // ==========================================
@@ -587,19 +782,16 @@
             const chip = document.querySelector(`[data-type="${type}"]`);
             
             if (type === 'all') {
-                // إذا اخترنا الكل، نلغي الباقي
                 currentFilters.types = ['all'];
                 document.querySelectorAll('.filter-chip').forEach(c => {
                     c.classList.toggle('active', c.dataset.type === 'all');
                 });
             } else {
-                // إذا اخترنا نوع محدد
                 const index = currentFilters.types.indexOf(type);
                 if (index > -1) {
                     currentFilters.types.splice(index, 1);
                     chip.classList.remove('active');
                 } else {
-                    // إزالة "الكل" إذا كانت موجودة
                     const allIndex = currentFilters.types.indexOf('all');
                     if (allIndex > -1) {
                         currentFilters.types.splice(allIndex, 1);
@@ -609,13 +801,14 @@
                     chip.classList.add('active');
                 }
                 
-                // إذا لم يتبق شيء، نرجع للكل
                 if (currentFilters.types.length === 0) {
                     currentFilters.types = ['all'];
                     document.querySelector('[data-type="all"]').classList.add('active');
                 }
             }
             
+            // ✅ إعادة تعيين التحميل الكسول عند تغيير الفلاتر
+            resetLazyLoading();
             applyFilters();
         };
 
@@ -624,6 +817,7 @@
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 currentFilters.search = document.getElementById('searchInput').value.toLowerCase();
+                resetLazyLoading();
                 applyFilters();
             }, 300);
         };
@@ -667,7 +861,8 @@
                 return true;
             });
 
-            renderTransactions();
+            // ✅ عرض النتائج الأولى مباشرة
+            renderInitialTransactions();
             updateStats();
         };
 
@@ -688,6 +883,7 @@
                 c.classList.toggle('active', c.dataset.type === 'all');
             });
             
+            resetLazyLoading();
             applyFilters();
         };
 
@@ -716,10 +912,10 @@
         }
 
         // ==========================================
-        // عرض العمليات
+        // ✅ عرض العمليات مع التحميل الكسول
         // ==========================================
 
-        function renderTransactions() {
+        function renderInitialTransactions() {
             const container = document.getElementById('transactionsList');
             const countElement = document.getElementById('resultsCount');
             
@@ -736,73 +932,121 @@
                 return;
             }
 
-            const todayStart = getTodayStart();
-            let currentDate = '';
+            // تحميل الدفعة الأولى
+            displayedTransactions = filteredTransactions.slice(0, LAZY_LOAD_CONFIG.itemsPerPage);
+            currentPage = 1;
+            hasMoreItems = displayedTransactions.length < filteredTransactions.length;
+            
+            container.innerHTML = '';
+            appendTransactions(displayedTransactions, true);
+            
+            // إظهار مؤشر التحميل إذا كان هناك المزيد
+            showLoadingIndicator(hasMoreItems);
+        }
 
-            container.innerHTML = filteredTransactions.map(tx => {
+        function appendTransactions(transactions, isInitial = false) {
+            const container = document.getElementById('transactionsList');
+            const todayStart = getTodayStart();
+            let currentDate = isInitial ? '' : getLastDateInContainer();
+
+            const fragment = document.createDocumentFragment();
+
+            transactions.forEach((tx, index) => {
                 const txDate = formatDate(tx.timestamp);
                 const isOld = tx.timestamp < todayStart;
                 
-                // تجميع حسب التاريخ
-                let dateHeader = '';
+                // إضافة عنوان التاريخ عند تغييره
                 if (txDate !== currentDate) {
                     currentDate = txDate;
                     const isToday = new Date(tx.timestamp).toDateString() === new Date().toDateString();
-                    dateHeader = `
-                        <div class="date-group">
-                            <i class="fas fa-calendar-alt text-slate-400"></i>
-                            <span>${txDate}</span>
-                            ${isToday ? '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs">اليوم</span>' : ''}
-                        </div>
+                    
+                    const dateHeader = document.createElement('div');
+                    dateHeader.className = 'date-group';
+                    dateHeader.innerHTML = `
+                        <i class="fas fa-calendar-alt text-slate-400"></i>
+                        <span>${txDate}</span>
+                        ${isToday ? '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs">اليوم</span>' : ''}
                     `;
+                    fragment.appendChild(dateHeader);
                 }
 
-                const typeConfig = getTypeConfig(tx.type, tx.payment);
-                const amount = getTransactionAmount(tx);
-                
-                return dateHeader + `
-                    <div class="transaction-card p-4 ${typeConfig.className} fade-in group">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="flex items-center gap-2">
-                                <span class="text-2xl">${typeConfig.icon}</span>
-                                <div>
-                                    <div class="font-bold text-slate-800 flex items-center gap-2">
-                                        ${tx.title || typeConfig.label}
-                                        ${isOld ? '<span class="old-badge">تاريخ قديم</span>' : ''}
-                                    </div>
-                                    <div class="text-xs text-slate-500 flex items-center gap-2 mt-1">
-                                        <span class="operation-number bg-slate-100 px-2 py-0.5 rounded">#${tx.operationNumber || '---'}</span>
-                                        <span>${formatTime(tx.timestamp)}</span>
-                                        <span class="period-badge ${tx.calculatedPeriod === 'صباحية' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}">
-                                            ${tx.calculatedPeriod === 'صباحية' ? '☀️' : '🌙'} ${tx.calculatedPeriod}
-                                        </span>
-                                    </div>
-                                </div>
+                const card = createTransactionCard(tx, isOld, index);
+                fragment.appendChild(card);
+            });
+
+            container.appendChild(fragment);
+            
+            // تفعيل الأنيميشن
+            requestAnimationFrame(() => {
+                animateNewItems();
+            });
+        }
+
+        function getLastDateInContainer() {
+            const headers = document.querySelectorAll('.date-group');
+            if (headers.length === 0) return '';
+            const lastHeader = headers[headers.length - 1];
+            return lastHeader.querySelector('span')?.textContent || '';
+        }
+
+        function createTransactionCard(tx, isOld, index) {
+            const typeConfig = getTypeConfig(tx.type, tx.payment);
+            const amount = getTransactionAmount(tx);
+            
+            const div = document.createElement('div');
+            div.className = `transaction-card p-4 ${typeConfig.className}`;
+            div.dataset.id = tx.id;
+            
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">${typeConfig.icon}</span>
+                        <div>
+                            <div class="font-bold text-slate-800 flex items-center gap-2">
+                                ${tx.title || typeConfig.label}
+                                ${isOld ? '<span class="old-badge">تاريخ قديم</span>' : ''}
                             </div>
-                            <div class="text-left">
-                                <div class="font-bold text-lg ${amount.color}">${amount.value}</div>
-                                ${amount.subtext ? `<div class="text-xs text-slate-500">${amount.subtext}</div>` : ''}
-                            </div>
-                        </div>
-                        
-                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
-                            <div class="text-xs text-slate-500 flex gap-3">
-                                ${tx.dept ? `<span><i class="fas fa-tag ml-1"></i>${tx.dept}</span>` : ''}
-                                ${tx.payment ? `<span><i class="fas fa-wallet ml-1"></i>${tx.payment}</span>` : ''}
-                                ${tx.vendor ? `<span><i class="fas fa-store ml-1"></i>${tx.vendor}</span>` : ''}
-                            </div>
-                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="openEditModal('${tx.id}')" class="btn-action w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200" title="تعديل">
-                                    <i class="fas fa-edit text-sm"></i>
-                                </button>
-                                <button onclick="openDeleteModal('${tx.id}')" class="btn-action w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200" title="حذف">
-                                    <i class="fas fa-trash text-sm"></i>
-                                </button>
+                            <div class="text-xs text-slate-500 flex items-center gap-2 mt-1">
+                                <span class="operation-number bg-slate-100 px-2 py-0.5 rounded">#${tx.operationNumber || '---'}</span>
+                                <span>${formatTime(tx.timestamp)}</span>
+                                <span class="period-badge ${tx.calculatedPeriod === 'صباحية' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}">
+                                    ${tx.calculatedPeriod === 'صباحية' ? '☀️' : '🌙'} ${tx.calculatedPeriod}
+                                </span>
                             </div>
                         </div>
                     </div>
-                `;
-            }).join('');
+                    <div class="text-left">
+                        <div class="font-bold text-lg ${amount.color}">${amount.value}</div>
+                        ${amount.subtext ? `<div class="text-xs text-slate-500">${amount.subtext}</div>` : ''}
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+                    <div class="text-xs text-slate-500 flex gap-3">
+                        ${tx.dept ? `<span><i class="fas fa-tag ml-1"></i>${tx.dept}</span>` : ''}
+                        ${tx.payment ? `<span><i class="fas fa-wallet ml-1"></i>${tx.payment}</span>` : ''}
+                        ${tx.vendor ? `<span><i class="fas fa-store ml-1"></i>${tx.vendor}</span>` : ''}
+                    </div>
+                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity sm:opacity-100">
+                        <button onclick="openEditModal('${tx.id}')" class="btn-action w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200" title="تعديل">
+                            <i class="fas fa-edit text-sm"></i>
+                        </button>
+                        <button onclick="openDeleteModal('${tx.id}')" class="btn-action w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200" title="حذف">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // إضافة تأثير hover للمجموعة
+            div.addEventListener('mouseenter', () => {
+                div.querySelectorAll('.btn-action').forEach(btn => btn.style.opacity = '1');
+            });
+            div.addEventListener('mouseleave', () => {
+                div.querySelectorAll('.btn-action').forEach(btn => btn.style.opacity = '');
+            });
+            
+            return div;
         }
 
         function getTypeConfig(type, payment) {
@@ -855,7 +1099,6 @@
             document.getElementById('editOldPayment').value = tx.payment || 'كاش';
             document.getElementById('editOpNumber').textContent = tx.operationNumber || '---';
             
-            // تعيين القيم
             const typeSelect = document.getElementById('editType');
             typeSelect.value = tx.type === 'shopExpense' || tx.type === 'personalExpense' ? tx.type : tx.type;
             
@@ -910,12 +1153,6 @@
                 const newDept = document.getElementById('editDept').value;
                 const newNote = document.getElementById('editNote').value;
                 
-                // حساب الفرق في الأرصدة
-                const oldAmount = Math.abs(parseFloat(document.getElementById('editOldAmount').value) || 0);
-                const oldType = document.getElementById('editOldType').value;
-                const oldPayment = document.getElementById('editOldPayment').value;
-                
-                // إعادة حساب الأرصدة
                 await recalculateBalances(oldTx, {
                     type: newType,
                     amount: newType === 'transfer' ? 0 : (newType === 'sales' ? newAmount : -newAmount),
@@ -964,15 +1201,10 @@
             }
             
             try {
-                // إعادة حساب الأرصدة (عكس العملية)
                 await reverseTransaction(tx);
-                
-                // حذف العملية
                 await remove(ref(database, `transactions/${id}`));
                 
-                // حذف الدمغة المرتبطة إن وجدت
                 if (tx.bankFee && tx.bankFee > 0) {
-                    // البحث عن الدمغة المرتبطة وحذفها
                     const feeTx = allTransactions.find(t => t.linkedTo === id && t.type === 'bankFee');
                     if (feeTx) {
                         await remove(ref(database, `transactions/${feeTx.id}`));
@@ -988,15 +1220,14 @@
         };
 
         // ==========================================
-        // إعادة حساب الأرصدة (النواة الأساسية)
+        // إعادة حساب الأرصدة
         // ==========================================
 
         async function recalculateBalances(oldTx, newTx) {
-            // استخدام runTransaction لضمان الذرية
             await runTransaction(ref(database, 'balances'), (currentBalances) => {
                 let { cash, bank } = currentBalances || { cash: 0, bank: 0 };
                 
-                // 1. عكس العملية القديمة
+                // عكس العملية القديمة
                 const oldAmount = Math.abs(oldTx.amount || 0);
                 const oldTransfer = oldTx.transferAmount || 0;
                 
@@ -1007,7 +1238,6 @@
                     if (oldTx.payment === 'كاش') cash += oldAmount;
                     else bank += oldAmount;
                     
-                    // إرجاع الدمغة
                     if (oldTx.bankFee) bank += oldTx.bankFee;
                 } else if (oldTx.type === 'transfer') {
                     if (oldTx.from === 'كاش') {
@@ -1019,7 +1249,7 @@
                     }
                 }
                 
-                // 2. تطبيق العملية الجديدة
+                // تطبيق العملية الجديدة
                 const newAmount = Math.abs(newTx.amount || 0);
                 const newTransfer = newTx.transferAmount || 0;
                 
@@ -1028,7 +1258,7 @@
                     else bank += newAmount;
                 } else if (newTx.type === 'shopExpense' || newTx.type === 'personalExpense') {
                     if (newTx.payment === 'كاش') cash -= newAmount;
-                    else bank -= newAmount + 60; // المبلغ + الدمغة
+                    else bank -= newAmount + 60;
                 } else if (newTx.type === 'transfer') {
                     if (newTx.from === 'كاش') {
                         cash -= newTransfer;
@@ -1042,10 +1272,9 @@
                 return { cash, bank };
             });
             
-            // تحديث العملية في قاعدة البيانات
             const updates = {
                 ...newTx,
-                id: undefined // إزالة id من البيانات
+                id: undefined
             };
             
             await update(ref(database, `transactions/${oldTx.id}`), updates);
@@ -1084,7 +1313,8 @@
         // ==========================================
 
         window.exportResults = function() {
-            const headers = ['رقم العملية', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل', 'الرصيد النقدي', 'رصيد البنك'];
+            // تصدير جميع النتائج المفلترة (ليس فقط المعروضة)
+            const headers = ['رقم العملية', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل'];
             
             const rows = filteredTransactions.map(tx => {
                 const isOld = tx.timestamp < getTodayStart();
@@ -1099,14 +1329,9 @@
                     tx.payment || '-',
                     tx.amount || tx.transferAmount || 0,
                     tx.title || '',
-                    isOld ? 'تاريخ قديم' : 'اليوم',
-                    ''
+                    isOld ? 'تاريخ قديم' : 'اليوم'
                 ];
             });
-            
-            // إضافة صف الأرصدة الحالية
-            rows.push(['', '', '', '', '', '', '', '', '', 'الرصيد النقدي:', balances.cash]);
-            rows.push(['', '', '', '', '', '', '', '', '', 'رصيد البنك:', balances.bank]);
             
             const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
