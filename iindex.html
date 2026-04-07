@@ -129,43 +129,59 @@
             font-weight: 600;
         }
 
+        /* منع الضغط المتكرر */
         .btn-disabled {
             opacity: 0.6;
             pointer-events: none;
             cursor: not-allowed;
         }
 
+        /* تنسيق خاصم بنكك */
         .bank-fee-row {
             background: #fee2e2;
             border-right: 3px solid #ef4444;
         }
-        
-        .offline-indicator {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+
+        /* وسم التاريخ القديم - تنسيق محسن */
+        .old-date-badge {
             background: #f59e0b;
             color: white;
-            text-align: center;
-            padding: 4px;
-            font-size: 0.75rem;
-            z-index: 9999;
-            transform: translateY(-100%);
-            transition: transform 0.3s ease;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-right: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-        
-        .offline-indicator.show {
-            transform: translateY(0);
+
+        /* خط مشطوب للتحويلات */
+        .transfer-strikethrough {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        /* تنسيق خاص للعمليات القديمة */
+        .old-transaction {
+            opacity: 0.8;
+            background: #f3f4f6 !important;
+            border-style: dashed !important;
+        }
+
+        .old-transaction .transaction-title {
+            color: #6b7280;
+        }
+
+        .old-transaction .transaction-amount {
+            text-decoration: line-through;
+            opacity: 0.6;
         }
     </style>
 </head>
 <body>
 
-    <div id="offlineIndicator" class="offline-indicator">
-        ⚠️ أنت غير متصل بالإنترنت - سيتم الحفظ محلياً
-    </div>
-
+    <!-- رسالة التحذير العائمة -->
     <div id="warningToast" class="warning-toast">
         رصيد غير كافٍ!
     </div>
@@ -261,7 +277,7 @@
                 </div>
             </div>
 
-            <!-- ملخص اليوم - يعرض فقط عمليات اليوم -->
+            <!-- ملخص اليوم -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-slate-700">📊 ملخص اليوم</h3>
@@ -322,13 +338,16 @@
                 </button>
             </div>
 
-            <!-- آخر العمليات - تعرض فقط عمليات اليوم -->
+            <!-- آخر العمليات -->
             <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-slate-700">📝 آخر العمليات</h3>
-                    <span class="text-xs text-emerald-600 font-semibold">● مباشر</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-amber-600 font-semibold bg-amber-100 px-2 py-1 rounded-full">آخر 12 عملية</span>
+                        <span class="text-xs text-slate-400">الأحدث فوق</span>
+                    </div>
                 </div>
-                <div id="recentTransactions" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
+                <div id="recentTransactions" class="space-y-2 max-h-80 overflow-y-auto hide-scrollbar">
                     <div class="text-center text-slate-400 py-4 text-sm">
                         جاري تحميل العمليات...
                     </div>
@@ -376,6 +395,7 @@
             </div>
 
             <form id="salesForm" class="space-y-4" onsubmit="handleSalesSubmit(event)">
+                <!-- القسم - 3 أقسام منفصلة -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">القسم</label>
                     <div class="grid grid-cols-3 gap-2">
@@ -395,6 +415,7 @@
                     <input type="hidden" id="salesDept" required>
                 </div>
 
+                <!-- طريقة الدفع -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -410,12 +431,14 @@
                     <input type="hidden" id="salesPayment" value="كاش">
                 </div>
 
+                <!-- التاريخ والوقت (اختياري) -->
                 <div>
-                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري)</label>
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري - الافتراضي الآن)</label>
                     <input type="datetime-local" id="salesDateTime" 
                         class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-emerald-500 focus:outline-none">
                 </div>
 
+                <!-- المبلغ -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المبلغ الإجمالي</label>
                     <input type="text" id="salesAmount" 
@@ -424,6 +447,7 @@
                         oninput="formatNumberInput(this)"
                         onkeypress="return isNumberKey(event)"
                         required>
+                    <div class="text-xs text-slate-400 mt-1">⚠️ أدخل المبلغ الكلي (وليس الصافي)</div>
                 </div>
 
                 <button type="submit" id="salesSubmitBtn" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">
@@ -433,12 +457,330 @@
         </div>
     </div>
 
+    <!-- مودال المبيعات الآجلة -->
+    <div id="creditSalesModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('creditSales')">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-amber-800">📝 مبيعات آجلة (دين)</h2>
+                <button onclick="closeModal('creditSales')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <div class="bg-amber-50 rounded-xl p-3 mb-4 text-sm text-amber-700">
+                <div class="flex items-start gap-2">
+                    <span class="text-lg">⚠️</span>
+                    <div>
+                        <div class="font-semibold mb-1">تنبيه مهم</div>
+                        <div class="text-xs">
+                            • تُحسب في المبيعات اليومية ✅<br>
+                            • لا تُضاف للكاش/البنكك الآن ❌<br>
+                            • تُسجل كدين على الزبون 📋
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="creditSalesForm" class="space-y-4" onsubmit="handleCreditSalesSubmit(event)">
+                <!-- القسم - 3 أقسام منفصلة -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">القسم</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" class="credit-dept-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="عصائر" onclick="selectCreditDept(this)">
+                            <span class="text-2xl">🧃</span>
+                            <div class="text-sm mt-1">عصائر</div>
+                        </button>
+                        <button type="button" class="credit-dept-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="حلويات" onclick="selectCreditDept(this)">
+                            <span class="text-2xl">🍰</span>
+                            <div class="text-sm mt-1">حلويات</div>
+                        </button>
+                        <button type="button" class="credit-dept-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="طعمية وفطائر" onclick="selectCreditDept(this)">
+                            <span class="text-2xl">🥙</span>
+                            <div class="text-sm mt-1">طعمية</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="creditSalesDept" required>
+                </div>
+
+                <!-- اسم الزبون -->
+                <div>
+                    <label class="block text-sm text-amber-600 mb-1 font-bold">اسم الزبون (المدين) *</label>
+                    <input type="text" id="creditCustomerName" 
+                        class="w-full border-2 border-amber-200 rounded-xl p-3 text-right focus:border-amber-500 focus:outline-none bg-amber-50" 
+                        placeholder="مثال: أحمد، محمد، الجار..." 
+                        required
+                        list="customersList">
+                    <datalist id="customersList"></datalist>
+                    <div class="text-xs text-amber-600 mt-1">⚠️ سيتم تسجيل هذا المبلغ كدين على هذا الشخص</div>
+                </div>
+
+                <!-- التاريخ والوقت -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري)</label>
+                    <input type="datetime-local" id="creditSalesDateTime" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <!-- المبلغ -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ الإجمالي</label>
+                    <input type="text" id="creditSalesAmount" 
+                        class="formatted-input w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-amber-500 focus:outline-none" 
+                        placeholder="0" 
+                        oninput="formatNumberInput(this)"
+                        onkeypress="return isNumberKey(event)"
+                        required>
+                    <div class="text-xs text-slate-400 mt-1">⚠️ أدخل المبلغ الكلي (وليس الصافي)</div>
+                </div>
+
+                <!-- البيان (اختياري) -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">البيان / التفصيل (اختياري)</label>
+                    <input type="text" id="creditSalesNote" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-amber-500 focus:outline-none" 
+                        placeholder="مثال: فطيرة جبنة، عصير مانجو...">
+                </div>
+
+                <button type="submit" id="creditSalesSubmitBtn" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
+                    ✅ تأكيد البيع الآجل
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال المصروفات -->
+    <div id="expensesModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('expenses')">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-slate-800">🔴 تسجيل مصروفات</h2>
+                <button onclick="closeModal('expenses')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <form id="expensesForm" class="space-y-4" onsubmit="handleExpenseSubmit(event)">
+                <!-- نوع الصرف -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">نوع الصرف</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="type-btn border-2 border-red-200 bg-red-50 rounded-xl p-3 text-center transition" data-value="محل" onclick="selectType(this)">
+                            <span class="text-2xl">🏪</span>
+                            <div class="text-sm mt-1 text-red-700 font-semibold">مصروفات محل</div>
+                            <div class="text-xs text-red-500">تؤثر على الأرباح</div>
+                        </button>
+                        <button type="button" class="type-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="شخصي" onclick="selectType(this)">
+                            <span class="text-2xl">👤</span>
+                            <div class="text-sm mt-1">نفقات شخصية</div>
+                            <div class="text-xs text-slate-400">مسحوبات من الأرباح</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="expenseType" value="محل">
+                </div>
+
+                <!-- طريقة الدفع -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="exp-payment-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="كاش" onclick="selectExpPayment(this)">
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
+                        </button>
+                        <button type="button" class="exp-payment-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك" onclick="selectExpPayment(this)">
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1">بنكك</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="expensePayment" value="كاش">
+                </div>
+
+                <!-- تنبيه خصم بنكك -->
+                <div id="bankFeeWarning" class="hidden bg-red-50 border border-red-200 rounded-xl p-3 text-red-800 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span>⚠️</span>
+                        <span class="font-bold">سيتم خصم 60 جنيه إضافية كدمغة بنكك</span>
+                    </div>
+                </div>
+
+                <!-- المورد -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المورد / الطرف</label>
+                    <input type="text" id="expenseVendor" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-red-500 focus:outline-none" placeholder="مثال: أمجد، الكهرباء، السوق..." list="vendorList">
+                    <datalist id="vendorList">
+                        <option value="أمجد">
+                        <option value="الكهرباء">
+                        <option value="السوق">
+                        <option value="قرفة">
+                        <option value="سكر">
+                    </datalist>
+                </div>
+
+                <!-- البيان -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">البيان / التفصيل</label>
+                    <input type="text" id="expenseName" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-red-500 focus:outline-none" placeholder="مثال: قرفة، فاتورة كهرباء..." required list="expenseList">
+                    <datalist id="expenseList">
+                        <option value="قرفة">
+                        <option value="سكر">
+                        <option value="زيت">
+                        <option value="كهرباء">
+                        <option value="ماء">
+                        <option value="إيجار">
+                        <option value="عيش">
+                    </datalist>
+                    <div class="text-xs text-slate-400 mt-1">💡 اكتب "عيش" للحصول على اقتراح "عيش"</div>
+                </div>
+
+                <!-- التاريخ والوقت -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري)</label>
+                    <input type="datetime-local" id="expenseDateTime" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-red-500 focus:outline-none">
+                </div>
+
+                <!-- المبلغ -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ</label>
+                    <input type="text" id="expenseAmount" 
+                        class="formatted-input w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-red-500 focus:outline-none" 
+                        placeholder="0" 
+                        oninput="formatNumberInput(this)"
+                        onkeypress="return isNumberKey(event)"
+                        required>
+                </div>
+
+                <!-- عرض الدمغة -->
+                <div id="bankFeeDisplay" class="hidden bg-red-50 rounded-xl p-3 border border-red-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-red-700 font-bold">💳 خصم بنكك (دمغة)</span>
+                        <span class="text-red-700 font-bold">60 جنيه</span>
+                    </div>
+                    <div class="text-xs text-red-600 mt-1">سيتم خصمها تلقائياً من رصيد البنك</div>
+                </div>
+
+                <!-- تحذير التكرار -->
+                <div id="duplicateWarning" class="hidden bg-red-50 border border-red-300 rounded-xl p-3 text-red-800 text-sm shake">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span>⚠️</span>
+                        <span class="font-bold">تنبيه: عملية مكررة محتملة!</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="confirmDuplicate()" class="flex-1 bg-red-500 text-white rounded-lg py-2 text-xs font-bold">تأكيد التسجيل</button>
+                        <button type="button" onclick="cancelDuplicate()" class="flex-1 bg-slate-200 text-slate-700 rounded-lg py-2 text-xs font-bold">إلغاء</button>
+                    </div>
+                </div>
+
+                <button type="submit" id="expenseSubmitBtn" class="w-full bg-red-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-red-600 transition">
+                    ✅ تأكيد المصروف
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال التبديل -->
+    <div id="transferModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('transfer')">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-slate-800">🟡 تبديل السيولة</h2>
+                <button onclick="closeModal('transfer')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <div class="bg-slate-100 rounded-xl p-3 mb-4 text-sm text-slate-600">
+                <div class="flex items-start gap-2">
+                    <span class="text-lg">💡</span>
+                    <div>
+                        <div class="font-semibold mb-1">Zero-Impact Transaction</div>
+                        <div class="text-xs">لا تؤثر على الأرباح. مجرد نقل بين الحسابات.</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="transferForm" class="space-y-4" onsubmit="handleTransferSubmit(event)">
+                <!-- من -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">من</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="from-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="كاش" onclick="selectFrom(this)">
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
+                        </button>
+                        <button type="button" class="from-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك" onclick="selectFrom(this)">
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1">بنكك</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="transferFrom" value="كاش">
+                </div>
+
+                <div class="flex justify-center">
+                    <div class="text-2xl text-amber-500 animate-bounce">⇅</div>
+                </div>
+
+                <!-- إلى -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">إلى</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="to-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="كاش" onclick="selectTo(this)">
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1">كاش</div>
+                        </button>
+                        <button type="button" class="to-btn border-2 border-blue-500 bg-blue-50 rounded-xl p-3 text-center transition" data-value="بنكك" onclick="selectTo(this)">
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1 font-semibold text-blue-700">بنكك</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="transferTo" value="بنكك">
+                </div>
+
+                <!-- التاريخ والوقت -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت (اختياري)</label>
+                    <input type="datetime-local" id="transferDateTime" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-2 text-sm text-right focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <!-- المبلغ -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ</label>
+                    <input type="text" id="transferAmount" 
+                        class="formatted-input w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-amber-500 focus:outline-none" 
+                        placeholder="0" 
+                        oninput="formatNumberInput(this)"
+                        onkeypress="return isNumberKey(event)"
+                        required>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1 text-xs text-amber-800">
+                    <div>✓ لن تظهر في تقارير الأرباح</div>
+                    <div>✓ ستظهر بخط مشطوب في السجل</div>
+                    <div>✓ تُطرح من حساب المتوقع في الدرج</div>
+                </div>
+
+                <button type="submit" id="transferSubmitBtn" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
+                    ✅ تأكيد التبديل المحايد
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Firebase & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { 
-            getDatabase, ref, set, push, onValue, update, get, runTransaction
+            getAuth, 
+            onAuthStateChanged,
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getDatabase, 
+            ref, 
+            set, 
+            push, 
+            onValue, 
+            update, 
+            get,
+            runTransaction
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -458,22 +800,17 @@
 
         let currentUser = null;
         let balances = { cash: 0, bank: 0 };
-        let todayStats = { sales: 0, shopExpenses: 0, personalExpenses: 0 };
         let transactions = [];
         let lastTransaction = { time: 0, type: '', amount: 0, name: '' };
-        let operationCounter = 0;
-        let currentDateKey = '';
-        let isOnline = navigator.onLine;
-        let pendingQueue = [];
-        let allTransactions = []; // تخزين جميع العمليات للفلترة
 
-        const BANK_FEE = 60;
+        // ثوابت النظام
+        const BANK_FEE = 60; // دمغة بنكك
 
         // ==========================================
-        // دوال التاريخ - تحديد يوم العمل (6 صباحاً إلى 6 صباحاً)
+        // دوال مساعدة للتواريخ
         // ==========================================
 
-        // الحصول على مفتاح اليوم الحالي (من 6 ص إلى 6 ص)
+        // الحصول على مفتاح اليوم (YYYY-MM-DD) - من 6ص إلى 6ص
         function getTodayKey() {
             const now = new Date();
             const hours = now.getHours();
@@ -486,111 +823,41 @@
             return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         }
 
-        // الحصول على بداية اليوم (6 صباحاً)
+        // التحقق مما إذا كان التاريخ ينتمي لليوم الحالي (6ص إلى 6ص)
+        function isToday(timestamp) {
+            const date = new Date(timestamp);
+            const todayKey = getTodayKey();
+            const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            return dateKey === todayKey;
+        }
+
+        // الحصول على بداية اليوم (6:00 صباحاً)
         function getTodayStart() {
             const now = new Date();
-            const hours = now.getHours();
+            const start = new Date(now);
+            start.setHours(6, 0, 0, 0);
             
-            if (hours < 6) {
-                now.setDate(now.getDate() - 1);
+            // إذا كان الوقت الحالي قبل 6 صباحاً، نرجع لبداية اليوم السابق
+            if (now.getHours() < 6) {
+                start.setDate(start.getDate() - 1);
             }
             
-            now.setHours(6, 0, 0, 0);
-            return now.getTime();
+            return start.getTime();
         }
 
-        // الحصول على نهاية اليوم (6 صباحاً اليوم التالي)
+        // الحصول على نهاية اليوم (5:59:59 صباحاً اليوم التالي)
         function getTodayEnd() {
             const start = getTodayStart();
-            return start + (24 * 60 * 60 * 1000); // +24 ساعة
+            return start + (24 * 60 * 60 * 1000) - 1;
         }
 
-        // التحقق إذا كان التاريخ ضمن اليوم الحالي
-        function isToday(timestamp) {
-            const start = getTodayStart();
-            const end = getTodayEnd();
-            return timestamp >= start && timestamp < end;
-        }
-
-        // ==========================================
-        // حل مشكلة العداد - يعمل 100% Offline
-        // ==========================================
-
-        async function initOperationCounter() {
-            const savedCounter = localStorage.getItem('operationCounter_v3');
-            const localValue = savedCounter ? parseInt(savedCounter) : 0;
-            
-            if (isOnline) {
-                try {
-                    const snapshot = await get(ref(database, 'system/operationCounter'));
-                    const serverValue = snapshot.val() || 0;
-                    operationCounter = Math.max(localValue, serverValue);
-                    
-                    if (localValue > serverValue) {
-                        await set(ref(database, 'system/operationCounter'), localValue);
-                    }
-                } catch (e) {
-                    operationCounter = localValue;
-                }
-            } else {
-                operationCounter = localValue;
-            }
-            
-            console.log('🔢 العداد الحالي:', operationCounter);
-        }
-
-        // ✅ توليد رقم العملية مع ضمان عدم التكرار
-        function generateOperationNumber() {
-            operationCounter++;
-            localStorage.setItem('operationCounter_v3', operationCounter.toString());
-            
-            if (isOnline) {
-                set(ref(database, 'system/operationCounter'), operationCounter).catch(() => {});
-            }
-            
-            // ✅ تأكد من إرجاع القيمة بشكل صحيح
-            const formatted = operationCounter.toString().padStart(4, '0');
-            console.log('🎫 رقم العملية الجديد:', formatted);
-            return formatted;
+        // تنسيق الرقم بـ 5 خانات
+        function formatOperationNumber(num) {
+            return num.toString().padStart(5, '0');
         }
 
         // ==========================================
-        // نظام Offline البسيط
-        // ==========================================
-
-        function queueOperation(operation) {
-            pendingQueue.push({
-                ...operation,
-                queuedAt: Date.now(),
-                retries: 0
-            });
-            localStorage.setItem('pendingQueue', JSON.stringify(pendingQueue));
-            updateOfflineUI();
-        }
-
-        async function processQueue() {
-            if (!isOnline || pendingQueue.length === 0) return;
-            
-            const queue = [...pendingQueue];
-            pendingQueue = [];
-            
-            for (const op of queue) {
-                try {
-                    await executeOperation(op);
-                } catch (e) {
-                    op.retries++;
-                    if (op.retries < 3) {
-                        pendingQueue.push(op);
-                    }
-                }
-            }
-            
-            localStorage.setItem('pendingQueue', JSON.stringify(pendingQueue));
-            updateOfflineUI();
-        }
-
-        // ==========================================
-        // دوال مساعدة
+        // دوال التنسيق
         // ==========================================
 
         window.formatNumber = function(num) {
@@ -629,6 +896,7 @@
             }, 3000);
         };
 
+        // الحصول على التimestamp مع إمكانية التخصيص
         function getTimestamp(inputId) {
             const input = document.getElementById(inputId);
             if (input && input.value) {
@@ -638,286 +906,25 @@
         }
 
         // ==========================================
-        // ✅ حساب إحصائيات اليوم فقط
+        // المصادقة والتهيئة
         // ==========================================
 
-        function calculateTodayStats() {
-            const startOfDay = getTodayStart();
-            const endOfDay = getTodayEnd();
-            
-            let sales = 0;
-            let shopExpenses = 0;
-            let personalExpenses = 0;
-            
-            // فلترة العمليات لتكون فقط لليوم الحالي
-            const todayTransactions = allTransactions.filter(tx => {
-                const txTime = tx.timestamp || 0;
-                return txTime >= startOfDay && txTime < endOfDay;
-            });
-            
-            todayTransactions.forEach(tx => {
-                const amount = Math.abs(tx.amount || 0);
-                
-                if (tx.type === 'sales' || (tx.type === 'shopExpense' && tx.amount > 0)) {
-                    // المبيعات
-                    if (tx.amount > 0 || (tx.type === 'sales' && !tx.amount)) {
-                        sales += amount;
-                    }
-                } else if (tx.type === 'shopExpense' || (tx.expenseType === 'محل' && tx.amount < 0)) {
-                    shopExpenses += amount;
-                } else if (tx.type === 'personalExpense' || tx.expenseType === 'شخصي') {
-                    personalExpenses += amount;
-                }
-            });
-            
-            // ✅ تحديث المتغيرات العامة
-            todayStats = { sales, shopExpenses, personalExpenses };
-            
-            // ✅ تحديث الواجهة
-            updateTodayStats();
-            
-            // ✅ تحديث قائمة العمليات لعرض فقط عمليات اليوم
-            updateTodayTransactionsList(todayTransactions);
-        }
-
-        function updateTodayStats() {
-            document.getElementById('todaySales').textContent = formatNumber(todayStats.sales);
-            document.getElementById('todayExpenses').textContent = formatNumber(todayStats.shopExpenses);
-            document.getElementById('todayPersonal').textContent = formatNumber(todayStats.personalExpenses);
-            
-            const net = todayStats.sales - todayStats.shopExpenses - todayStats.personalExpenses;
-            const netEl = document.getElementById('todayNet');
-            netEl.textContent = formatNumber(net);
-            netEl.className = `font-bold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`;
-        }
-
-        // ✅ عرض عمليات اليوم فقط في القائمة
-        function updateTodayTransactionsList(todayTransactions) {
-            const container = document.getElementById('recentTransactions');
-            
-            if (todayTransactions.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">لا توجد عمليات اليوم</div>';
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
                 return;
             }
             
-            // ترتيب من الأحدث للأقدم
-            const sorted = todayTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            
-            const styles = {
-                sales: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                shopExpense: 'bg-red-100 text-red-700 border-red-200',
-                personalExpense: 'bg-blue-100 text-blue-700 border-blue-200',
-                transfer: 'bg-slate-100 text-slate-700 border-slate-200'
-            };
-            
-            const emojis = {
-                sales: '🟢',
-                shopExpense: '🔴',
-                personalExpense: '🔵',
-                transfer: '⇄'
-            };
-            
-            container.innerHTML = sorted.slice(0, 10).map(t => {
-                const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
-                
-                // ✅ التأكد من وجود رقم العملية
-                const opNum = t.operationNumber ? t.operationNumber.toString().padStart(4, '0') : '----';
-                
-                let emoji = emojis[t.type] || '⚪';
-                let style = styles[t.type] || styles.sales;
-                
-                if (t.saleType === 'credit' || t.payment === 'آجل') {
-                    emoji = '📝';
-                    style = 'bg-amber-100 text-amber-700 border-amber-200';
-                }
-                
-                return `
-                    <div class="flex justify-between items-center p-3 rounded-xl border ${style} fade-in">
-                        <div class="flex items-center gap-2 flex-1">
-                            <span>${emoji}</span>
-                            <div class="flex-1">
-                                <div class="font-semibold text-sm">${t.title || 'عملية'}</div>
-                                <div class="text-xs opacity-75 flex items-center gap-2">
-                                    ${time} 
-                                    <span class="operation-number bg-slate-200 px-2 py-1 rounded text-xs">#${opNum}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-left font-bold">${formatNumber(Math.abs(t.amount || 0))}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // ==========================================
-        // معالجات الإرسال
-        // ==========================================
-
-        window.handleSalesSubmit = async function(e) {
-            e.preventDefault();
-            
-            const btn = document.getElementById('salesSubmitBtn');
-            if (btn.disabled) return;
-            btn.disabled = true;
-            
-            try {
-                const amount = parseFormattedNumber('salesAmount');
-                const payment = document.getElementById('salesPayment').value;
-                const dept = document.getElementById('salesDept').value;
-                
-                if (!dept) {
-                    showWarning('الرجاء اختيار القسم');
-                    return;
-                }
-
-                if (amount <= 0) {
-                    showWarning('المبلغ يجب أن يكون أكبر من صفر');
-                    return;
-                }
-
-                const timestamp = getTimestamp('salesDateTime');
-                
-                // ✅ تأكد من توليد الرقم قبل أي شيء
-                const operationNumber = generateOperationNumber();
-                
-                const uid = Date.now().toString(36).toUpperCase().slice(-6);
-                
-                // تحديث محلي فوري
-                if (payment === 'كاش') balances.cash += amount;
-                else balances.bank += amount;
-                updateBalanceDisplay();
-                
-                const transactionData = {
-                    type: 'sales',
-                    title: `مبيعات ${dept} (${payment})`,
-                    amount: amount,
-                    timestamp: timestamp,
-                    uid: uid,
-                    operationNumber: operationNumber, // ✅ مضمون الوجود
-                    payment: payment,
-                    dept: dept,
-                    date: getTodayKey()
-                };
-
-                // إضافة للمصفوفة المحلية فوراً
-                allTransactions.push(transactionData);
-                calculateTodayStats(); // ✅ إعادة حساب إحصائيات اليوم
-
-                if (!isOnline) {
-                    queueOperation({ type: 'transaction', data: transactionData });
-                    closeModal('sales');
-                    showWarning('✅ تم الحفظ محلياً #' + operationNumber);
-                    return;
-                }
-
-                try {
-                    const balanceUpdate = {};
-                    balanceUpdate[payment === 'كاش' ? 'cash' : 'bank'] = 
-                        payment === 'كاش' ? balances.cash : balances.bank;
-                    
-                    await Promise.all([
-                        update(ref(database, 'balances'), balanceUpdate),
-                        push(ref(database, 'transactions'), transactionData),
-                        set(ref(database, 'lastTransaction'), {
-                            time: timestamp,
-                            type: 'sales',
-                            amount: amount,
-                            name: dept
-                        })
-                    ]);
-
-                    closeModal('sales');
-                    showWarning('✅ تم تسجيل المبيعات #' + operationNumber);
-                } catch (error) {
-                    queueOperation({ type: 'transaction', data: transactionData });
-                    closeModal('sales');
-                    showWarning('⚠️ تم الحفظ محلياً #' + operationNumber);
-                }
-                
-            } finally {
-                btn.disabled = false;
-            }
-        };
-
-        // ==========================================
-        // بقية الدوال
-        // ==========================================
-
-        function updateBalanceDisplay() {
-            document.getElementById('cashBalance').textContent = formatNumber(balances.cash);
-            document.getElementById('bankBalance').textContent = formatNumber(balances.bank);
-            document.getElementById('lastSync').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
-        }
-
-        function updateOfflineUI() {
-            const indicator = document.getElementById('offlineIndicator');
-            if (!isOnline) {
-                indicator.classList.add('show');
-            } else {
-                indicator.classList.remove('show');
-            }
-        }
-
-        // ==========================================
-        // التهيئة
-        // ==========================================
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = 'login.html';
+            if (!user.emailVerified) {
+                alert('⚠️ يرجى توثيق حسابك أولاً من بريدك الإلكتروني');
+                signOut(auth);
                 return;
             }
             
             currentUser = user;
             document.getElementById('userEmail').textContent = '👤 ' + user.email;
             
-            await initOperationCounter();
-            
-            const savedQueue = localStorage.getItem('pendingQueue');
-            if (savedQueue) {
-                pendingQueue = JSON.parse(savedQueue);
-                if (isOnline) processQueue();
-            }
-            
-            // ✅ الاستماع للعمليات مع الفلترة اليومية
-            onValue(ref(database, 'transactions'), (snap) => {
-                allTransactions = []; // إعادة تعيين
-                
-                snap.forEach(child => {
-                    allTransactions.push({ 
-                        id: child.key, 
-                        ...child.val() 
-                    });
-                });
-                
-                // ✅ حساب إحصائيات اليوم فقط
-                calculateTodayStats();
-            });
-            
-            // الأرصدة
-            onValue(ref(database, 'balances'), (snap) => {
-                const val = snap.val();
-                if (val) {
-                    balances = val;
-                    updateBalanceDisplay();
-                }
-            });
-            
-            // الساعة والتاريخ
-            setInterval(() => {
-                const now = new Date();
-                document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
-                document.getElementById('currentUID').textContent = 'UID: ' + Date.now().toString(36).toUpperCase().slice(-6);
-                
-                const dateStr = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                const shortDate = now.toLocaleDateString('ar-SA', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                
-                document.getElementById('date').textContent = dateStr;
-                document.getElementById('currentDateBadge').textContent = `📅 ${shortDate}`;
-                document.getElementById('todayDateBadge').textContent = `📅 ${shortDate}`;
-            }, 1000);
-            
-            updateOfflineUI();
+            initApp();
         });
 
         window.logout = async function() {
@@ -928,6 +935,253 @@
                 console.error('Logout error:', error);
             }
         };
+
+        function initApp() {
+            // مراقبة الأرصدة
+            onValue(ref(database, 'balances'), (snap) => {
+                balances = snap.val() || { cash: 0, bank: 0 };
+                updateBalanceDisplay();
+            });
+            
+            // مراقبة إحصائيات اليوم فقط
+            onValue(ref(database, 'stats/today'), (snap) => {
+                const stats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                updateTodayStats(stats);
+            });
+            
+            // مراقبة العمليات - نجلب كل العمليات
+            onValue(ref(database, 'transactions'), (snap) => {
+                const txs = [];
+                snap.forEach((child) => {
+                    txs.push({ 
+                        id: child.key, 
+                        ...child.val() 
+                    });
+                });
+                
+                // حفظ جميع العمليات
+                transactions = txs;
+                
+                updateTransactionsList();
+                calculateTodayStatsFromTransactions();
+            });
+            
+            // مراقبة آخر عملية (للكشف عن التكرار)
+            onValue(ref(database, 'lastTransaction'), (snap) => {
+                lastTransaction = snap.val() || { time: 0 };
+            });
+            
+            // تحديث قائمة الزبائن
+            onValue(ref(database, 'debts'), (snap) => {
+                const customers = new Set();
+                snap.forEach((child) => {
+                    const debt = child.val();
+                    if (debt.customer && debt.status === 'pending') {
+                        customers.add(debt.customer);
+                    }
+                });
+                
+                const datalist = document.getElementById('customersList');
+                if (datalist) {
+                    datalist.innerHTML = Array.from(customers).map(c => 
+                        `<option value="${c}">`
+                    ).join('');
+                }
+            });
+            
+            // تحديث الساعة والتاريخ
+            updateClock();
+            setInterval(updateClock, 1000);
+            updateDateDisplay();
+        }
+
+        // حساب إحصائيات اليوم من العمليات مباشرة
+        function calculateTodayStatsFromTransactions() {
+            const todayStart = getTodayStart();
+            const todayEnd = getTodayEnd();
+            
+            let sales = 0;
+            let shopExpenses = 0;
+            let personalExpenses = 0;
+            
+            transactions.forEach(t => {
+                // فقط العمليات التي تحدثت اليوم (من 6ص إلى 6ص)
+                if (t.timestamp >= todayStart && t.timestamp <= todayEnd) {
+                    if (t.type === 'sales') {
+                        sales += Math.abs(t.amount || 0);
+                    } else if (t.type === 'shopExpense') {
+                        shopExpenses += Math.abs(t.amount || 0);
+                    } else if (t.type === 'personalExpense') {
+                        personalExpenses += Math.abs(t.amount || 0);
+                    }
+                }
+            });
+            
+            // تحديث العرض
+            updateTodayStats({ sales, shopExpenses, personalExpenses });
+        }
+
+        function updateTodayStats(stats) {
+            document.getElementById('todaySales').textContent = formatNumber(stats.sales || 0);
+            document.getElementById('todayExpenses').textContent = formatNumber(stats.shopExpenses || 0);
+            document.getElementById('todayPersonal').textContent = formatNumber(stats.personalExpenses || 0);
+            
+            // حساب الصافي
+            const net = (stats.sales || 0) - (stats.shopExpenses || 0) - (stats.personalExpenses || 0);
+            const netElement = document.getElementById('todayNet');
+            netElement.textContent = formatNumber(net);
+            netElement.className = `font-bold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`;
+        }
+
+        function updateBalanceDisplay() {
+            document.getElementById('cashBalance').textContent = formatNumber(balances.cash);
+            document.getElementById('bankBalance').textContent = formatNumber(balances.bank);
+            document.getElementById('lastSync').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+            document.getElementById('currentUID').textContent = 'UID: ' + Date.now().toString(36).toUpperCase().slice(-6);
+        }
+
+        function updateDateDisplay() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ar-SA', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            const shortDate = now.toLocaleDateString('ar-SA', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+            });
+            
+            document.getElementById('date').textContent = dateStr;
+            document.getElementById('currentDateBadge').textContent = `📅 ${shortDate}`;
+            document.getElementById('todayDateBadge').textContent = `📅 ${shortDate}`;
+        }
+
+        // ==========================================
+        // دالة تحديث قائمة العمليات - معدلة
+        // ==========================================
+        function updateTransactionsList() {
+            const container = document.getElementById('recentTransactions');
+            
+            if (transactions.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">لا توجد عمليات</div>';
+                return;
+            }
+            
+            const styles = {
+                sales: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                shopExpense: 'bg-red-100 text-red-700 border-red-200',
+                personalExpense: 'bg-blue-100 text-blue-700 border-blue-200',
+                transfer: 'bg-slate-100 text-slate-700 border-slate-200',
+                bankFee: 'bg-red-50 text-red-600 border-red-200'
+            };
+            
+            const emojis = {
+                sales: '🟢',
+                shopExpense: '🔴',
+                personalExpense: '🔵',
+                transfer: '⇄',
+                bankFee: '💳'
+            };
+            
+            // ترتيب العمليات حسب رقم العملية تنازلياً (الأكبر فوق)
+            const sortedTxs = [...transactions].sort((a, b) => {
+                const numA = parseInt(a.operationNumber) || 0;
+                const numB = parseInt(b.operationNumber) || 0;
+                return numB - numA; // تنازلي: الأكبر فوق
+            });
+            
+            // أخذ آخر 12 عملية (بعد الترتيب حسب الرقم)
+            const recentTxs = sortedTxs.slice(0, 12);
+            const todayStart = getTodayStart();
+
+            container.innerHTML = recentTxs.map(t => {
+                const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                const dateStr = t.timestamp ? new Date(t.timestamp).toLocaleDateString('ar-SA', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '--/--/----';
+                
+                // التحقق مما إذا كانت العملية قديمة (قبل اليوم الحالي)
+                const isOld = t.timestamp < todayStart;
+                
+                let amountDisplay = '';
+                let extraRows = '';
+                let titleClass = '';
+                
+                // تنسيق المبلغ حسب نوع العملية
+                if (t.type === 'transfer') {
+                    const transferAmount = formatNumber(t.transferAmount || 0);
+                    amountDisplay = `<div class="text-left">
+                        <div class="font-bold text-slate-700 ${isOld ? 'line-through opacity-50' : ''}">${transferAmount}</div>
+                        <div class="text-xs text-slate-600">${t.from} → ${t.to}</div>
+                    </div>`;
+                } else if (t.type === 'shopExpense' || t.type === 'personalExpense') {
+                    const baseAmount = Math.abs(t.amount);
+                    amountDisplay = `<div class="text-left font-bold ${isOld ? 'line-through opacity-50' : ''}">${formatNumber(baseAmount)}</div>`;
+                    
+                    if (t.bankFee && t.bankFee > 0) {
+                        extraRows = `
+                            <div class="mt-1 pt-1 border-t border-red-200/50">
+                                <div class="flex justify-between items-center text-xs text-red-600 ${isOld ? 'line-through opacity-50' : ''}">
+                                    <span>💳 خصم بنكك (دمغة)</span>
+                                    <span class="font-bold">${formatNumber(t.bankFee)}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else if (t.type === 'bankFee') {
+                    amountDisplay = `<div class="text-left font-bold text-red-600 ${isOld ? 'line-through opacity-50' : ''}">${formatNumber(Math.abs(t.amount))}</div>`;
+                } else {
+                    amountDisplay = `<div class="text-left font-bold ${isOld ? 'line-through opacity-50' : ''}">${formatNumber(Math.abs(t.amount))}</div>`;
+                }
+                
+                let emoji = emojis[t.type] || '⚪';
+                let style = styles[t.type] || styles.sales;
+                
+                if (t.saleType === 'credit' || t.payment === 'آجل') {
+                    emoji = '📝';
+                    style = 'bg-amber-100 text-amber-700 border-amber-200';
+                }
+                
+                // تعديل التنسيق للعمليات القديمة
+                let cardClass = `flex justify-between items-center p-3 rounded-xl border ${style} fade-in`;
+                if (isOld) {
+                    cardClass += ' old-transaction';
+                    style = 'bg-gray-100 text-gray-600 border-gray-300';
+                }
+                
+                const opNum = t.operationNumber ? `<span class="operation-number bg-slate-800 text-white px-2 py-1 rounded text-xs font-bold">#${t.operationNumber}</span>` : '';
+                
+                // وسم التاريخ القديم
+                const oldBadge = isOld ? `<span class="old-date-badge">📅 ${dateStr}</span>` : `<span class="text-slate-500 text-xs">${time}</span>`;
+                
+                return `
+                    <div class="${cardClass}">
+                        <div class="flex items-center gap-2 flex-1">
+                            <span class="text-xl ${isOld ? 'grayscale' : ''}">${emoji}</span>
+                            <div class="flex-1">
+                                <div class="font-semibold text-sm transaction-title ${isOld ? 'text-slate-500' : ''}">${t.title}</div>
+                                <div class="text-xs opacity-75 flex items-center gap-2 flex-wrap mt-1">
+                                    ${opNum}
+                                    ${oldBadge}
+                                </div>
+                                ${extraRows}
+                            </div>
+                        </div>
+                        <div class="transaction-amount">${amountDisplay}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // واجهة المستخدم
+        // ==========================================
 
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
@@ -943,19 +1197,39 @@
         };
 
         window.openModal = function(type) {
-            document.getElementById(type + 'Modal').classList.add('active');
+            const modal = document.getElementById(type + 'Modal');
+            modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             
+            // تعيين التاريخ/الوقت الافتراضي للحقول
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            const field = document.getElementById(type + 'DateTime');
-            if (field) field.value = now.toISOString().slice(0, 16);
+            const defaultDateTime = now.toISOString().slice(0, 16);
+            
+            const dateTimeField = document.getElementById(type + 'DateTime');
+            if (dateTimeField) {
+                dateTimeField.value = defaultDateTime;
+            }
         };
 
         window.closeModal = function(type) {
-            document.getElementById(type + 'Modal').classList.remove('active');
+            const modal = document.getElementById(type + 'Modal');
+            modal.classList.remove('active');
             document.body.style.overflow = '';
-            document.getElementById(type + 'Form')?.reset();
+            
+            const form = document.getElementById(type + 'Form');
+            if (form) form.reset();
+            
+            // إعادة تعيين الأزرار
+            document.querySelectorAll('.dept-btn, .credit-dept-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-amber-500', 'bg-amber-50');
+                b.classList.add('border-slate-200');
+            });
+            
+            // إخفاء تحذيرات بنكك
+            document.getElementById('bankFeeWarning')?.classList.add('hidden');
+            document.getElementById('bankFeeDisplay')?.classList.add('hidden');
+            document.getElementById('duplicateWarning')?.classList.add('hidden');
         };
 
         window.selectDept = function(btn) {
@@ -979,15 +1253,483 @@
             document.getElementById('salesPayment').value = btn.dataset.value;
         };
 
-        window.addEventListener('online', () => {
-            isOnline = true;
-            updateOfflineUI();
-            processQueue();
-        });
+        window.selectCreditDept = function(btn) {
+            document.querySelectorAll('.credit-dept-btn').forEach(b => {
+                b.classList.remove('border-amber-500', 'bg-amber-50');
+                b.classList.add('border-slate-200');
+            });
+            btn.classList.remove('border-slate-200');
+            btn.classList.add('border-amber-500', 'bg-amber-50');
+            document.getElementById('creditSalesDept').value = btn.dataset.value;
+        };
 
-        window.addEventListener('offline', () => {
-            isOnline = false;
-            updateOfflineUI();
+        window.selectType = function(btn) {
+            document.querySelectorAll('.type-btn').forEach(b => {
+                b.classList.remove('border-red-500', 'bg-red-50', 'border-blue-500', 'bg-blue-50');
+                b.classList.add('border-slate-200');
+            });
+            const color = btn.dataset.value === 'محل' ? 'red' : 'blue';
+            btn.classList.remove('border-slate-200');
+            btn.classList.add(`border-${color}-500`, `bg-${color}-50`);
+            document.getElementById('expenseType').value = btn.dataset.value;
+        };
+
+        window.selectExpPayment = function(btn) {
+            document.querySelectorAll('.exp-payment-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                b.classList.add('border-slate-200');
+            });
+            const isCash = btn.dataset.value === 'كاش';
+            btn.classList.remove('border-slate-200');
+            btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+            document.getElementById('expensePayment').value = btn.dataset.value;
+            
+            // إظهار/إخفاء تحذير الدمغة
+            const warning = document.getElementById('bankFeeWarning');
+            const display = document.getElementById('bankFeeDisplay');
+            if (!isCash) {
+                warning?.classList.remove('hidden');
+                display?.classList.remove('hidden');
+            } else {
+                warning?.classList.add('hidden');
+                display?.classList.add('hidden');
+            }
+        };
+
+        window.selectFrom = function(btn) {
+            document.querySelectorAll('.from-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                b.classList.add('border-slate-200');
+            });
+            const isCash = btn.dataset.value === 'كاش';
+            btn.classList.remove('border-slate-200');
+            btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+            document.getElementById('transferFrom').value = btn.dataset.value;
+            
+            const toValue = btn.dataset.value === 'كاش' ? 'بنكك' : 'كاش';
+            document.querySelector(`.to-btn[data-value="${toValue}"]`).click();
+        };
+
+        window.selectTo = function(btn) {
+            document.querySelectorAll('.to-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                b.classList.add('border-slate-200');
+            });
+            const isCash = btn.dataset.value === 'كاش';
+            btn.classList.remove('border-slate-200');
+            btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+            document.getElementById('transferTo').value = btn.dataset.value;
+        };
+
+        function normalizeText(text) {
+            if (!text) return '';
+            return text.replace(/^ال/, '').replace(/ة$/, 'ه').toLowerCase().trim();
+        }
+
+        function checkDuplicate(type, name, amount) {
+            const now = Date.now();
+            return lastTransaction && 
+                   lastTransaction.type === type && 
+                   normalizeText(lastTransaction.name) === normalizeText(name) && 
+                   lastTransaction.amount == amount && 
+                   (now - lastTransaction.time) < 60000;
+        }
+
+        // ==========================================
+        // توليد رقم العملية الذري
+        // ==========================================
+
+        async function generateOperationNumber() {
+            const counterRef = ref(database, 'system/operationCounter');
+            
+            try {
+                const result = await runTransaction(counterRef, (current) => {
+                    return (current || 0) + 1;
+                });
+                
+                return formatOperationNumber(result.snapshot.val());
+            } catch (error) {
+                console.error('Error generating operation number:', error);
+                // في حالة الخطأ، نستخدم الوقت كبديل
+                return formatOperationNumber(Date.now() % 100000);
+            }
+        }
+
+        // ==========================================
+        // معالجات الإرسال
+        // ==========================================
+
+        window.handleSalesSubmit = async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('salesSubmitBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.classList.add('btn-disabled');
+            
+            try {
+                const amount = parseFormattedNumber('salesAmount');
+                const payment = document.getElementById('salesPayment').value;
+                const dept = document.getElementById('salesDept').value;
+                
+                if (!dept) {
+                    showWarning('الرجاء اختيار القسم');
+                    return;
+                }
+
+                if (amount <= 0) {
+                    showWarning('المبلغ يجب أن يكون أكبر من صفر');
+                    return;
+                }
+
+                const timestamp = getTimestamp('salesDateTime');
+                const operationNumber = await generateOperationNumber();
+                const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                
+                const balanceUpdate = {};
+                if (payment === 'كاش') {
+                    balanceUpdate.cash = balances.cash + amount;
+                } else {
+                    balanceUpdate.bank = balances.bank + amount;
+                }
+                
+                const isTodayTransaction = isToday(timestamp);
+                const updates = [];
+                
+                // تحديث الأرصدة دائماً
+                updates.push(update(ref(database, 'balances'), balanceUpdate));
+                
+                // تحديث إحصائيات اليوم فقط إذا كانت العملية لليوم الحالي
+                if (isTodayTransaction) {
+                    const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                    updates.push(update(ref(database, 'stats/today'), { 
+                        sales: (currentStats.sales || 0) + amount,
+                        lastUpdate: timestamp
+                    }));
+                }
+                
+                // تسجيل العملية
+                updates.push(push(ref(database, 'transactions'), {
+                    type: 'sales',
+                    title: `مبيعات ${dept} (${payment})`,
+                    amount: amount,
+                    timestamp,
+                    uid,
+                    operationNumber,
+                    payment,
+                    dept,
+                    date: getTodayKey(),
+                    isOldDate: !isTodayTransaction
+                }));
+                
+                updates.push(set(ref(database, 'lastTransaction'), {
+                    time: timestamp,
+                    type: 'sales',
+                    amount: amount,
+                    name: dept
+                }));
+                
+                await Promise.all(updates);
+
+                closeModal('sales');
+                showWarning(isTodayTransaction ? '✅ تم تسجيل المبيعات بنجاح' : '✅ تم تسجيل المبيعات (تاريخ قديم)');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
+            }
+        };
+
+        window.handleCreditSalesSubmit = async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('creditSalesSubmitBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.classList.add('btn-disabled');
+            
+            try {
+                const amount = parseFormattedNumber('creditSalesAmount');
+                const dept = document.getElementById('creditSalesDept').value;
+                const customer = document.getElementById('creditCustomerName').value.trim();
+                const note = document.getElementById('creditSalesNote').value;
+                
+                if (!dept) {
+                    showWarning('الرجاء اختيار القسم');
+                    return;
+                }
+
+                if (!customer) {
+                    showWarning('الرجاء إدخال اسم الزبون');
+                    document.getElementById('creditCustomerName').focus();
+                    return;
+                }
+
+                if (amount <= 0) {
+                    showWarning('المبلغ يجب أن يكون أكبر من صفر');
+                    return;
+                }
+
+                const timestamp = getTimestamp('creditSalesDateTime');
+                const operationNumber = await generateOperationNumber();
+                const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                
+                const isTodayTransaction = isToday(timestamp);
+                const updates = [];
+                
+                // تحديث إحصائيات اليوم فقط إذا كانت العملية لليوم الحالي
+                if (isTodayTransaction) {
+                    const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                    updates.push(update(ref(database, 'stats/today'), { 
+                        sales: (currentStats.sales || 0) + amount,
+                        lastUpdate: timestamp
+                    }));
+                }
+                
+                // تسجيل العملية
+                const txRef = push(ref(database, 'transactions'));
+                updates.push(set(txRef, {
+                    type: 'sales',
+                    saleType: 'credit',
+                    title: `مبيعات آجلة - ${dept} (${customer})`,
+                    amount: amount,
+                    timestamp,
+                    uid,
+                    operationNumber,
+                    payment: 'آجل',
+                    dept,
+                    customer,
+                    note: note || null,
+                    date: getTodayKey(),
+                    isOldDate: !isTodayTransaction
+                }));
+                
+                // تسجيل الدين
+                updates.push(push(ref(database, 'debts'), {
+                    type: 'sale',
+                    customer,
+                    amount,
+                    dept,
+                    note: note || `مبيعات آجلة - ${dept}`,
+                    status: 'pending',
+                    createdAt: timestamp,
+                    linkedTransaction: uid,
+                    operationNumber: operationNumber + 'D',
+                    date: getTodayKey()
+                }));
+                
+                updates.push(set(ref(database, 'lastTransaction'), {
+                    time: timestamp,
+                    type: 'credit_sales',
+                    amount: amount,
+                    name: customer
+                }));
+                
+                await Promise.all(updates);
+
+                closeModal('creditSales');
+                showWarning(`✅ تم تسجيل المبيعات الآجلة وإضافة الدين على ${customer}`);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
+            }
+        };
+
+        window.handleExpenseSubmit = async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('expenseSubmitBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.classList.add('btn-disabled');
+            
+            try {
+                const amount = parseFormattedNumber('expenseAmount');
+                const name = document.getElementById('expenseName').value.trim();
+                const type = document.getElementById('expenseType').value;
+                const payment = document.getElementById('expensePayment').value;
+                const vendor = document.getElementById('expenseVendor').value.trim();
+                
+                const normalizedName = name.replace(/^ال/, '');
+                
+                const currentBalance = payment === 'كاش' ? balances.cash : balances.bank;
+                const totalDeduction = payment === 'بنكك' ? amount + BANK_FEE : amount;
+                
+                if (totalDeduction > currentBalance) {
+                    showWarning(`⚠️ رصيد ${payment} غير كافٍ! المطلوب: ${formatNumber(totalDeduction)} (المتوفر: ${formatNumber(currentBalance)})`);
+                    return;
+                }
+
+                if (checkDuplicate(type, normalizedName, amount)) {
+                    document.getElementById('duplicateWarning').classList.remove('hidden');
+                    return;
+                }
+
+                const timestamp = getTimestamp('expenseDateTime');
+                const operationNumber = await generateOperationNumber();
+                const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                
+                const balanceUpdate = {};
+                balanceUpdate[payment === 'كاش' ? 'cash' : 'bank'] = currentBalance - totalDeduction;
+                
+                const isTodayTransaction = isToday(timestamp);
+                const updates = [];
+                
+                // تحديث الأرصدة دائماً
+                updates.push(update(ref(database, 'balances'), balanceUpdate));
+                
+                // تحديث إحصائيات اليوم فقط إذا كانت العملية لليوم الحالي
+                if (isTodayTransaction) {
+                    const currentStats = (await get(ref(database, 'stats/today'))).val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                    const statsUpdate = {
+                        sales: currentStats.sales || 0,
+                        lastUpdate: timestamp
+                    };
+                    
+                    if (type === 'محل') {
+                        statsUpdate.shopExpenses = (currentStats.shopExpenses || 0) + amount;
+                        statsUpdate.personalExpenses = currentStats.personalExpenses || 0;
+                    } else {
+                        statsUpdate.shopExpenses = currentStats.shopExpenses || 0;
+                        statsUpdate.personalExpenses = (currentStats.personalExpenses || 0) + amount;
+                    }
+                    
+                    updates.push(update(ref(database, 'stats/today'), statsUpdate));
+                }
+                
+                // تسجيل المصروف الأساسي
+                const mainTxRef = push(ref(database, 'transactions'));
+                updates.push(set(mainTxRef, {
+                    type: type === 'محل' ? 'shopExpense' : 'personalExpense',
+                    title: `${type === 'محل' ? '🔴' : '🔵'} ${normalizedName} ${vendor ? '(' + vendor + ')' : ''}`,
+                    amount: -amount,
+                    timestamp,
+                    uid,
+                    operationNumber,
+                    payment,
+                    expenseType: type,
+                    vendor: vendor || '',
+                    date: getTodayKey(),
+                    bankFee: payment === 'بنكك' ? BANK_FEE : 0,
+                    isOldDate: !isTodayTransaction
+                }));
+                
+                // تسجيل الدمغة منفصلة إذا كان بنكك
+                if (payment === 'بنكك') {
+                    const feeTxRef = push(ref(database, 'transactions'));
+                    updates.push(set(feeTxRef, {
+                        type: 'bankFee',
+                        title: '💳 خصم بنكك (دمغة)',
+                        amount: -BANK_FEE,
+                        timestamp: timestamp + 1,
+                        uid: uid + 'F',
+                        operationNumber: operationNumber + 'F',
+                        payment: 'بنكك',
+                        expenseType: 'bankFee',
+                        linkedTo: mainTxRef.key,
+                        date: getTodayKey(),
+                        isOldDate: !isTodayTransaction
+                    }));
+                }
+                
+                updates.push(set(ref(database, 'lastTransaction'), {
+                    time: timestamp,
+                    type: type,
+                    amount: amount,
+                    name: normalizedName
+                }));
+                
+                await Promise.all(updates);
+
+                closeModal('expenses');
+                showWarning('✅ تم تسجيل المصروف بنجاح');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
+            }
+        };
+
+        window.handleTransferSubmit = async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('transferSubmitBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.classList.add('btn-disabled');
+            
+            try {
+                const amount = parseFormattedNumber('transferAmount');
+                const from = document.getElementById('transferFrom').value;
+                const to = document.getElementById('transferTo').value;
+                
+                if (from === to) {
+                    showWarning('لا يمكن التحويل لنفس الحساب!');
+                    return;
+                }
+
+                const currentBalance = from === 'كاش' ? balances.cash : balances.bank;
+                if (amount > currentBalance) {
+                    showWarning(`⚠️ رصيد ${from} غير كافٍ! المتوفر: ${formatNumber(currentBalance)}`);
+                    return;
+                }
+                
+                const timestamp = getTimestamp('transferDateTime');
+                const operationNumber = await generateOperationNumber();
+                const uid = Date.now().toString(36).toUpperCase().slice(-6);
+                
+                const balanceUpdate = {};
+                if (from === 'كاش') {
+                    balanceUpdate.cash = balances.cash - amount;
+                    balanceUpdate.bank = balances.bank + amount;
+                } else {
+                    balanceUpdate.bank = balances.bank - amount;
+                    balanceUpdate.cash = balances.cash + amount;
+                }
+
+                const isTodayTransaction = isToday(timestamp);
+
+                await Promise.all([
+                    update(ref(database, 'balances'), balanceUpdate),
+                    push(ref(database, 'transactions'), {
+                        type: 'transfer',
+                        title: `⇄ تبديل: ${from} → ${to}`,
+                        amount: 0,
+                        timestamp,
+                        uid,
+                        operationNumber,
+                        from,
+                        to,
+                        transferAmount: amount,
+                        date: getTodayKey(),
+                        isOldDate: !isTodayTransaction
+                    })
+                ]);
+
+                closeModal('transfer');
+                showWarning('✅ تم التبديل بنجاح');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
+            }
+        };
+
+        window.confirmDuplicate = function() {
+            document.getElementById('duplicateWarning').classList.add('hidden');
+            handleExpenseSubmit(new Event('submit'));
+        };
+
+        window.cancelDuplicate = function() {
+            document.getElementById('expenseName').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('duplicateWarning').classList.add('hidden');
+        };
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    const type = this.id.replace('Modal', '');
+                    closeModal(type);
+                }
+            });
         });
     </script>
 </body>
