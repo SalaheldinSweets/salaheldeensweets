@@ -7,7 +7,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         * {
@@ -21,11 +20,16 @@
         }
         
         .app-container {
-            max-width: 800px;
+            max-width: 480px;
             margin: 0 auto;
             background: #f8fafc;
             min-height: 100vh;
             box-shadow: 0 0 50px rgba(0,0,0,0.2);
+        }
+        
+        .btn-press:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
         }
         
         .hide-scrollbar::-webkit-scrollbar {
@@ -38,67 +42,16 @@
         }
         
         .fade-in {
-            animation: fadeIn 0.3s ease;
+            animation: fadeIn 0.5s ease;
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
-        
-        .transaction-card {
-            transition: all 0.2s ease;
-            border-right: 4px solid transparent;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        
-        .transaction-card.visible {
-            opacity: 1;
-            transform: translateY(0);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        
-        .transaction-card:hover {
-            transform: translateX(-4px) scale(1.01);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .type-sales { border-right-color: #10b981; }
-        .type-expense { border-right-color: #ef4444; }
-        .type-transfer { border-right-color: #f59e0b; }
-        .type-safe { border-right-color: #8b5cf6; }
-        .type-bank { border-right-color: #3b82f6; }
-        
-        .filter-chip {
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        
-        .filter-chip.active {
-            background: #10b981;
-            color: white;
-            border-color: #10b981;
-        }
-        
-        .filter-chip:not(.active):hover {
-            background: #f1f5f9;
         }
         
         .modal {
             display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 50;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
         }
         
         .modal.active {
@@ -106,34 +59,12 @@
         }
         
         .modal-content {
-            background: white;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
         }
         
-        @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .search-input {
-            background: #f1f5f9;
-            border: 2px solid transparent;
-            transition: all 0.2s;
-        }
-        
-        .search-input:focus {
-            background: white;
-            border-color: #10b981;
-            outline: none;
-        }
-        
-        .stats-pill {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .modal.active .modal-content {
+            transform: translateY(0);
         }
         
         .operation-number {
@@ -142,244 +73,185 @@
             letter-spacing: 1px;
         }
         
-        .old-badge {
-            background: #f59e0b;
+        .date-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
             font-weight: 600;
         }
         
-        .btn-action {
-            transition: all 0.2s;
+        .btn-disabled {
+            opacity: 0.6;
+            pointer-events: none;
+            cursor: not-allowed;
         }
         
-        .btn-action:hover {
-            transform: scale(1.05);
-        }
-        
-        .btn-action:active {
-            transform: scale(0.95);
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #94a3b8;
-        }
-        
-        .date-group {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: #f8fafc;
-            padding: 8px 16px;
-            font-weight: 700;
-            color: #475569;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        /* ✅ تعديل: مؤشر التحميل الكسول */
-        .loading-trigger {
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #94a3b8;
-            font-size: 14px;
-            gap: 8px;
-        }
-        
-        .loading-trigger i {
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .skeleton-loader {
-            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s infinite;
+        .old-date-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 2px 8px;
             border-radius: 12px;
-            height: 80px;
-            margin: 8px 0;
+            font-size: 0.7rem;
+            font-weight: 700;
         }
         
-        @keyframes skeleton-loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+        .transaction-row {
+            transition: all 0.2s ease;
         }
         
-        /* ✅ تعديل: placeholder للصور */
-        .lazy-image {
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .transaction-row:hover {
+            background: #f8fafc;
         }
         
-        .lazy-image.loaded {
-            opacity: 1;
-        }
-        
-        .image-placeholder {
-            background: #f1f5f9;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #cbd5e1;
-        }
+        .type-sales { border-right: 3px solid #10b981; }
+        .type-expense { border-right: 3px solid #ef4444; }
+        .type-transfer { border-right: 3px solid #f59e0b; }
+        .type-safe { border-right: 3px solid #8b5cf6; }
+        .type-bank { border-right: 3px solid #3b82f6; }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
+    <!-- التطبيق الرئيسي -->
+    <div class="app-container" id="app">
         <!-- الهيدر -->
-        <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg sticky top-0 z-40">
-            <div class="flex justify-between items-center">
-                <a href="index.html" class="p-2 rounded-lg hover:bg-slate-700 transition">
-                    <i class="fas fa-arrow-right text-xl"></i>
-                </a>
-                <div class="text-center">
-                    <h1 class="text-lg font-bold">🗂️ إدارة السجلات</h1>
-                    <p class="text-xs text-slate-400">تعديل • حذف • بحث متقدم • تحميل كسول</p>
-                </div>
-                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition">
-                    <i class="fas fa-sign-out-alt text-xl"></i>
+        <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg">
+            <div class="flex justify-between items-center mb-2">
+                <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-slate-700 transition">
+                    <span class="text-2xl">☰</span>
                 </button>
+                <h1 class="text-lg font-bold">إدارة السجلات</h1>
+                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">
+                    خروج
+                </button>
+            </div>
+            
+            <div class="text-center mt-4">
+                <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg">
+                    00:00:00
+                </div>
+                <div id="date" class="text-slate-300 text-sm mt-1">
+                    جاري التحميل...
+                </div>
+                <div class="flex justify-center items-center gap-2 mt-2">
+                    <span id="currentDateBadge" class="date-badge">📅 --/--/----</span>
+                </div>
+                <div class="text-xs text-slate-400 mt-1 font-mono" id="currentUID">
+                    UID: --
+                </div>
             </div>
         </header>
 
-        <!-- المحتوى -->
+        <!-- القائمة الجانبية -->
+        <div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50" onclick="toggleSidebar()">
+            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
+                <div class="p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-lg">القائمة</h2>
+                        <button onclick="toggleSidebar()" class="text-2xl">&times;</button>
+                    </div>
+                </div>
+                <div class="p-4 space-y-2">
+                    <a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 text-emerald-700 flex items-center gap-3">
+                        <span>🏠</span>
+                        <span>الرئيسية</span>
+                    </a>
+                    <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700">
+                        <span>📝</span>
+                        <span>الديون</span>
+                    </a>
+                    <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
+                        <span>🏦</span>
+                        <span>الصندوق الجانبي</span>
+                    </a>
+                    <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
+                        <span>📊</span>
+                        <span>التقارير</span>
+                    </a>
+                    <a href="records.html" class="w-full text-right p-3 rounded-xl bg-purple-50 text-purple-700 font-semibold flex items-center gap-3">
+                        <span>🗂️</span>
+                        <span>إدارة السجلات</span>
+                    </a>
+                    <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
+                        <span>🧮</span>
+                        <span>تصفية الوردية</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- المحتوى الرئيسي -->
         <main class="p-4 space-y-4 pb-24">
             
-            <!-- إحصائيات سريعة -->
-            <div class="grid grid-cols-4 gap-2 fade-in">
-                <div class="stats-pill rounded-xl p-3 text-white text-center">
-                    <div class="text-xs opacity-75">الكل</div>
-                    <div class="text-lg font-bold" id="statTotal">0</div>
-                </div>
-                <div class="bg-emerald-500 rounded-xl p-3 text-white text-center">
-                    <div class="text-xs opacity-75">مبيعات</div>
-                    <div class="text-lg font-bold" id="statSales">0</div>
-                </div>
-                <div class="bg-red-500 rounded-xl p-3 text-white text-center">
-                    <div class="text-xs opacity-75">مصروفات</div>
-                    <div class="text-lg font-bold" id="statExpenses">0</div>
-                </div>
-                <div class="bg-amber-500 rounded-xl p-3 text-white text-center">
-                    <div class="text-xs opacity-75">تبديل</div>
-                    <div class="text-lg font-bold" id="statTransfer">0</div>
-                </div>
-            </div>
-
-            <!-- البحث المتقدم -->
-            <div class="glass-effect rounded-2xl p-4 shadow-md space-y-4 fade-in">
-                <div class="relative">
-                    <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="searchInput" placeholder="ابحث برقم العملية، الاسم، المبلغ..." 
-                        class="search-input w-full rounded-xl p-3 pr-12 text-right"
+            <!-- البحث -->
+            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
+                <div class="relative mb-3">
+                    <input type="text" id="searchInput" placeholder="ابحث برقم العملية، المبلغ، القسم..." 
+                        class="w-full bg-slate-100 border-2 border-transparent rounded-xl p-3 pr-10 text-right focus:bg-white focus:border-emerald-500 focus:outline-none transition"
                         oninput="debouncedSearch()">
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
                 </div>
-
-                <!-- فلاتر النوع -->
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="toggleTypeFilter('all')" class="filter-chip active px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white" data-type="all">
+                
+                <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
+                    <button onclick="setTypeFilter('all')" class="filter-btn active flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-emerald-500 text-white" data-type="all">
                         الكل
                     </button>
-                    <button onclick="toggleTypeFilter('sales')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-emerald-600" data-type="sales">
-                        💰 مبيعات
+                    <button onclick="setTypeFilter('sales')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 text-slate-600" data-type="sales">
+                        مبيعات
                     </button>
-                    <button onclick="toggleTypeFilter('expenses')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-red-600" data-type="expenses">
-                        💸 مصروفات
+                    <button onclick="setTypeFilter('expenses')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 text-slate-600" data-type="expenses">
+                        مصروفات
                     </button>
-                    <button onclick="toggleTypeFilter('transfer')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-amber-600" data-type="transfer">
-                        🔄 تبديل
-                    </button>
-                    <button onclick="toggleTypeFilter('safe')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-purple-600" data-type="safe">
-                        🏦 خزنة
-                    </button>
-                    <button onclick="toggleTypeFilter('bank')" class="filter-chip px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 bg-white text-blue-600" data-type="bank">
-                        💳 بنكك
-                    </button>
-                </div>
-
-                <!-- فلاتر التاريخ -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-slate-500 mb-1">من تاريخ</label>
-                        <input type="date" id="dateFrom" onchange="applyFilters()" class="w-full border border-slate-200 rounded-xl p-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-500 mb-1">إلى تاريخ</label>
-                        <input type="date" id="dateTo" onchange="applyFilters()" class="w-full border border-slate-200 rounded-xl p-2 text-sm">
-                    </div>
-                </div>
-
-                <!-- خيارات إضافية -->
-                <div class="flex gap-2">
-                    <button onclick="resetFilters()" class="flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
-                        <i class="fas fa-undo ml-1"></i> إعادة ضبط
-                    </button>
-                    <button onclick="exportResults()" class="flex-1 py-2 rounded-xl text-sm font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition">
-                        <i class="fas fa-download ml-1"></i> تصدير
+                    <button onclick="setTypeFilter('transfer')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 text-slate-600" data-type="transfer">
+                        تبديل
                     </button>
                 </div>
             </div>
 
-            <!-- نتائج البحث -->
+            <!-- السجلات -->
             <div class="bg-white rounded-2xl shadow-md overflow-hidden fade-in">
                 <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-700">📋 النتائج</h3>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                            <i class="fas fa-layer-group ml-1"></i>
-                            تحميل كسول
-                        </span>
-                        <span class="text-sm text-slate-500" id="resultsCount">جاري التحميل...</span>
-                    </div>
+                    <h3 class="font-bold text-slate-700">العمليات</h3>
+                    <span class="text-sm text-slate-500" id="resultsCount">0 عملية</span>
                 </div>
                 
-                <!-- ✅ حاوية قابلة للتمرير مع Intersection Observer -->
-                <div id="transactionsList" class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto hide-scrollbar relative">
+                <div id="transactionsList" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto hide-scrollbar">
                     <div class="p-8 text-center text-slate-400">
-                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                        <p>جاري تحميل السجلات...</p>
+                        جاري التحميل...
                     </div>
                 </div>
                 
-                <!-- ✅ عنصر التحميل الكسول (المشغل) -->
-                <div id="lazyLoadingTrigger" class="loading-trigger hidden">
-                    <i class="fas fa-circle-notch"></i>
-                    <span>جاري تحميل المزيد...</span>
-                </div>
+                <!-- زر عرض المزيد -->
+                <button id="loadMoreBtn" onclick="loadMore()" class="hidden w-full p-4 text-center text-emerald-600 font-semibold hover:bg-emerald-50 transition border-t border-slate-100">
+                    عرض المزيد ↓
+                </button>
             </div>
 
         </main>
 
         <!-- شريط التنقل السفلي -->
-        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0 z-40">
+        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
             <div class="flex justify-around items-center">
-                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
-                    <i class="fas fa-home text-xl"></i>
+                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏠</span>
                     <span class="text-xs mt-1">الرئيسية</span>
                 </a>
-                <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
-                    <i class="fas fa-chart-bar text-xl"></i>
+                <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">📝</span>
+                    <span class="text-xs mt-1">الديون</span>
+                </a>
+                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏦</span>
+                    <span class="text-xs mt-1">الجانبي</span>
+                </a>
+                <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">📊</span>
                     <span class="text-xs mt-1">التقارير</span>
                 </a>
-                <a href="records.html" class="flex flex-col items-center p-2 text-emerald-600">
-                    <i class="fas fa-database text-xl"></i>
-                    <span class="text-xs mt-1 font-semibold">السجلات</span>
-                </a>
-                <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
-                    <i class="fas fa-calculator text-xl"></i>
+                <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🧮</span>
                     <span class="text-xs mt-1">الوردية</span>
                 </a>
             </div>
@@ -388,123 +260,108 @@
     </div>
 
     <!-- مودال التعديل -->
-    <div id="editModal" class="modal" onclick="closeEditModal(event)">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-slate-800">✏️ تعديل العملية</h2>
-                    <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
+    <div id="editModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeEditModal(event)">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-slate-800">تعديل العملية</h2>
+                <button onclick="closeEditModal()" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <form id="editForm" class="space-y-4" onsubmit="handleEditSubmit(event)">
+                <input type="hidden" id="editId">
+                <input type="hidden" id="editOldType">
+                <input type="hidden" id="editOldAmount">
+                <input type="hidden" id="editOldPayment">
+
+                <div class="bg-slate-50 rounded-xl p-3 text-center mb-4">
+                    <span class="text-xs text-slate-500">رقم العملية</span>
+                    <div class="operation-number text-lg font-bold text-slate-700" id="editOpNumber">--</div>
                 </div>
 
-                <form id="editForm" onsubmit="handleEditSubmit(event)" class="space-y-4">
-                    <input type="hidden" id="editId">
-                    <input type="hidden" id="editOldType">
-                    <input type="hidden" id="editOldAmount">
-                    <input type="hidden" id="editOldPayment">
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">النوع</label>
+                    <select id="editType" onchange="onEditTypeChange()" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                        <option value="sales">مبيعات</option>
+                        <option value="shopExpense">مصروف محل</option>
+                        <option value="personalExpense">مصروف شخصي</option>
+                        <option value="transfer">تبديل</option>
+                    </select>
+                </div>
 
-                    <!-- رقم العملية (للعرض فقط) -->
-                    <div class="bg-slate-50 rounded-xl p-3 text-center">
-                        <span class="text-xs text-slate-500">رقم العملية</span>
-                        <div class="operation-number text-lg font-bold text-slate-700" id="editOpNumber">--</div>
-                    </div>
+                <div id="editDeptContainer">
+                    <label class="block text-sm text-slate-600 mb-1">القسم</label>
+                    <select id="editDept" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                        <option value="عصائر">عصائر</option>
+                        <option value="حلويات">حلويات</option>
+                        <option value="طعمية وفطائر">طعمية وفطائر</option>
+                    </select>
+                </div>
 
-                    <!-- النوع -->
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">النوع</label>
-                        <select id="editType" onchange="onEditTypeChange()" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
-                            <option value="sales">💰 مبيعات</option>
-                            <option value="shopExpense">💸 مصروف محل</option>
-                            <option value="personalExpense">👤 مصروف شخصي</option>
-                            <option value="transfer">🔄 تبديل</option>
-                            <option value="safe">🏦 خزنة</option>
-                        </select>
+                <div id="editPaymentContainer">
+                    <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
+                    <select id="editPayment" onchange="onEditPaymentChange()" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                        <option value="كاش">كاش</option>
+                        <option value="بنكك">بنكك</option>
+                    </select>
+                    <div id="editBankFeeWarning" class="hidden mt-2 bg-red-50 text-red-700 text-sm p-2 rounded-lg">
+                        سيتم خصم 60 جنيه كدمغة بنكك
                     </div>
+                </div>
 
-                    <!-- القسم (للمبيعات) -->
-                    <div id="editDeptContainer">
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">القسم</label>
-                        <select id="editDept" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
-                            <option value="عصائر">🧃 عصائر</option>
-                            <option value="حلويات">🍰 حلويات</option>
-                            <option value="طعمية وفطائر">🥙 طعمية وفطائر</option>
-                        </select>
-                    </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ</label>
+                    <input type="number" id="editAmount" required min="0" step="0.01"
+                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-center font-bold text-lg focus:border-emerald-500 focus:outline-none">
+                </div>
 
-                    <!-- طريقة الدفع -->
-                    <div id="editPaymentContainer">
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">طريقة الدفع</label>
-                        <select id="editPayment" onchange="onEditPaymentChange()" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
-                            <option value="كاش">💵 كاش</option>
-                            <option value="بنكك">💳 بنكك</option>
-                        </select>
-                        <div id="editBankFeeWarning" class="hidden mt-2 bg-red-50 text-red-700 text-sm p-2 rounded-lg">
-                            ⚠️ سيتم خصم 60 جنيه كدمغة بنكك
-                        </div>
-                    </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت</label>
+                    <input type="datetime-local" id="editDateTime" required
+                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                </div>
 
-                    <!-- المبلغ -->
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">المبلغ</label>
-                        <input type="number" id="editAmount" required min="0" step="0.01"
-                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-center font-bold text-lg focus:border-emerald-500 focus:outline-none">
-                    </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">البيان</label>
+                    <input type="text" id="editNote" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                </div>
 
-                    <!-- التاريخ والوقت -->
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">التاريخ والوقت</label>
-                        <input type="datetime-local" id="editDateTime" required
-                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
-                    </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-800 text-sm">
+                    سيتم إعادة حساب الأرصدة تلقائياً
+                </div>
 
-                    <!-- البيان/التفاصيل -->
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">البيان / التفاصيل</label>
-                        <input type="text" id="editNote" 
-                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none"
-                            placeholder="أدخل تفاصيل إضافية...">
-                    </div>
-
-                    <!-- تحذير -->
-                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-800 text-sm">
-                        <i class="fas fa-exclamation-triangle ml-1"></i>
-                        <strong>تنبيه:</strong> سيتم إعادة حساب جميع الأرصدة المرتبطة بهذه العملية تلقائياً.
-                    </div>
-
-                    <div class="flex gap-3 pt-4">
-                        <button type="button" onclick="closeEditModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
-                            إلغاء
-                        </button>
-                        <button type="submit" id="editSubmitBtn" class="flex-1 py-3 rounded-xl font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition btn-action">
-                            <i class="fas fa-save ml-1"></i> حفظ التعديلات
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeEditModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                        إلغاء
+                    </button>
+                    <button type="submit" id="editSubmitBtn" class="flex-1 py-3 rounded-xl font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition btn-press">
+                        حفظ
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- مودال الحذف -->
-    <div id="deleteModal" class="modal" onclick="closeDeleteModal(event)">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-trash-alt text-2xl text-red-500"></i>
-                </div>
-                <h2 class="text-xl font-bold text-slate-800 mb-2">⚠️ تأكيد الحذف</h2>
-                <p class="text-slate-600 mb-6">هل أنت متأكد من حذف هذه العملية؟<br>سيتم إعادة حساب جميع الأرصدة المرتبطة.</p>
-                
-                <input type="hidden" id="deleteId">
-                
-                <div class="flex gap-3">
-                    <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
-                        إلغاء
-                    </button>
-                    <button onclick="confirmDelete()" class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition btn-action">
-                        <i class="fas fa-trash ml-1"></i> نعم، احذف
-                    </button>
-                </div>
+    <div id="deleteModal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50 p-4" onclick="closeDeleteModal(event)">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 text-center" onclick="event.stopPropagation()">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-2xl">🗑️</span>
+            </div>
+            <h2 class="text-xl font-bold text-slate-800 mb-2">تأكيد الحذف</h2>
+            <p class="text-slate-600 mb-6">هل أنت متأكد من حذف هذه العملية؟<br>سيتم إعادة حساب الأرصدة</p>
+            
+            <input type="hidden" id="deleteId">
+            
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                    إلغاء
+                </button>
+                <button onclick="confirmDelete()" class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition btn-press">
+                    حذف
+                </button>
             </div>
         </div>
     </div>
@@ -542,30 +399,16 @@
         const auth = getAuth(app);
         const database = getDatabase(app);
 
-        // ==========================================
-        // ✅ إعدادات التحميل الكسول (Lazy Loading)
-        // ==========================================
-        const LAZY_LOAD_CONFIG = {
-            itemsPerPage: 15,        // عدد العناصر في كل دفعة
-            preloadThreshold: 0.8,    // نسبة الظهور قبل التحميل (80%)
-            maxLoadedItems: 100,      // الحد الأقصى للعناصر المحملة
-            enableVirtualScroll: true // تفعيل التمرير الافتراضي
-        };
-
         let allTransactions = [];
         let filteredTransactions = [];
-        let displayedTransactions = []; // العناصر المعروضة حالياً
-        let currentPage = 0;
-        let isLoading = false;
-        let hasMoreItems = true;
-        let lazyObserver = null;
+        let displayedCount = 0;
+        const ITEMS_PER_PAGE = 10;
         
         let currentFilters = {
-            types: ['all'],
-            search: '',
-            dateFrom: null,
-            dateTo: null
+            type: 'all',
+            search: ''
         };
+
         let balances = { cash: 0, bank: 0 };
 
         // ==========================================
@@ -586,12 +429,10 @@
         };
 
         function initApp() {
-            // تحميل الأرصدة
             onValue(ref(database, 'balances'), (snap) => {
                 balances = snap.val() || { cash: 0, bank: 0 };
             });
 
-            // تحميل العمليات
             onValue(ref(database, 'transactions'), (snap) => {
                 const txs = [];
                 snap.forEach((child) => {
@@ -603,135 +444,15 @@
                     });
                 });
                 
-                // ترتيب حسب الرقم التنازلي (الأحدث فوق)
                 allTransactions = txs.sort((a, b) => {
                     const numA = parseInt(a.operationNumber) || 0;
                     const numB = parseInt(b.operationNumber) || 0;
                     return numB - numA;
                 });
                 
-                // إعادة تعيين حالة التحميل الكسول
-                resetLazyLoading();
                 applyFilters();
-                updateStats();
-            });
-
-            // تعيين تواريخ افتراضية
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('dateTo').value = today;
-            
-            // ✅ إعداد Intersection Observer للتحميل الكسول
-            setupLazyObserver();
-        }
-
-        // ==========================================
-        // ✅ إعداد Intersection Observer
-        // ==========================================
-        function setupLazyObserver() {
-            const options = {
-                root: document.getElementById('transactionsList'),
-                rootMargin: '0px 0px 100px 0px', // هامش سفلي للتحميل المبكر
-                threshold: LAZY_LOAD_CONFIG.preloadThreshold
-            };
-
-            lazyObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting && !isLoading && hasMoreItems) {
-                        loadMoreItems();
-                    }
-                });
-            }, options);
-
-            // مراقبة عنصر التحميل
-            const trigger = document.getElementById('lazyLoadingTrigger');
-            if (trigger) {
-                lazyObserver.observe(trigger);
-            }
-        }
-
-        function resetLazyLoading() {
-            currentPage = 0;
-            hasMoreItems = true;
-            isLoading = false;
-            displayedTransactions = [];
-            
-            // إخفاء مؤشر التحميل
-            const trigger = document.getElementById('lazyLoadingTrigger');
-            if (trigger) {
-                trigger.classList.add('hidden');
-            }
-        }
-
-        // ==========================================
-        // ✅ دالة التحميل الكسول الرئيسية
-        // ==========================================
-        async function loadMoreItems() {
-            if (isLoading || !hasMoreItems) return;
-            
-            isLoading = true;
-            showLoadingIndicator(true);
-            
-            // محاكاة تأخير الشبكة للاختبار (يمكن إزالته)
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
-            const start = currentPage * LAZY_LOAD_CONFIG.itemsPerPage;
-            const end = start + LAZY_LOAD_CONFIG.itemsPerPage;
-            const newItems = filteredTransactions.slice(start, end);
-            
-            if (newItems.length === 0) {
-                hasMoreItems = false;
-                showLoadingIndicator(false);
-                isLoading = false;
-                return;
-            }
-            
-            // إضافة العناصر الجديدة
-            displayedTransactions = [...displayedTransactions, ...newItems];
-            currentPage++;
-            
-            // التحقق من وجود المزيد
-            hasMoreItems = end < filteredTransactions.length && 
-                          displayedTransactions.length < LAZY_LOAD_CONFIG.maxLoadedItems;
-            
-            // عرض العناصر الجديدة فقط (append)
-            appendTransactions(newItems);
-            
-            showLoadingIndicator(false);
-            isLoading = false;
-            
-            // ✅ تفعيل الأنيميشن التدريجي للعناصر الجديدة
-            animateNewItems();
-        }
-
-        function showLoadingIndicator(show) {
-            const trigger = document.getElementById('lazyLoadingTrigger');
-            if (trigger) {
-                trigger.classList.toggle('hidden', !show || !hasMoreItems);
-                if (show && hasMoreItems) {
-                    trigger.innerHTML = `
-                        <i class="fas fa-circle-notch fa-spin"></i>
-                        <span>جاري تحميل المزيد...</span>
-                    `;
-                } else if (!hasMoreItems && displayedTransactions.length > 0) {
-                    trigger.innerHTML = `
-                        <i class="fas fa-check-circle text-emerald-500"></i>
-                        <span class="text-emerald-600">تم تحميل جميع السجلات</span>
-                    `;
-                    trigger.classList.remove('hidden');
-                }
-            }
-        }
-
-        function animateNewItems() {
-            // استخدام requestAnimationFrame للأنيميشن السلس
-            const cards = document.querySelectorAll('.transaction-card:not(.visible)');
-            
-            cards.forEach((card, index) => {
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        card.classList.add('visible');
-                    }, index * 50); // تأخير تدريجي 50ms لكل عنصر
-                });
+                updateClock();
+                setInterval(updateClock, 1000);
             });
         }
 
@@ -750,13 +471,12 @@
 
         function formatNumber(num) {
             if (!num || isNaN(num)) return '0';
-            return parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+            return parseFloat(num).toLocaleString('en-US');
         }
 
         function formatDate(timestamp) {
             if (!timestamp) return '--/--/----';
-            const date = new Date(timestamp);
-            return date.toLocaleDateString('ar-SA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            return new Date(timestamp).toLocaleDateString('ar-SA', { year: 'numeric', month: '2-digit', day: '2-digit' });
         }
 
         function formatTime(timestamp) {
@@ -774,41 +494,44 @@
             return start.getTime();
         }
 
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('currentDateBadge').textContent = '📅 ' + now.toLocaleDateString('ar-SA', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            document.getElementById('currentUID').textContent = 'UID: ' + Date.now().toString(36).toUpperCase().slice(-6);
+        }
+
         // ==========================================
         // الفلاتر والبحث
         // ==========================================
 
-        window.toggleTypeFilter = function(type) {
-            const chip = document.querySelector(`[data-type="${type}"]`);
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('sidebarContent');
             
-            if (type === 'all') {
-                currentFilters.types = ['all'];
-                document.querySelectorAll('.filter-chip').forEach(c => {
-                    c.classList.toggle('active', c.dataset.type === 'all');
-                });
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('translate-x-full'), 10);
             } else {
-                const index = currentFilters.types.indexOf(type);
-                if (index > -1) {
-                    currentFilters.types.splice(index, 1);
-                    chip.classList.remove('active');
-                } else {
-                    const allIndex = currentFilters.types.indexOf('all');
-                    if (allIndex > -1) {
-                        currentFilters.types.splice(allIndex, 1);
-                        document.querySelector('[data-type="all"]').classList.remove('active');
-                    }
-                    currentFilters.types.push(type);
-                    chip.classList.add('active');
-                }
-                
-                if (currentFilters.types.length === 0) {
-                    currentFilters.types = ['all'];
-                    document.querySelector('[data-type="all"]').classList.add('active');
-                }
+                content.classList.add('translate-x-full');
+                setTimeout(() => sidebar.classList.add('hidden'), 300);
             }
+        };
+
+        window.setTypeFilter = function(type) {
+            currentFilters.type = type;
             
-            // ✅ إعادة تعيين التحميل الكسول عند تغيير الفلاتر
-            resetLazyLoading();
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const isActive = btn.dataset.type === type;
+                btn.classList.toggle('active', isActive);
+                btn.classList.toggle('bg-emerald-500', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('bg-slate-100', !isActive);
+                btn.classList.toggle('text-slate-600', !isActive);
+            });
+            
+            displayedCount = 0;
             applyFilters();
         };
 
@@ -817,29 +540,19 @@
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 currentFilters.search = document.getElementById('searchInput').value.toLowerCase();
-                resetLazyLoading();
+                displayedCount = 0;
                 applyFilters();
             }, 300);
         };
 
-        window.applyFilters = function() {
-            const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo = document.getElementById('dateTo').value;
-            
-            currentFilters.dateFrom = dateFrom ? new Date(dateFrom).getTime() : null;
-            currentFilters.dateTo = dateTo ? new Date(dateTo).setHours(23, 59, 59, 999) : null;
-
+        function applyFilters() {
             filteredTransactions = allTransactions.filter(tx => {
                 // فلتر النوع
-                if (!currentFilters.types.includes('all')) {
+                if (currentFilters.type !== 'all') {
                     let txType = tx.type;
                     if (txType === 'shopExpense' || txType === 'personalExpense') txType = 'expenses';
-                    if (!currentFilters.types.includes(txType)) return false;
+                    if (currentFilters.type !== txType) return false;
                 }
-
-                // فلتر التاريخ
-                if (currentFilters.dateFrom && tx.timestamp < currentFilters.dateFrom) return false;
-                if (currentFilters.dateTo && tx.timestamp > currentFilters.dateTo) return false;
 
                 // فلتر البحث
                 if (currentFilters.search) {
@@ -848,9 +561,6 @@
                         tx.uid,
                         tx.title,
                         tx.dept,
-                        tx.customer,
-                        tx.vendor,
-                        tx.payment,
                         tx.amount?.toString(),
                         tx.transferAmount?.toString()
                     ].filter(Boolean).join(' ').toLowerCase();
@@ -861,235 +571,155 @@
                 return true;
             });
 
-            // ✅ عرض النتائج الأولى مباشرة
-            renderInitialTransactions();
-            updateStats();
-        };
-
-        window.resetFilters = function() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('dateFrom').value = '';
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('dateTo').value = today;
-            
-            currentFilters = {
-                types: ['all'],
-                search: '',
-                dateFrom: null,
-                dateTo: null
-            };
-            
-            document.querySelectorAll('.filter-chip').forEach(c => {
-                c.classList.toggle('active', c.dataset.type === 'all');
-            });
-            
-            resetLazyLoading();
-            applyFilters();
-        };
-
-        function updateStats() {
-            const counts = {
-                total: filteredTransactions.length,
-                sales: 0,
-                expenses: 0,
-                transfer: 0,
-                safe: 0,
-                bank: 0
-            };
-
-            filteredTransactions.forEach(tx => {
-                if (tx.type === 'sales') counts.sales++;
-                else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') counts.expenses++;
-                else if (tx.type === 'transfer') counts.transfer++;
-                else if (tx.type === 'safe') counts.safe++;
-                else if (tx.type === 'bankFee' || tx.payment === 'بنكك') counts.bank++;
-            });
-
-            document.getElementById('statTotal').textContent = counts.total;
-            document.getElementById('statSales').textContent = counts.sales;
-            document.getElementById('statExpenses').textContent = counts.expenses;
-            document.getElementById('statTransfer').textContent = counts.transfer;
+            renderTransactions();
         }
 
         // ==========================================
-        // ✅ عرض العمليات مع التحميل الكسول
+        // عرض العمليات مع التحميل التدريجي
         // ==========================================
 
-        function renderInitialTransactions() {
+        function renderTransactions() {
             const container = document.getElementById('transactionsList');
             const countElement = document.getElementById('resultsCount');
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
             
-            countElement.textContent = `${filteredTransactions.length} عملية`;
+            countElement.textContent = filteredTransactions.length + ' عملية';
 
             if (filteredTransactions.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-inbox text-4xl mb-3"></i>
-                        <p class="font-semibold">لا توجد نتائج</p>
-                        <p class="text-sm">جرب تغيير معايير البحث</p>
+                    <div class="p-8 text-center text-slate-400">
+                        <div class="text-4xl mb-2">📭</div>
+                        <p>لا توجد نتائج</p>
                     </div>
                 `;
+                loadMoreBtn.classList.add('hidden');
                 return;
             }
 
-            // تحميل الدفعة الأولى
-            displayedTransactions = filteredTransactions.slice(0, LAZY_LOAD_CONFIG.itemsPerPage);
-            currentPage = 1;
-            hasMoreItems = displayedTransactions.length < filteredTransactions.length;
+            // عرض أول دفعة
+            const toShow = filteredTransactions.slice(0, ITEMS_PER_PAGE);
+            displayedCount = toShow.length;
             
-            container.innerHTML = '';
-            appendTransactions(displayedTransactions, true);
+            container.innerHTML = toShow.map(tx => createTransactionHTML(tx)).join('');
             
-            // إظهار مؤشر التحميل إذا كان هناك المزيد
-            showLoadingIndicator(hasMoreItems);
+            // إظهار زر المزيد إذا كان هناك المزيد
+            if (displayedCount < filteredTransactions.length) {
+                loadMoreBtn.classList.remove('hidden');
+                loadMoreBtn.textContent = `عرض المزيد (${filteredTransactions.length - displayedCount} متبقي)`;
+            } else {
+                loadMoreBtn.classList.add('hidden');
+            }
         }
 
-        function appendTransactions(transactions, isInitial = false) {
+        window.loadMore = function() {
             const container = document.getElementById('transactionsList');
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            
+            const nextBatch = filteredTransactions.slice(displayedCount, displayedCount + ITEMS_PER_PAGE);
+            
+            if (nextBatch.length === 0) {
+                loadMoreBtn.classList.add('hidden');
+                return;
+            }
+            
+            // إضافة العناصر الجديدة
+            const newHTML = nextBatch.map(tx => createTransactionHTML(tx)).join('');
+            container.insertAdjacentHTML('beforeend', newHTML);
+            
+            displayedCount += nextBatch.length;
+            
+            // تحديث زر المزيد
+            if (displayedCount < filteredTransactions.length) {
+                loadMoreBtn.textContent = `عرض المزيد (${filteredTransactions.length - displayedCount} متبقي)`;
+            } else {
+                loadMoreBtn.classList.add('hidden');
+            }
+        };
+
+        function createTransactionHTML(tx) {
             const todayStart = getTodayStart();
-            let currentDate = isInitial ? '' : getLastDateInContainer();
-
-            const fragment = document.createDocumentFragment();
-
-            transactions.forEach((tx, index) => {
-                const txDate = formatDate(tx.timestamp);
-                const isOld = tx.timestamp < todayStart;
-                
-                // إضافة عنوان التاريخ عند تغييره
-                if (txDate !== currentDate) {
-                    currentDate = txDate;
-                    const isToday = new Date(tx.timestamp).toDateString() === new Date().toDateString();
-                    
-                    const dateHeader = document.createElement('div');
-                    dateHeader.className = 'date-group';
-                    dateHeader.innerHTML = `
-                        <i class="fas fa-calendar-alt text-slate-400"></i>
-                        <span>${txDate}</span>
-                        ${isToday ? '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs">اليوم</span>' : ''}
-                    `;
-                    fragment.appendChild(dateHeader);
-                }
-
-                const card = createTransactionCard(tx, isOld, index);
-                fragment.appendChild(card);
-            });
-
-            container.appendChild(fragment);
+            const isOld = tx.timestamp < todayStart;
             
-            // تفعيل الأنيميشن
-            requestAnimationFrame(() => {
-                animateNewItems();
-            });
-        }
-
-        function getLastDateInContainer() {
-            const headers = document.querySelectorAll('.date-group');
-            if (headers.length === 0) return '';
-            const lastHeader = headers[headers.length - 1];
-            return lastHeader.querySelector('span')?.textContent || '';
-        }
-
-        function createTransactionCard(tx, isOld, index) {
-            const typeConfig = getTypeConfig(tx.type, tx.payment);
-            const amount = getTransactionAmount(tx);
+            let typeClass = '';
+            let typeLabel = '';
+            let amountClass = '';
+            let amountText = '';
             
-            const div = document.createElement('div');
-            div.className = `transaction-card p-4 ${typeConfig.className}`;
-            div.dataset.id = tx.id;
+            switch(tx.type) {
+                case 'sales':
+                    typeClass = 'type-sales';
+                    typeLabel = 'مبيعات';
+                    amountClass = 'text-emerald-600';
+                    amountText = formatNumber(Math.abs(tx.amount)) + ' ج';
+                    break;
+                case 'shopExpense':
+                case 'personalExpense':
+                    typeClass = 'type-expense';
+                    typeLabel = tx.type === 'shopExpense' ? 'مصروف محل' : 'مصروف شخصي';
+                    amountClass = 'text-red-600';
+                    amountText = formatNumber(Math.abs(tx.amount)) + ' ج';
+                    break;
+                case 'transfer':
+                    typeClass = 'type-transfer';
+                    typeLabel = 'تبديل';
+                    amountClass = 'text-amber-600';
+                    amountText = formatNumber(tx.transferAmount || 0) + ' ج';
+                    break;
+                case 'bankFee':
+                    typeClass = 'type-bank';
+                    typeLabel = 'دمغة بنكك';
+                    amountClass = 'text-blue-600';
+                    amountText = formatNumber(Math.abs(tx.amount)) + ' ج';
+                    break;
+                default:
+                    typeLabel = tx.type;
+                    amountText = formatNumber(Math.abs(tx.amount || 0)) + ' ج';
+            }
             
-            div.innerHTML = `
-                <div class="flex justify-between items-start mb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-2xl">${typeConfig.icon}</span>
+            if (tx.payment === 'آجل') {
+                typeLabel = 'مبيعات آجلة';
+            }
+
+            return `
+                <div class="transaction-row p-4 ${typeClass} fade-in">
+                    <div class="flex justify-between items-start mb-2">
                         <div>
-                            <div class="font-bold text-slate-800 flex items-center gap-2">
-                                ${tx.title || typeConfig.label}
-                                ${isOld ? '<span class="old-badge">تاريخ قديم</span>' : ''}
+                            <div class="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                ${typeLabel}
+                                ${isOld ? '<span class="old-date-badge">قديم</span>' : ''}
                             </div>
-                            <div class="text-xs text-slate-500 flex items-center gap-2 mt-1">
-                                <span class="operation-number bg-slate-100 px-2 py-0.5 rounded">#${tx.operationNumber || '---'}</span>
+                            <div class="text-xs text-slate-500 flex items-center gap-2">
+                                <span class="operation-number bg-slate-100 px-2 py-1 rounded">#${tx.operationNumber || '---'}</span>
+                                <span>${formatDate(tx.timestamp)}</span>
                                 <span>${formatTime(tx.timestamp)}</span>
-                                <span class="period-badge ${tx.calculatedPeriod === 'صباحية' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}">
-                                    ${tx.calculatedPeriod === 'صباحية' ? '☀️' : '🌙'} ${tx.calculatedPeriod}
-                                </span>
                             </div>
                         </div>
+                        <div class="text-left">
+                            <div class="font-bold ${amountClass}">${amountText}</div>
+                            ${tx.payment ? `<div class="text-xs text-slate-400">${tx.payment}</div>` : ''}
+                        </div>
                     </div>
-                    <div class="text-left">
-                        <div class="font-bold text-lg ${amount.color}">${amount.value}</div>
-                        ${amount.subtext ? `<div class="text-xs text-slate-500">${amount.subtext}</div>` : ''}
-                    </div>
-                </div>
-                
-                <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
-                    <div class="text-xs text-slate-500 flex gap-3">
-                        ${tx.dept ? `<span><i class="fas fa-tag ml-1"></i>${tx.dept}</span>` : ''}
-                        ${tx.payment ? `<span><i class="fas fa-wallet ml-1"></i>${tx.payment}</span>` : ''}
-                        ${tx.vendor ? `<span><i class="fas fa-store ml-1"></i>${tx.vendor}</span>` : ''}
-                    </div>
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity sm:opacity-100">
-                        <button onclick="openEditModal('${tx.id}')" class="btn-action w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200" title="تعديل">
-                            <i class="fas fa-edit text-sm"></i>
+                    
+                    ${tx.dept ? `<div class="text-sm text-slate-600 mb-2">${tx.dept}</div>` : ''}
+                    ${tx.title ? `<div class="text-sm text-slate-500 mb-2">${tx.title}</div>` : ''}
+                    
+                    <div class="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                        <button onclick="openEditModal('${tx.id}')" class="flex-1 py-2 rounded-lg bg-blue-100 text-blue-700 text-sm font-semibold hover:bg-blue-200 transition btn-press">
+                            تعديل
                         </button>
-                        <button onclick="openDeleteModal('${tx.id}')" class="btn-action w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200" title="حذف">
-                            <i class="fas fa-trash text-sm"></i>
+                        <button onclick="openDeleteModal('${tx.id}')" class="flex-1 py-2 rounded-lg bg-red-100 text-red-700 text-sm font-semibold hover:bg-red-200 transition btn-press">
+                            حذف
                         </button>
                     </div>
                 </div>
             `;
-            
-            // إضافة تأثير hover للمجموعة
-            div.addEventListener('mouseenter', () => {
-                div.querySelectorAll('.btn-action').forEach(btn => btn.style.opacity = '1');
-            });
-            div.addEventListener('mouseleave', () => {
-                div.querySelectorAll('.btn-action').forEach(btn => btn.style.opacity = '');
-            });
-            
-            return div;
-        }
-
-        function getTypeConfig(type, payment) {
-            const configs = {
-                sales: { icon: '💰', label: 'مبيعات', className: 'type-sales' },
-                shopExpense: { icon: '💸', label: 'مصروف محل', className: 'type-expense' },
-                personalExpense: { icon: '👤', label: 'مصروف شخصي', className: 'type-expense' },
-                transfer: { icon: '🔄', label: 'تبديل', className: 'type-transfer' },
-                safe: { icon: '🏦', label: 'خزنة', className: 'type-safe' },
-                bankFee: { icon: '💳', label: 'دمغة بنكك', className: 'type-bank' }
-            };
-            
-            if (payment === 'آجل') {
-                return { icon: '📝', label: 'مبيعات آجلة', className: 'type-sales' };
-            }
-            
-            return configs[type] || { icon: '❓', label: type, className: '' };
-        }
-
-        function getTransactionAmount(tx) {
-            if (tx.type === 'transfer') {
-                return {
-                    value: formatNumber(tx.transferAmount || 0) + ' ج',
-                    color: 'text-amber-600',
-                    subtext: `${tx.from || '?'} → ${tx.to || '?'}`
-                };
-            }
-            
-            const amount = Math.abs(tx.amount || 0);
-            const isIncome = tx.amount > 0;
-            
-            return {
-                value: formatNumber(amount) + ' ج',
-                color: isIncome ? 'text-emerald-600' : 'text-red-600',
-                subtext: tx.bankFee ? `شامل الدمغة: ${formatNumber(tx.bankFee)} ج` : ''
-            };
         }
 
         // ==========================================
         // التعديل
         // ==========================================
 
-        window.openEditModal = async function(id) {
+        window.openEditModal = function(id) {
             const tx = allTransactions.find(t => t.id === id);
             if (!tx) return;
 
@@ -1113,13 +743,13 @@
             
             onEditTypeChange();
             document.getElementById('editModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         };
 
         window.onEditTypeChange = function() {
             const type = document.getElementById('editType').value;
             const isSales = type === 'sales';
             const isTransfer = type === 'transfer';
-            const isExpense = type.includes('Expense');
             
             document.getElementById('editDeptContainer').style.display = isSales ? 'block' : 'none';
             document.getElementById('editPaymentContainer').style.display = !isTransfer ? 'block' : 'none';
@@ -1131,8 +761,9 @@
         };
 
         window.closeEditModal = function(e) {
-            if (e && e.target !== e.currentTarget) return;
+            if (e && e.target !== e.currentTarget && e.target.id !== 'editModal') return;
             document.getElementById('editModal').classList.remove('active');
+            document.body.style.overflow = '';
         };
 
         window.handleEditSubmit = async function(e) {
@@ -1140,7 +771,7 @@
             
             const btn = document.getElementById('editSubmitBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin ml-1"></i> جاري الحفظ...';
+            btn.classList.add('btn-disabled');
             
             try {
                 const id = document.getElementById('editId').value;
@@ -1153,6 +784,7 @@
                 const newDept = document.getElementById('editDept').value;
                 const newNote = document.getElementById('editNote').value;
                 
+                // إعادة حساب الأرصدة
                 await recalculateBalances(oldTx, {
                     type: newType,
                     amount: newType === 'transfer' ? 0 : (newType === 'sales' ? newAmount : -newAmount),
@@ -1167,13 +799,13 @@
                 });
                 
                 closeEditModal();
-                alert('✅ تم التعديل بنجاح وإعادة حساب الأرصدة');
+                alert('تم التعديل بنجاح');
             } catch (error) {
-                console.error('Error updating:', error);
-                alert('❌ حدث خطأ أثناء التعديل: ' + error.message);
+                console.error('Error:', error);
+                alert('حدث خطأ: ' + error.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-save ml-1"></i> حفظ التعديلات';
+                btn.classList.remove('btn-disabled');
             }
         };
 
@@ -1187,7 +819,7 @@
         };
 
         window.closeDeleteModal = function(e) {
-            if (e && e.target !== e.currentTarget) return;
+            if (e && e.target !== e.currentTarget && e.target.id !== 'deleteModal') return;
             document.getElementById('deleteModal').classList.remove('active');
         };
 
@@ -1201,9 +833,13 @@
             }
             
             try {
+                // إعادة حساب الأرصدة (عكس العملية)
                 await reverseTransaction(tx);
+                
+                // حذف العملية
                 await remove(ref(database, `transactions/${id}`));
                 
+                // حذف الدمغة المرتبطة إن وجدت
                 if (tx.bankFee && tx.bankFee > 0) {
                     const feeTx = allTransactions.find(t => t.linkedTo === id && t.type === 'bankFee');
                     if (feeTx) {
@@ -1212,10 +848,10 @@
                 }
                 
                 closeDeleteModal();
-                alert('✅ تم الحذف بنجاح وإعادة حساب الأرصدة');
+                alert('تم الحذف بنجاح');
             } catch (error) {
-                console.error('Error deleting:', error);
-                alert('❌ حدث خطأ أثناء الحذف: ' + error.message);
+                console.error('Error:', error);
+                alert('حدث خطأ: ' + error.message);
             }
         };
 
@@ -1237,7 +873,6 @@
                 } else if (oldTx.type === 'shopExpense' || oldTx.type === 'personalExpense') {
                     if (oldTx.payment === 'كاش') cash += oldAmount;
                     else bank += oldAmount;
-                    
                     if (oldTx.bankFee) bank += oldTx.bankFee;
                 } else if (oldTx.type === 'transfer') {
                     if (oldTx.from === 'كاش') {
@@ -1292,7 +927,6 @@
                 } else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
                     if (tx.payment === 'كاش') cash += amount;
                     else bank += amount;
-                    
                     if (tx.bankFee) bank += tx.bankFee;
                 } else if (tx.type === 'transfer') {
                     if (tx.from === 'كاش') {
@@ -1307,39 +941,6 @@
                 return { cash, bank };
             });
         }
-
-        // ==========================================
-        // التصدير
-        // ==========================================
-
-        window.exportResults = function() {
-            // تصدير جميع النتائج المفلترة (ليس فقط المعروضة)
-            const headers = ['رقم العملية', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل'];
-            
-            const rows = filteredTransactions.map(tx => {
-                const isOld = tx.timestamp < getTodayStart();
-                
-                return [
-                    tx.operationNumber || tx.id,
-                    formatDate(tx.timestamp),
-                    formatTime(tx.timestamp),
-                    tx.type,
-                    tx.calculatedPeriod,
-                    tx.dept || '-',
-                    tx.payment || '-',
-                    tx.amount || tx.transferAmount || 0,
-                    tx.title || '',
-                    isOld ? 'تاريخ قديم' : 'اليوم'
-                ];
-            });
-            
-            const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `سجلات_${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
-        };
 
     </script>
 </body>
