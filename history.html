@@ -4,36 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>إدارة السجلات - مدير حسابات صلاح الدين</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <style>
         * {
             font-family: 'Cairo', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         body {
-            background: #f1f5f9;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
-        
+
         .app-container {
             max-width: 480px;
             margin: 0 auto;
             background: #f8fafc;
             min-height: 100vh;
-            box-shadow: 0 0 60px rgba(0,0,0,0.15);
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
         }
-        
+
         /* تصميم الهيدر الزجاجي */
         .glass-header {
             background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        
+
         /* البطاقات المتقدمة */
         .modern-card {
             background: white;
@@ -44,7 +44,7 @@
             overflow: hidden;
             position: relative;
         }
-        
+
         .modern-card::before {
             content: '';
             position: absolute;
@@ -54,37 +54,37 @@
             width: 4px;
             transition: width 0.3s ease;
         }
-        
+
         .modern-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
             border-color: #cbd5e1;
         }
-        
+
         .modern-card:hover::before {
             width: 6px;
         }
-        
+
         /* ألوان الأنواع */
         .card-sales::before { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
         .card-expense::before { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
         .card-transfer::before { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
         .card-safe::before { background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%); }
         .card-bank::before { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); }
-        
+
         /* حالة التوسيع */
         .modern-card.expanded {
             border-color: #10b981;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1), 0 20px 25px -5px rgba(0,0,0,0.1);
         }
-        
+
         .card-actions {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
             opacity: 0;
         }
-        
+
         .modern-card.expanded .card-actions {
             max-height: 80px;
             opacity: 1;
@@ -92,7 +92,7 @@
             border-top: 1px solid #f1f5f9;
             margin-top: 12px;
         }
-        
+
         /* الفلاتر العائمة */
         .floating-filters {
             background: rgba(255,255,255,0.95);
@@ -102,29 +102,29 @@
             top: 0;
             z-index: 30;
         }
-        
+
         .filter-pill {
             transition: all 0.2s ease;
             border: 2px solid transparent;
         }
-        
+
         .filter-pill:hover {
             transform: translateY(-1px);
         }
-        
+
         .filter-pill.active {
             border-color: currentColor;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             transform: translateY(-1px);
         }
-        
+
         /* التاريخ المتقدم */
         .date-range-picker {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             border: 1px solid #e2e8f0;
             border-radius: 16px;
         }
-        
+
         /* مؤشر التحميل الأنيق */
         .loader-dots {
             display: flex;
@@ -132,7 +132,7 @@
             justify-content: center;
             padding: 20px;
         }
-        
+
         .loader-dots span {
             width: 8px;
             height: 8px;
@@ -140,15 +140,15 @@
             background: #10b981;
             animation: bounce 1.4s infinite ease-in-out both;
         }
-        
+
         .loader-dots span:nth-child(1) { animation-delay: -0.32s; }
         .loader-dots span:nth-child(2) { animation-delay: -0.16s; }
-        
+
         @keyframes bounce {
             0%, 80%, 100% { transform: scale(0); }
             40% { transform: scale(1); }
         }
-        
+
         /* الأزرار المتقدمة */
         .btn-glass {
             background: rgba(255,255,255,0.1);
@@ -156,64 +156,64 @@
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.2s;
         }
-        
+
         .btn-glass:hover {
             background: rgba(255,255,255,0.2);
         }
-        
+
         /* الشريط الجانبي المحسن */
         .sidebar-overlay {
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
         }
-        
+
         /* التصدير */
         .export-btn {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
-        
+
         .export-btn:hover {
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
             transform: translateY(-1px);
         }
-        
+
         /* المودال المتقدم */
         .modal-advanced {
             background: rgba(0,0,0,0.7);
             backdrop-filter: blur(8px);
         }
-        
+
         .modal-content-advanced {
             background: white;
             border-radius: 24px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
-        
+
         /* تأثيرات النص */
         .text-gradient {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        
+
         /* الشريط السفلي */
         .bottom-nav {
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(226, 232, 240, 0.8);
         }
-        
+
         /* التمرير المخفي */
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
-        
+
         .hide-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        
+
         /* تأثير الظهور */
         @keyframes slideUpFade {
             from {
@@ -225,11 +225,11 @@
                 transform: translateY(0);
             }
         }
-        
+
         .animate-up {
             animation: slideUpFade 0.5s ease forwards;
         }
-        
+
         /* شارة العملية */
         .op-badge {
             font-family: 'Courier New', monospace;
@@ -237,11 +237,39 @@
             background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
             border: 1px solid #cbd5e1;
         }
-        
+
         /* المبلغ المميز */
         .amount-highlight {
             font-variant-numeric: tabular-nums;
             letter-spacing: -0.5px;
+        }
+
+        /* وسم التاريخ القديم - تنسيق محسن */
+        .old-date-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-right: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-press:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -254,17 +282,17 @@
                 <button onclick="toggleSidebar()" class="btn-glass w-10 h-10 rounded-xl flex items-center justify-center">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
-                
+
                 <div class="text-center">
                     <h1 class="text-lg font-bold tracking-wide">إدارة السجلات</h1>
                     <p class="text-xs text-slate-300">تعديل • حذف • تصدير</p>
                 </div>
-                
+
                 <button onclick="logout()" class="btn-glass w-10 h-10 rounded-xl flex items-center justify-center text-red-300 hover:text-red-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </button>
             </div>
-            
+
             <div class="flex justify-center items-center gap-3 text-sm">
                 <span id="clock" class="font-mono text-emerald-400 font-bold">00:00:00</span>
                 <span class="text-slate-400">|</span>
@@ -272,45 +300,41 @@
             </div>
         </header>
 
-        <!-- الشريط الجانبي -->
-        <div id="sidebar" class="fixed inset-0 sidebar-overlay hidden z-50" onclick="toggleSidebar()">
-            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform duration-300 translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
-                <div class="p-6 bg-gradient-to-br from-slate-800 to-slate-900 text-white">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold">القائمة</h2>
-                        <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
+        <!-- الشريط الجانبي - مطابق للصفحة الرئيسية -->
+        <div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50" onclick="toggleSidebar()">
+            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
+                <div class="p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-lg">القائمة</h2>
+                        <button onclick="toggleSidebar()" class="text-2xl">&times;</button>
                     </div>
-                    <div class="text-sm text-slate-400">مدير حسابات صلاح الدين</div>
                 </div>
-                
-                <nav class="p-4 space-y-2">
-                    <a href="index.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-600 transition">
-                        <span class="text-xl">🏠</span>
-                        <span class="font-medium">الرئيسية</span>
+                <div class="p-4 space-y-2">
+                    <a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 flex items-center gap-3 text-emerald-700">
+                        <span>🏠</span>
+                        <span>الرئيسية</span>
                     </a>
-                    <a href="debts.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-amber-50 text-amber-600 transition">
-                        <span class="text-xl">📝</span>
-                        <span class="font-medium">الديون</span>
+                    <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700">
+                        <span>📝</span>
+                        <span>الديون</span>
                     </a>
-                    <a href="external.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 text-orange-600 transition">
-                        <span class="text-xl">🏦</span>
-                        <span class="font-medium">الصندوق الجانبي</span>
+                    <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
+                        <span>🏦</span>
+                        <span>الصندوق الجانبي</span>
                     </a>
-                    <a href="reports.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 text-blue-600 transition">
-                        <span class="text-xl">📊</span>
-                        <span class="font-medium">التقارير</span>
+                    <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
+                        <span>📊</span>
+                        <span>التقارير</span>
                     </a>
-                    <a href="records.html" class="flex items-center gap-3 p-3 rounded-xl bg-purple-50 text-purple-700 font-semibold border-r-4 border-purple-500">
-                        <span class="text-xl">🗂️</span>
-                        <span>إدارة السجلات</span>
+                    <a href="records.html" class="w-full text-right p-3 rounded-xl bg-purple-50 text-purple-700 font-semibold border-r-4 border-purple-500 flex items-center gap-3">
+                        <span>🗂️</span>
+                        <span>السجلات</span>
                     </a>
-                    <a href="shift.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 text-purple-600 transition">
-                        <span class="text-xl">🧮</span>
-                        <span class="font-medium">تصفية الوردية</span>
+                    <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
+                        <span>🧮</span>
+                        <span>تصفية الوردية</span>
                     </a>
-                </nav>
+                </div>
             </div>
         </div>
 
@@ -334,7 +358,7 @@
                     🏦 خزنة
                 </button>
             </div>
-            
+
             <!-- نطاق التاريخ -->
             <div class="date-range-picker p-3 flex gap-2 items-center">
                 <div class="flex-1">
@@ -350,7 +374,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </button>
             </div>
-            
+
             <!-- البحث والتصدير -->
             <div class="flex gap-2">
                 <div class="flex-1 relative">
@@ -371,7 +395,7 @@
                 <span class="text-sm text-slate-500" id="resultsCount">0 عملية</span>
                 <span class="text-xs text-slate-400">اضغط على البطاقة للتعديل أو الحذف</span>
             </div>
-            
+
             <div id="transactionsList" class="space-y-3">
                 <div class="loader-dots">
                     <span></span>
@@ -379,35 +403,35 @@
                     <span></span>
                 </div>
             </div>
-            
+
             <!-- زر المزيد -->
             <button id="loadMoreBtn" onclick="loadMore()" class="hidden w-full py-4 rounded-2xl bg-white border-2 border-dashed border-slate-300 text-slate-600 font-semibold hover:border-emerald-500 hover:text-emerald-600 transition">
                 عرض المزيد ↓
             </button>
         </main>
 
-        <!-- الشريط السفلي -->
-        <nav class="bottom-nav fixed bottom-0 left-0 right-0 p-2 z-40 max-w-[480px] mx-auto">
+        <!-- الشريط السفلي - مطابق للصفحة الرئيسية -->
+        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
             <div class="flex justify-around items-center">
                 <a href="index.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="text-[10px] mt-1">الرئيسية</span>
+                    <span class="text-xl">🏠</span>
+                    <span class="text-xs mt-1">الرئيسية</span>
                 </a>
                 <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-amber-600 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                    <span class="text-[10px] mt-1">الديون</span>
+                    <span class="text-xl">📝</span>
+                    <span class="text-xs mt-1">الديون</span>
                 </a>
                 <a href="external.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-orange-600 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    <span class="text-[10px] mt-1">الجانبي</span>
+                    <span class="text-xl">🏦</span>
+                    <span class="text-xs mt-1">الجانبي</span>
                 </a>
                 <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-blue-600 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    <span class="text-[10px] mt-1">التقارير</span>
+                    <span class="text-xl">📊</span>
+                    <span class="text-xs mt-1">التقارير</span>
                 </a>
                 <a href="records.html" class="flex flex-col items-center p-2 text-purple-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                    <span class="text-[10px] mt-1 font-semibold">السجلات</span>
+                    <span class="text-xl">🗂️</span>
+                    <span class="text-xs mt-1 font-semibold">السجلات</span>
                 </a>
             </div>
         </nav>
@@ -509,9 +533,9 @@
             </div>
             <h2 class="text-2xl font-bold text-slate-800 mb-2">حذف العملية</h2>
             <p class="text-slate-500 mb-6">هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء وسيتم إعادة حساب الأرصدة.</p>
-            
+
             <input type="hidden" id="deleteId">
-            
+
             <div class="flex gap-3">
                 <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
                     إلغاء
@@ -560,7 +584,7 @@
         let displayedCount = 0;
         const ITEMS_PER_PAGE = 10;
         let expandedCardId = null;
-        
+
         let currentFilters = {
             type: 'all',
             search: '',
@@ -602,13 +626,12 @@
                         calculatedPeriod: calculatePeriod(tx.timestamp)
                     });
                 });
-                
-                allTransactions = txs.sort((a, b) => {
-                    const numA = parseInt(a.operationNumber) || 0;
-                    const numB = parseInt(b.operationNumber) || 0;
-                    return numB - numA;
-                });
-                
+
+                allTransactions = txs;
+
+                // ترتيب حسب الزمن (timestamp) تنازليًا - الأحدث فوق
+                allTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
                 applyFilters();
                 updateClock();
                 setInterval(updateClock, 1000);
@@ -670,7 +693,7 @@
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('sidebarContent');
-            
+
             if (sidebar.classList.contains('hidden')) {
                 sidebar.classList.remove('hidden');
                 setTimeout(() => content.classList.remove('translate-x-full'), 10);
@@ -682,11 +705,11 @@
 
         window.setTypeFilter = function(type) {
             currentFilters.type = type;
-            
+
             document.querySelectorAll('.filter-pill').forEach(btn => {
                 const isActive = btn.dataset.type === type;
                 btn.classList.toggle('active', isActive);
-                
+
                 if (isActive) {
                     btn.classList.remove('bg-slate-100', 'bg-emerald-100', 'bg-red-100', 'bg-amber-100', 'bg-purple-100');
                     btn.classList.remove('text-slate-600', 'text-emerald-700', 'text-red-700', 'text-amber-700', 'text-purple-700');
@@ -704,7 +727,7 @@
                     btn.classList.add(bg, text);
                 }
             });
-            
+
             displayedCount = 0;
             expandedCardId = null;
             applyFilters();
@@ -724,7 +747,7 @@
         window.applyFilters = function() {
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
-            
+
             currentFilters.dateFrom = dateFrom ? new Date(dateFrom).getTime() : null;
             currentFilters.dateTo = dateTo ? new Date(dateTo).setHours(23, 59, 59, 999) : null;
 
@@ -750,7 +773,7 @@
                         tx.amount?.toString(),
                         tx.transferAmount?.toString()
                     ].filter(Boolean).join(' ').toLowerCase();
-                    
+
                     if (!searchFields.includes(currentFilters.search)) return false;
                 }
 
@@ -765,14 +788,14 @@
             document.getElementById('dateFrom').value = '';
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('dateTo').value = today;
-            
+
             currentFilters = {
                 type: 'all',
                 search: '',
                 dateFrom: null,
                 dateTo: null
             };
-            
+
             setTypeFilter('all');
         };
 
@@ -784,7 +807,7 @@
             const container = document.getElementById('transactionsList');
             const countElement = document.getElementById('resultsCount');
             const loadMoreBtn = document.getElementById('loadMoreBtn');
-            
+
             countElement.textContent = filteredTransactions.length + ' عملية';
 
             if (filteredTransactions.length === 0) {
@@ -801,15 +824,15 @@
             // عرض أول دفعة
             const toShow = filteredTransactions.slice(0, ITEMS_PER_PAGE);
             displayedCount = toShow.length;
-            
+
             container.innerHTML = toShow.map((tx, index) => createTransactionHTML(tx, index)).join('');
-            
+
             // إعادة توسيع البطاقة المفتوحة سابقاً إن وجدت
             if (expandedCardId) {
                 const card = document.querySelector(`[data-id="${expandedCardId}"]`);
                 if (card) card.classList.add('expanded');
             }
-            
+
             if (displayedCount < filteredTransactions.length) {
                 loadMoreBtn.classList.remove('hidden');
                 loadMoreBtn.innerHTML = `عرض المزيد <span class="text-slate-400">(${filteredTransactions.length - displayedCount})</span>`;
@@ -821,19 +844,19 @@
         window.loadMore = function() {
             const container = document.getElementById('transactionsList');
             const loadMoreBtn = document.getElementById('loadMoreBtn');
-            
+
             const nextBatch = filteredTransactions.slice(displayedCount, displayedCount + ITEMS_PER_PAGE);
-            
+
             if (nextBatch.length === 0) {
                 loadMoreBtn.classList.add('hidden');
                 return;
             }
-            
+
             const newHTML = nextBatch.map((tx, index) => createTransactionHTML(tx, displayedCount + index)).join('');
             container.insertAdjacentHTML('beforeend', newHTML);
-            
+
             displayedCount += nextBatch.length;
-            
+
             if (displayedCount < filteredTransactions.length) {
                 loadMoreBtn.innerHTML = `عرض المزيد <span class="text-slate-400">(${filteredTransactions.length - displayedCount})</span>`;
             } else {
@@ -845,13 +868,13 @@
             const todayStart = getTodayStart();
             const isOld = tx.timestamp < todayStart;
             const isExpanded = tx.id === expandedCardId;
-            
+
             let cardClass = 'modern-card p-4 cursor-pointer ';
             let typeIcon = '';
             let typeLabel = '';
             let amountClass = '';
             let amountText = '';
-            
+
             switch(tx.type) {
                 case 'sales':
                     cardClass += 'card-sales';
@@ -894,12 +917,12 @@
                     typeLabel = tx.type;
                     amountText = formatNumber(Math.abs(tx.amount || 0)) + ' ج';
             }
-            
+
             if (isExpanded) cardClass += ' expanded';
 
             // تأخير ظهور البطاقة للأنيميشن
             const delay = index < 10 ? index * 50 : 0;
-            
+
             return `
                 <div class="${cardClass} animate-up" data-id="${tx.id}" style="animation-delay: ${delay}ms" onclick="toggleCard('${tx.id}')">
                     <div class="flex justify-between items-start">
@@ -907,7 +930,7 @@
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="text-2xl">${typeIcon}</span>
                                 <span class="font-bold text-slate-800">${typeLabel}</span>
-                                ${isOld ? '<span class="old-date-badge">قديم</span>' : ''}
+                                ${isOld ? '<span class="old-date-badge">متأخر</span>' : ''}
                             </div>
                             
                             <div class="flex items-center gap-3 text-xs text-slate-500 mb-2">
@@ -947,13 +970,13 @@
         window.toggleCard = function(id) {
             const card = document.querySelector(`[data-id="${id}"]`);
             if (!card) return;
-            
+
             // إغلاق البطاقة السابقة
             if (expandedCardId && expandedCardId !== id) {
                 const oldCard = document.querySelector(`[data-id="${expandedCardId}"]`);
                 if (oldCard) oldCard.classList.remove('expanded');
             }
-            
+
             // تبديل الحالة
             if (expandedCardId === id) {
                 card.classList.remove('expanded');
@@ -977,21 +1000,21 @@
             document.getElementById('editOldAmount').value = tx.amount || 0;
             document.getElementById('editOldPayment').value = tx.payment || 'كاش';
             document.getElementById('editOpNumber').textContent = tx.operationNumber || '---';
-            
+
             const typeSelect = document.getElementById('editType');
             typeSelect.value = tx.type === 'shopExpense' || tx.type === 'personalExpense' ? tx.type : tx.type;
-            
+
             document.getElementById('editDept').value = tx.dept || 'عصائر';
             document.getElementById('editPayment').value = tx.payment || 'كاش';
             document.getElementById('editAmount').value = Math.abs(tx.amount || tx.transferAmount || 0);
             document.getElementById('editNote').value = tx.title || '';
-            
+
             const date = new Date(tx.timestamp);
             date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
             document.getElementById('editDateTime').value = date.toISOString().slice(0, 16);
-            
+
             onEditTypeChange();
-            
+
             const modal = document.getElementById('editModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -1002,7 +1025,7 @@
             const type = document.getElementById('editType').value;
             const isSales = type === 'sales';
             const isTransfer = type === 'transfer';
-            
+
             document.getElementById('editDeptContainer').style.display = isSales ? 'block' : 'none';
             document.getElementById('editPaymentContainer').style.display = !isTransfer ? 'block' : 'none';
         };
@@ -1014,7 +1037,7 @@
 
         window.closeEditModal = function(e) {
             if (e && e.target !== e.currentTarget && !e.target.closest('.modal-content-advanced')) return;
-            
+
             const modal = document.getElementById('editModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
@@ -1023,23 +1046,23 @@
 
         window.handleEditSubmit = async function(e) {
             e.preventDefault();
-            
+
             const btn = document.getElementById('editSubmitBtn');
             const originalText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري الحفظ...';
-            
+
             try {
                 const id = document.getElementById('editId').value;
                 const oldTx = allTransactions.find(t => t.id === id);
-                
+
                 const newType = document.getElementById('editType').value;
                 const newAmount = parseFloat(document.getElementById('editAmount').value) || 0;
                 const newPayment = document.getElementById('editPayment').value;
                 const newDateTime = new Date(document.getElementById('editDateTime').value).getTime();
                 const newDept = document.getElementById('editDept').value;
                 const newNote = document.getElementById('editNote').value;
-                
+
                 await recalculateBalances(oldTx, {
                     type: newType,
                     amount: newType === 'transfer' ? 0 : (newType === 'sales' ? newAmount : -newAmount),
@@ -1052,9 +1075,9 @@
                     title: newNote,
                     calculatedPeriod: calculatePeriod(newDateTime)
                 });
-                
+
                 closeEditModal();
-                
+
                 // إغلاق البطاقة الموسعة
                 expandedCardId = null;
             } catch (error) {
@@ -1079,7 +1102,7 @@
 
         window.closeDeleteModal = function(e) {
             if (e && e.target !== e.currentTarget && !e.target.closest('.bg-white')) return;
-            
+
             const modal = document.getElementById('deleteModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
@@ -1088,23 +1111,23 @@
         window.confirmDelete = async function() {
             const id = document.getElementById('deleteId').value;
             const tx = allTransactions.find(t => t.id === id);
-            
+
             if (!tx) {
                 closeDeleteModal();
                 return;
             }
-            
+
             try {
                 await reverseTransaction(tx);
                 await remove(ref(database, `transactions/${id}`));
-                
+
                 if (tx.bankFee && tx.bankFee > 0) {
                     const feeTx = allTransactions.find(t => t.linkedTo === id && t.type === 'bankFee');
                     if (feeTx) {
                         await remove(ref(database, `transactions/${feeTx.id}`));
                     }
                 }
-                
+
                 closeDeleteModal();
                 expandedCardId = null;
             } catch (error) {
@@ -1120,11 +1143,11 @@
         async function recalculateBalances(oldTx, newTx) {
             await runTransaction(ref(database, 'balances'), (currentBalances) => {
                 let { cash, bank } = currentBalances || { cash: 0, bank: 0 };
-                
+
                 // عكس العملية القديمة
                 const oldAmount = Math.abs(oldTx.amount || 0);
                 const oldTransfer = oldTx.transferAmount || 0;
-                
+
                 if (oldTx.type === 'sales') {
                     if (oldTx.payment === 'كاش') cash -= oldAmount;
                     else bank -= oldAmount;
@@ -1141,11 +1164,11 @@
                         cash -= oldTransfer;
                     }
                 }
-                
+
                 // تطبيق العملية الجديدة
                 const newAmount = Math.abs(newTx.amount || 0);
                 const newTransfer = newTx.transferAmount || 0;
-                
+
                 if (newTx.type === 'sales') {
                     if (newTx.payment === 'كاش') cash += newAmount;
                     else bank += newAmount;
@@ -1161,15 +1184,15 @@
                         cash += newTransfer;
                     }
                 }
-                
+
                 return { cash, bank };
             });
-            
+
             const updates = {
                 ...newTx,
                 id: undefined
             };
-            
+
             await update(ref(database, `transactions/${oldTx.id}`), updates);
         }
 
@@ -1178,7 +1201,7 @@
                 let { cash, bank } = currentBalances || { cash: 0, bank: 0 };
                 const amount = Math.abs(tx.amount || 0);
                 const transfer = tx.transferAmount || 0;
-                
+
                 if (tx.type === 'sales') {
                     if (tx.payment === 'كاش') cash -= amount;
                     else bank -= amount;
@@ -1195,7 +1218,7 @@
                         cash -= transfer;
                     }
                 }
-                
+
                 return { cash, bank };
             });
         }
@@ -1206,10 +1229,10 @@
 
         window.exportToExcel = function() {
             const headers = ['رقم العملية', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل', 'الحالة'];
-            
+
             const rows = filteredTransactions.map(tx => {
                 const isOld = tx.timestamp < getTodayStart();
-                
+
                 return [
                     tx.operationNumber || tx.id,
                     formatDate(tx.timestamp),
@@ -1220,10 +1243,10 @@
                     tx.payment || '-',
                     tx.amount || tx.transferAmount || 0,
                     tx.title || '',
-                    isOld ? 'تاريخ قديم' : 'اليوم'
+                    isOld ? 'متأخر' : 'اليوم'
                 ];
             });
-            
+
             // إنشاء CSV مع BOM للعربية
             const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
