@@ -6,7 +6,7 @@
     <title>إدارة السجلات - مدير حسابات صلاح الدين</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         * {
@@ -15,7 +15,7 @@
         }
         
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f1f5f9;
             min-height: 100vh;
         }
         
@@ -24,14 +24,187 @@
             margin: 0 auto;
             background: #f8fafc;
             min-height: 100vh;
-            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+            box-shadow: 0 0 60px rgba(0,0,0,0.15);
         }
         
-        .btn-press:active {
-            transform: scale(0.95);
-            transition: transform 0.1s;
+        /* تصميم الهيدر الزجاجي */
+        .glass-header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
+        /* البطاقات المتقدمة */
+        .modern-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.02);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .modern-card::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .modern-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            border-color: #cbd5e1;
+        }
+        
+        .modern-card:hover::before {
+            width: 6px;
+        }
+        
+        /* ألوان الأنواع */
+        .card-sales::before { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
+        .card-expense::before { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
+        .card-transfer::before { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
+        .card-safe::before { background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%); }
+        .card-bank::before { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); }
+        
+        /* حالة التوسيع */
+        .modern-card.expanded {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1), 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+        
+        .card-actions {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+            opacity: 0;
+        }
+        
+        .modern-card.expanded .card-actions {
+            max-height: 80px;
+            opacity: 1;
+            padding-top: 12px;
+            border-top: 1px solid #f1f5f9;
+            margin-top: 12px;
+        }
+        
+        /* الفلاتر العائمة */
+        .floating-filters {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+        
+        .filter-pill {
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        
+        .filter-pill:hover {
+            transform: translateY(-1px);
+        }
+        
+        .filter-pill.active {
+            border-color: currentColor;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+        
+        /* التاريخ المتقدم */
+        .date-range-picker {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+        }
+        
+        /* مؤشر التحميل الأنيق */
+        .loader-dots {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .loader-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        
+        .loader-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loader-dots span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        /* الأزرار المتقدمة */
+        .btn-glass {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.2s;
+        }
+        
+        .btn-glass:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* الشريط الجانبي المحسن */
+        .sidebar-overlay {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+        }
+        
+        /* التصدير */
+        .export-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .export-btn:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        /* المودال المتقدم */
+        .modal-advanced {
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+        }
+        
+        .modal-content-advanced {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        
+        /* تأثيرات النص */
+        .text-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* الشريط السفلي */
+        .bottom-nav {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        
+        /* التمرير المخفي */
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -41,303 +214,287 @@
             scrollbar-width: none;
         }
         
-        .fade-in {
-            animation: fadeIn 0.5s ease;
+        /* تأثير الظهور */
+        @keyframes slideUpFade {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .animate-up {
+            animation: slideUpFade 0.5s ease forwards;
         }
         
-        .modal {
-            display: none;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .modal.active .modal-content {
-            transform: translateY(0);
-        }
-        
-        .operation-number {
+        /* شارة العملية */
+        .op-badge {
             font-family: 'Courier New', monospace;
-            font-weight: bold;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border: 1px solid #cbd5e1;
         }
         
-        .date-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
+        /* المبلغ المميز */
+        .amount-highlight {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.5px;
         }
-        
-        .btn-disabled {
-            opacity: 0.6;
-            pointer-events: none;
-            cursor: not-allowed;
-        }
-        
-        .old-date-badge {
-            background: #f59e0b;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-        
-        .transaction-row {
-            transition: all 0.2s ease;
-        }
-        
-        .transaction-row:hover {
-            background: #f8fafc;
-        }
-        
-        .type-sales { border-right: 3px solid #10b981; }
-        .type-expense { border-right: 3px solid #ef4444; }
-        .type-transfer { border-right: 3px solid #f59e0b; }
-        .type-safe { border-right: 3px solid #8b5cf6; }
-        .type-bank { border-right: 3px solid #3b82f6; }
     </style>
 </head>
 <body>
 
-    <!-- التطبيق الرئيسي -->
-    <div class="app-container" id="app">
-        <!-- الهيدر -->
-        <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg">
-            <div class="flex justify-between items-center mb-2">
-                <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-slate-700 transition">
-                    <span class="text-2xl">☰</span>
+    <div class="app-container">
+        <!-- الهيدر الزجاجي -->
+        <header class="glass-header text-white p-4 sticky top-0 z-40">
+            <div class="flex justify-between items-center mb-3">
+                <button onclick="toggleSidebar()" class="btn-glass w-10 h-10 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
-                <h1 class="text-lg font-bold">إدارة السجلات</h1>
-                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">
-                    خروج
+                
+                <div class="text-center">
+                    <h1 class="text-lg font-bold tracking-wide">إدارة السجلات</h1>
+                    <p class="text-xs text-slate-300">تعديل • حذف • تصدير</p>
+                </div>
+                
+                <button onclick="logout()" class="btn-glass w-10 h-10 rounded-xl flex items-center justify-center text-red-300 hover:text-red-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </button>
             </div>
             
-            <div class="text-center mt-4">
-                <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg">
-                    00:00:00
-                </div>
-                <div id="date" class="text-slate-300 text-sm mt-1">
-                    جاري التحميل...
-                </div>
-                <div class="flex justify-center items-center gap-2 mt-2">
-                    <span id="currentDateBadge" class="date-badge">📅 --/--/----</span>
-                </div>
-                <div class="text-xs text-slate-400 mt-1 font-mono" id="currentUID">
-                    UID: --
-                </div>
+            <div class="flex justify-center items-center gap-3 text-sm">
+                <span id="clock" class="font-mono text-emerald-400 font-bold">00:00:00</span>
+                <span class="text-slate-400">|</span>
+                <span id="date" class="text-slate-300">--/--/----</span>
             </div>
         </header>
 
-        <!-- القائمة الجانبية -->
-        <div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50" onclick="toggleSidebar()">
-            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
-                <div class="p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
-                    <div class="flex justify-between items-center">
-                        <h2 class="font-bold text-lg">القائمة</h2>
-                        <button onclick="toggleSidebar()" class="text-2xl">&times;</button>
+        <!-- الشريط الجانبي -->
+        <div id="sidebar" class="fixed inset-0 sidebar-overlay hidden z-50" onclick="toggleSidebar()">
+            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform duration-300 translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
+                <div class="p-6 bg-gradient-to-br from-slate-800 to-slate-900 text-white">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">القائمة</h2>
+                        <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
                     </div>
+                    <div class="text-sm text-slate-400">مدير حسابات صلاح الدين</div>
                 </div>
-                <div class="p-4 space-y-2">
-                    <a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 text-emerald-700 flex items-center gap-3">
-                        <span>🏠</span>
-                        <span>الرئيسية</span>
+                
+                <nav class="p-4 space-y-2">
+                    <a href="index.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-600 transition">
+                        <span class="text-xl">🏠</span>
+                        <span class="font-medium">الرئيسية</span>
                     </a>
-                    <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700">
-                        <span>📝</span>
-                        <span>الديون</span>
+                    <a href="debts.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-amber-50 text-amber-600 transition">
+                        <span class="text-xl">📝</span>
+                        <span class="font-medium">الديون</span>
                     </a>
-                    <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
-                        <span>🏦</span>
-                        <span>الصندوق الجانبي</span>
+                    <a href="external.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 text-orange-600 transition">
+                        <span class="text-xl">🏦</span>
+                        <span class="font-medium">الصندوق الجانبي</span>
                     </a>
-                    <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
-                        <span>📊</span>
-                        <span>التقارير</span>
+                    <a href="reports.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 text-blue-600 transition">
+                        <span class="text-xl">📊</span>
+                        <span class="font-medium">التقارير</span>
                     </a>
-                    <a href="records.html" class="w-full text-right p-3 rounded-xl bg-purple-50 text-purple-700 font-semibold flex items-center gap-3">
-                        <span>🗂️</span>
+                    <a href="records.html" class="flex items-center gap-3 p-3 rounded-xl bg-purple-50 text-purple-700 font-semibold border-r-4 border-purple-500">
+                        <span class="text-xl">🗂️</span>
                         <span>إدارة السجلات</span>
                     </a>
-                    <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
-                        <span>🧮</span>
-                        <span>تصفية الوردية</span>
+                    <a href="shift.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 text-purple-600 transition">
+                        <span class="text-xl">🧮</span>
+                        <span class="font-medium">تصفية الوردية</span>
                     </a>
-                </div>
+                </nav>
             </div>
         </div>
 
-        <!-- المحتوى الرئيسي -->
-        <main class="p-4 space-y-4 pb-24">
-            
-            <!-- البحث -->
-            <div class="bg-white rounded-2xl p-4 shadow-md fade-in">
-                <div class="relative mb-3">
-                    <input type="text" id="searchInput" placeholder="ابحث برقم العملية، المبلغ، القسم..." 
-                        class="w-full bg-slate-100 border-2 border-transparent rounded-xl p-3 pr-10 text-right focus:bg-white focus:border-emerald-500 focus:outline-none transition"
-                        oninput="debouncedSearch()">
-                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-                </div>
-                
-                <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
-                    <button onclick="setTypeFilter('all')" class="filter-btn active flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-emerald-500 text-white" data-type="all">
-                        الكل
-                    </button>
-                    <button onclick="setTypeFilter('sales')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 text-slate-600" data-type="sales">
-                        مبيعات
-                    </button>
-                    <button onclick="setTypeFilter('expenses')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 text-slate-600" data-type="expenses">
-                        مصروفات
-                    </button>
-                    <button onclick="setTypeFilter('transfer')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 text-slate-600" data-type="transfer">
-                        تبديل
-                    </button>
-                </div>
-            </div>
-
-            <!-- السجلات -->
-            <div class="bg-white rounded-2xl shadow-md overflow-hidden fade-in">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-700">العمليات</h3>
-                    <span class="text-sm text-slate-500" id="resultsCount">0 عملية</span>
-                </div>
-                
-                <div id="transactionsList" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto hide-scrollbar">
-                    <div class="p-8 text-center text-slate-400">
-                        جاري التحميل...
-                    </div>
-                </div>
-                
-                <!-- زر عرض المزيد -->
-                <button id="loadMoreBtn" onclick="loadMore()" class="hidden w-full p-4 text-center text-emerald-600 font-semibold hover:bg-emerald-50 transition border-t border-slate-100">
-                    عرض المزيد ↓
+        <!-- الفلاتر العائمة -->
+        <div class="floating-filters p-4 space-y-4">
+            <!-- فلاتر النوع -->
+            <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+                <button onclick="setTypeFilter('all')" class="filter-pill active flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-slate-800 text-white shadow-lg" data-type="all">
+                    الكل
+                </button>
+                <button onclick="setTypeFilter('sales')" class="filter-pill flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-700" data-type="sales">
+                    💰 مبيعات
+                </button>
+                <button onclick="setTypeFilter('expenses')" class="filter-pill flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-700" data-type="expenses">
+                    💸 مصروفات
+                </button>
+                <button onclick="setTypeFilter('transfer')" class="filter-pill flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-amber-100 text-amber-700" data-type="transfer">
+                    🔄 تبديل
+                </button>
+                <button onclick="setTypeFilter('safe')" class="filter-pill flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold bg-purple-100 text-purple-700" data-type="safe">
+                    🏦 خزنة
                 </button>
             </div>
+            
+            <!-- نطاق التاريخ -->
+            <div class="date-range-picker p-3 flex gap-2 items-center">
+                <div class="flex-1">
+                    <label class="block text-xs text-slate-500 mb-1">من</label>
+                    <input type="date" id="dateFrom" onchange="applyFilters()" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm focus:border-emerald-500 focus:outline-none">
+                </div>
+                <span class="text-slate-400 pt-4">→</span>
+                <div class="flex-1">
+                    <label class="block text-xs text-slate-500 mb-1">إلى</label>
+                    <input type="date" id="dateTo" onchange="applyFilters()" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm focus:border-emerald-500 focus:outline-none">
+                </div>
+                <button onclick="resetFilters()" class="mt-4 p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition" title="إعادة ضبط">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+            </div>
+            
+            <!-- البحث والتصدير -->
+            <div class="flex gap-2">
+                <div class="flex-1 relative">
+                    <input type="text" id="searchInput" placeholder="ابحث برقم العملية أو المبلغ..." oninput="debouncedSearch()" 
+                        class="w-full bg-slate-100 border-2 border-transparent rounded-xl p-3 pr-10 text-right focus:bg-white focus:border-emerald-500 focus:outline-none transition">
+                    <svg class="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <button onclick="exportToExcel()" class="export-btn px-4 py-2 rounded-xl text-white font-semibold text-sm flex items-center gap-2 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    تصدير
+                </button>
+            </div>
+        </div>
 
+        <!-- قائمة العمليات -->
+        <main class="p-4 space-y-3 pb-24">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-slate-500" id="resultsCount">0 عملية</span>
+                <span class="text-xs text-slate-400">اضغط على البطاقة للتعديل أو الحذف</span>
+            </div>
+            
+            <div id="transactionsList" class="space-y-3">
+                <div class="loader-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            
+            <!-- زر المزيد -->
+            <button id="loadMoreBtn" onclick="loadMore()" class="hidden w-full py-4 rounded-2xl bg-white border-2 border-dashed border-slate-300 text-slate-600 font-semibold hover:border-emerald-500 hover:text-emerald-600 transition">
+                عرض المزيد ↓
+            </button>
         </main>
 
-        <!-- شريط التنقل السفلي -->
-        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
+        <!-- الشريط السفلي -->
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 p-2 z-40 max-w-[480px] mx-auto">
             <div class="flex justify-around items-center">
-                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">🏠</span>
-                    <span class="text-xs mt-1">الرئيسية</span>
+                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="text-[10px] mt-1">الرئيسية</span>
                 </a>
-                <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">📝</span>
-                    <span class="text-xs mt-1">الديون</span>
+                <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-amber-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    <span class="text-[10px] mt-1">الديون</span>
                 </a>
-                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">🏦</span>
-                    <span class="text-xs mt-1">الجانبي</span>
+                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-orange-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    <span class="text-[10px] mt-1">الجانبي</span>
                 </a>
-                <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">📊</span>
-                    <span class="text-xs mt-1">التقارير</span>
+                <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-blue-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <span class="text-[10px] mt-1">التقارير</span>
                 </a>
-                <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">🧮</span>
-                    <span class="text-xs mt-1">الوردية</span>
+                <a href="records.html" class="flex flex-col items-center p-2 text-purple-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    <span class="text-[10px] mt-1 font-semibold">السجلات</span>
                 </a>
             </div>
         </nav>
 
     </div>
 
-    <!-- مودال التعديل -->
-    <div id="editModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeEditModal(event)">
-        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
-            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
-            
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-slate-800">تعديل العملية</h2>
-                <button onclick="closeEditModal()" class="text-slate-400 text-2xl">&times;</button>
+    <!-- مودال التعديل المحسن -->
+    <div id="editModal" class="fixed inset-0 modal-advanced hidden items-end z-50" onclick="closeEditModal(event)">
+        <div class="modal-content-advanced w-full max-w-md mx-auto p-6 animate-up" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">تعديل العملية</h2>
+                    <p class="text-sm text-slate-500">سيتم إعادة حساب الأرصدة</p>
+                </div>
+                <button onclick="closeEditModal()" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
 
-            <form id="editForm" class="space-y-4" onsubmit="handleEditSubmit(event)">
+            <form id="editForm" onsubmit="handleEditSubmit(event)" class="space-y-4">
                 <input type="hidden" id="editId">
                 <input type="hidden" id="editOldType">
                 <input type="hidden" id="editOldAmount">
                 <input type="hidden" id="editOldPayment">
 
-                <div class="bg-slate-50 rounded-xl p-3 text-center mb-4">
-                    <span class="text-xs text-slate-500">رقم العملية</span>
-                    <div class="operation-number text-lg font-bold text-slate-700" id="editOpNumber">--</div>
+                <div class="bg-gradient-to-r from-slate-100 to-slate-50 rounded-xl p-4 text-center border border-slate-200">
+                    <span class="text-xs text-slate-500 uppercase tracking-wider">رقم العملية</span>
+                    <div class="op-badge inline-block mt-1 px-3 py-1 rounded-lg text-lg font-bold text-slate-700" id="editOpNumber">--</div>
                 </div>
 
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">النوع</label>
-                    <select id="editType" onchange="onEditTypeChange()" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
-                        <option value="sales">مبيعات</option>
-                        <option value="shopExpense">مصروف محل</option>
-                        <option value="personalExpense">مصروف شخصي</option>
-                        <option value="transfer">تبديل</option>
-                    </select>
-                </div>
-
-                <div id="editDeptContainer">
-                    <label class="block text-sm text-slate-600 mb-1">القسم</label>
-                    <select id="editDept" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
-                        <option value="عصائر">عصائر</option>
-                        <option value="حلويات">حلويات</option>
-                        <option value="طعمية وفطائر">طعمية وفطائر</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">النوع</label>
+                        <select id="editType" onchange="onEditTypeChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 transition">
+                            <option value="sales">💰 مبيعات</option>
+                            <option value="shopExpense">💸 مصروف محل</option>
+                            <option value="personalExpense">👤 مصروف شخصي</option>
+                            <option value="transfer">🔄 تبديل</option>
+                        </select>
+                    </div>
+                    <div id="editDeptContainer">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">القسم</label>
+                        <select id="editDept" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 transition">
+                            <option value="عصائر">🧃 عصائر</option>
+                            <option value="حلويات">🍰 حلويات</option>
+                            <option value="طعمية وفطائر">🥙 طعمية</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div id="editPaymentContainer">
-                    <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
-                    <select id="editPayment" onchange="onEditPaymentChange()" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
-                        <option value="كاش">كاش</option>
-                        <option value="بنكك">بنكك</option>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">طريقة الدفع</label>
+                    <select id="editPayment" onchange="onEditPaymentChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 transition">
+                        <option value="كاش">💵 كاش</option>
+                        <option value="بنكك">💳 بنكك</option>
                     </select>
-                    <div id="editBankFeeWarning" class="hidden mt-2 bg-red-50 text-red-700 text-sm p-2 rounded-lg">
-                        سيتم خصم 60 جنيه كدمغة بنكك
+                    <div id="editBankFeeWarning" class="hidden mt-2 bg-red-50 border border-red-200 text-red-700 text-xs p-2 rounded-lg flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        سيتم خصم 60 جنيه كدمغة
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm text-slate-600 mb-1">المبلغ</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">المبلغ (جنية)</label>
                     <input type="number" id="editAmount" required min="0" step="0.01"
-                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-center font-bold text-lg focus:border-emerald-500 focus:outline-none">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-center font-bold text-2xl text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 transition amount-highlight">
                 </div>
 
                 <div>
-                    <label class="block text-sm text-slate-600 mb-1">التاريخ والوقت</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">التاريخ والوقت</label>
                     <input type="datetime-local" id="editDateTime" required
-                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 transition">
                 </div>
 
                 <div>
-                    <label class="block text-sm text-slate-600 mb-1">البيان</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">البيان / التفاصيل</label>
                     <input type="text" id="editNote" 
-                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none">
-                </div>
-
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-800 text-sm">
-                    سيتم إعادة حساب الأرصدة تلقائياً
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-right focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 transition"
+                        placeholder="أدخل تفاصيل إضافية...">
                 </div>
 
                 <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeEditModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                    <button type="button" onclick="closeEditModal()" class="flex-1 py-4 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
                         إلغاء
                     </button>
-                    <button type="submit" id="editSubmitBtn" class="flex-1 py-3 rounded-xl font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition btn-press">
-                        حفظ
+                    <button type="submit" id="editSubmitBtn" class="flex-1 py-4 rounded-xl font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition shadow-lg shadow-emerald-200">
+                        حفظ التعديلات
                     </button>
                 </div>
             </form>
@@ -345,22 +502,22 @@
     </div>
 
     <!-- مودال الحذف -->
-    <div id="deleteModal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50 p-4" onclick="closeDeleteModal(event)">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 text-center" onclick="event.stopPropagation()">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span class="text-2xl">🗑️</span>
+    <div id="deleteModal" class="fixed inset-0 modal-advanced hidden items-center justify-center z-50 p-4" onclick="closeDeleteModal(event)">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl animate-up" onclick="event.stopPropagation()">
+            <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             </div>
-            <h2 class="text-xl font-bold text-slate-800 mb-2">تأكيد الحذف</h2>
-            <p class="text-slate-600 mb-6">هل أنت متأكد من حذف هذه العملية؟<br>سيتم إعادة حساب الأرصدة</p>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">حذف العملية</h2>
+            <p class="text-slate-500 mb-6">هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء وسيتم إعادة حساب الأرصدة.</p>
             
             <input type="hidden" id="deleteId">
             
             <div class="flex gap-3">
-                <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
                     إلغاء
                 </button>
-                <button onclick="confirmDelete()" class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition btn-press">
-                    حذف
+                <button onclick="confirmDelete()" class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition shadow-lg shadow-red-200">
+                    نعم، احذف
                 </button>
             </div>
         </div>
@@ -380,7 +537,6 @@
             onValue,
             update,
             remove,
-            get,
             runTransaction
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -403,10 +559,13 @@
         let filteredTransactions = [];
         let displayedCount = 0;
         const ITEMS_PER_PAGE = 10;
+        let expandedCardId = null;
         
         let currentFilters = {
             type: 'all',
-            search: ''
+            search: '',
+            dateFrom: null,
+            dateTo: null
         };
 
         let balances = { cash: 0, bank: 0 };
@@ -454,6 +613,10 @@
                 updateClock();
                 setInterval(updateClock, 1000);
             });
+
+            // تعيين تواريخ افتراضية
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateTo').value = today;
         }
 
         // ==========================================
@@ -498,8 +661,6 @@
             const now = new Date();
             document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
             document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('currentDateBadge').textContent = '📅 ' + now.toLocaleDateString('ar-SA', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            document.getElementById('currentUID').textContent = 'UID: ' + Date.now().toString(36).toUpperCase().slice(-6);
         }
 
         // ==========================================
@@ -522,16 +683,30 @@
         window.setTypeFilter = function(type) {
             currentFilters.type = type;
             
-            document.querySelectorAll('.filter-btn').forEach(btn => {
+            document.querySelectorAll('.filter-pill').forEach(btn => {
                 const isActive = btn.dataset.type === type;
                 btn.classList.toggle('active', isActive);
-                btn.classList.toggle('bg-emerald-500', isActive);
-                btn.classList.toggle('text-white', isActive);
-                btn.classList.toggle('bg-slate-100', !isActive);
-                btn.classList.toggle('text-slate-600', !isActive);
+                
+                if (isActive) {
+                    btn.classList.remove('bg-slate-100', 'bg-emerald-100', 'bg-red-100', 'bg-amber-100', 'bg-purple-100');
+                    btn.classList.remove('text-slate-600', 'text-emerald-700', 'text-red-700', 'text-amber-700', 'text-purple-700');
+                    btn.classList.add('bg-slate-800', 'text-white');
+                } else {
+                    btn.classList.remove('active', 'bg-slate-800', 'text-white');
+                    const colors = {
+                        all: ['bg-slate-100', 'text-slate-600'],
+                        sales: ['bg-emerald-100', 'text-emerald-700'],
+                        expenses: ['bg-red-100', 'text-red-700'],
+                        transfer: ['bg-amber-100', 'text-amber-700'],
+                        safe: ['bg-purple-100', 'text-purple-700']
+                    };
+                    const [bg, text] = colors[btn.dataset.type] || colors.all;
+                    btn.classList.add(bg, text);
+                }
             });
             
             displayedCount = 0;
+            expandedCardId = null;
             applyFilters();
         };
 
@@ -541,11 +716,18 @@
             searchTimeout = setTimeout(() => {
                 currentFilters.search = document.getElementById('searchInput').value.toLowerCase();
                 displayedCount = 0;
+                expandedCardId = null;
                 applyFilters();
             }, 300);
         };
 
-        function applyFilters() {
+        window.applyFilters = function() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            
+            currentFilters.dateFrom = dateFrom ? new Date(dateFrom).getTime() : null;
+            currentFilters.dateTo = dateTo ? new Date(dateTo).setHours(23, 59, 59, 999) : null;
+
             filteredTransactions = allTransactions.filter(tx => {
                 // فلتر النوع
                 if (currentFilters.type !== 'all') {
@@ -553,6 +735,10 @@
                     if (txType === 'shopExpense' || txType === 'personalExpense') txType = 'expenses';
                     if (currentFilters.type !== txType) return false;
                 }
+
+                // فلتر التاريخ
+                if (currentFilters.dateFrom && tx.timestamp < currentFilters.dateFrom) return false;
+                if (currentFilters.dateTo && tx.timestamp > currentFilters.dateTo) return false;
 
                 // فلتر البحث
                 if (currentFilters.search) {
@@ -572,10 +758,26 @@
             });
 
             renderTransactions();
-        }
+        };
+
+        window.resetFilters = function() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('dateFrom').value = '';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateTo').value = today;
+            
+            currentFilters = {
+                type: 'all',
+                search: '',
+                dateFrom: null,
+                dateTo: null
+            };
+            
+            setTypeFilter('all');
+        };
 
         // ==========================================
-        // عرض العمليات مع التحميل التدريجي
+        // عرض العمليات المتقدم
         // ==========================================
 
         function renderTransactions() {
@@ -587,9 +789,9 @@
 
             if (filteredTransactions.length === 0) {
                 container.innerHTML = `
-                    <div class="p-8 text-center text-slate-400">
-                        <div class="text-4xl mb-2">📭</div>
-                        <p>لا توجد نتائج</p>
+                    <div class="text-center py-12 text-slate-400">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                        <p class="font-semibold">لا توجد نتائج</p>
                     </div>
                 `;
                 loadMoreBtn.classList.add('hidden');
@@ -600,12 +802,17 @@
             const toShow = filteredTransactions.slice(0, ITEMS_PER_PAGE);
             displayedCount = toShow.length;
             
-            container.innerHTML = toShow.map(tx => createTransactionHTML(tx)).join('');
+            container.innerHTML = toShow.map((tx, index) => createTransactionHTML(tx, index)).join('');
             
-            // إظهار زر المزيد إذا كان هناك المزيد
+            // إعادة توسيع البطاقة المفتوحة سابقاً إن وجدت
+            if (expandedCardId) {
+                const card = document.querySelector(`[data-id="${expandedCardId}"]`);
+                if (card) card.classList.add('expanded');
+            }
+            
             if (displayedCount < filteredTransactions.length) {
                 loadMoreBtn.classList.remove('hidden');
-                loadMoreBtn.textContent = `عرض المزيد (${filteredTransactions.length - displayedCount} متبقي)`;
+                loadMoreBtn.innerHTML = `عرض المزيد <span class="text-slate-400">(${filteredTransactions.length - displayedCount})</span>`;
             } else {
                 loadMoreBtn.classList.add('hidden');
             }
@@ -622,98 +829,140 @@
                 return;
             }
             
-            // إضافة العناصر الجديدة
-            const newHTML = nextBatch.map(tx => createTransactionHTML(tx)).join('');
+            const newHTML = nextBatch.map((tx, index) => createTransactionHTML(tx, displayedCount + index)).join('');
             container.insertAdjacentHTML('beforeend', newHTML);
             
             displayedCount += nextBatch.length;
             
-            // تحديث زر المزيد
             if (displayedCount < filteredTransactions.length) {
-                loadMoreBtn.textContent = `عرض المزيد (${filteredTransactions.length - displayedCount} متبقي)`;
+                loadMoreBtn.innerHTML = `عرض المزيد <span class="text-slate-400">(${filteredTransactions.length - displayedCount})</span>`;
             } else {
                 loadMoreBtn.classList.add('hidden');
             }
         };
 
-        function createTransactionHTML(tx) {
+        function createTransactionHTML(tx, index) {
             const todayStart = getTodayStart();
             const isOld = tx.timestamp < todayStart;
+            const isExpanded = tx.id === expandedCardId;
             
-            let typeClass = '';
+            let cardClass = 'modern-card p-4 cursor-pointer ';
+            let typeIcon = '';
             let typeLabel = '';
             let amountClass = '';
             let amountText = '';
             
             switch(tx.type) {
                 case 'sales':
-                    typeClass = 'type-sales';
-                    typeLabel = 'مبيعات';
+                    cardClass += 'card-sales';
+                    typeIcon = '💰';
+                    typeLabel = tx.payment === 'آجل' ? 'مبيعات آجلة' : 'مبيعات';
                     amountClass = 'text-emerald-600';
-                    amountText = formatNumber(Math.abs(tx.amount)) + ' ج';
+                    amountText = '+' + formatNumber(Math.abs(tx.amount)) + ' ج';
                     break;
                 case 'shopExpense':
-                case 'personalExpense':
-                    typeClass = 'type-expense';
-                    typeLabel = tx.type === 'shopExpense' ? 'مصروف محل' : 'مصروف شخصي';
+                    cardClass += 'card-expense';
+                    typeIcon = '💸';
+                    typeLabel = 'مصروف محل';
                     amountClass = 'text-red-600';
-                    amountText = formatNumber(Math.abs(tx.amount)) + ' ج';
+                    amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج';
+                    break;
+                case 'personalExpense':
+                    cardClass += 'card-expense';
+                    typeIcon = '👤';
+                    typeLabel = 'مصروف شخصي';
+                    amountClass = 'text-red-600';
+                    amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج';
                     break;
                 case 'transfer':
-                    typeClass = 'type-transfer';
+                    cardClass += 'card-transfer';
+                    typeIcon = '🔄';
                     typeLabel = 'تبديل';
                     amountClass = 'text-amber-600';
-                    amountText = formatNumber(tx.transferAmount || 0) + ' ج';
+                    amountText = '⇄ ' + formatNumber(tx.transferAmount || 0) + ' ج';
                     break;
                 case 'bankFee':
-                    typeClass = 'type-bank';
+                    cardClass += 'card-bank';
+                    typeIcon = '💳';
                     typeLabel = 'دمغة بنكك';
                     amountClass = 'text-blue-600';
-                    amountText = formatNumber(Math.abs(tx.amount)) + ' ج';
+                    amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج';
                     break;
                 default:
+                    cardClass += 'card-safe';
+                    typeIcon = '🏦';
                     typeLabel = tx.type;
                     amountText = formatNumber(Math.abs(tx.amount || 0)) + ' ج';
             }
             
-            if (tx.payment === 'آجل') {
-                typeLabel = 'مبيعات آجلة';
-            }
+            if (isExpanded) cardClass += ' expanded';
 
+            // تأخير ظهور البطاقة للأنيميشن
+            const delay = index < 10 ? index * 50 : 0;
+            
             return `
-                <div class="transaction-row p-4 ${typeClass} fade-in">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <div class="font-bold text-slate-800 mb-1 flex items-center gap-2">
-                                ${typeLabel}
+                <div class="${cardClass} animate-up" data-id="${tx.id}" style="animation-delay: ${delay}ms" onclick="toggleCard('${tx.id}')">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-2xl">${typeIcon}</span>
+                                <span class="font-bold text-slate-800">${typeLabel}</span>
                                 ${isOld ? '<span class="old-date-badge">قديم</span>' : ''}
                             </div>
-                            <div class="text-xs text-slate-500 flex items-center gap-2">
-                                <span class="operation-number bg-slate-100 px-2 py-1 rounded">#${tx.operationNumber || '---'}</span>
+                            
+                            <div class="flex items-center gap-3 text-xs text-slate-500 mb-2">
+                                <span class="op-badge px-2 py-1 rounded">#${tx.operationNumber || '---'}</span>
                                 <span>${formatDate(tx.timestamp)}</span>
-                                <span>${formatTime(tx.timestamp)}</span>
+                                <span class="px-2 py-0.5 rounded-full ${tx.calculatedPeriod === 'صباحية' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}">
+                                    ${tx.calculatedPeriod === 'صباحية' ? '☀️' : '🌙'} ${tx.calculatedPeriod}
+                                </span>
                             </div>
+                            
+                            ${tx.dept ? `<div class="text-sm text-slate-600 mb-1">${tx.dept}</div>` : ''}
+                            ${tx.title ? `<div class="text-sm text-slate-500 line-clamp-1">${tx.title}</div>` : ''}
                         </div>
-                        <div class="text-left">
-                            <div class="font-bold ${amountClass}">${amountText}</div>
-                            ${tx.payment ? `<div class="text-xs text-slate-400">${tx.payment}</div>` : ''}
+                        
+                        <div class="text-left mr-4">
+                            <div class="font-bold text-lg amount-highlight ${amountClass}">${amountText}</div>
+                            ${tx.payment && tx.type !== 'transfer' ? `<div class="text-xs text-slate-400 mt-1">${tx.payment}</div>` : ''}
+                            ${tx.from && tx.to ? `<div class="text-xs text-slate-400 mt-1">${tx.from} → ${tx.to}</div>` : ''}
                         </div>
                     </div>
                     
-                    ${tx.dept ? `<div class="text-sm text-slate-600 mb-2">${tx.dept}</div>` : ''}
-                    ${tx.title ? `<div class="text-sm text-slate-500 mb-2">${tx.title}</div>` : ''}
-                    
-                    <div class="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-                        <button onclick="openEditModal('${tx.id}')" class="flex-1 py-2 rounded-lg bg-blue-100 text-blue-700 text-sm font-semibold hover:bg-blue-200 transition btn-press">
+                    <!-- أزرار التحكم (تظهر عند التوسيع) -->
+                    <div class="card-actions grid grid-cols-2 gap-3">
+                        <button onclick="event.stopPropagation(); openEditModal('${tx.id}')" class="py-3 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 transition flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             تعديل
                         </button>
-                        <button onclick="openDeleteModal('${tx.id}')" class="flex-1 py-2 rounded-lg bg-red-100 text-red-700 text-sm font-semibold hover:bg-red-200 transition btn-press">
+                        <button onclick="event.stopPropagation(); openDeleteModal('${tx.id}')" class="py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             حذف
                         </button>
                     </div>
                 </div>
             `;
         }
+
+        window.toggleCard = function(id) {
+            const card = document.querySelector(`[data-id="${id}"]`);
+            if (!card) return;
+            
+            // إغلاق البطاقة السابقة
+            if (expandedCardId && expandedCardId !== id) {
+                const oldCard = document.querySelector(`[data-id="${expandedCardId}"]`);
+                if (oldCard) oldCard.classList.remove('expanded');
+            }
+            
+            // تبديل الحالة
+            if (expandedCardId === id) {
+                card.classList.remove('expanded');
+                expandedCardId = null;
+            } else {
+                card.classList.add('expanded');
+                expandedCardId = id;
+            }
+        };
 
         // ==========================================
         // التعديل
@@ -742,7 +991,10 @@
             document.getElementById('editDateTime').value = date.toISOString().slice(0, 16);
             
             onEditTypeChange();
-            document.getElementById('editModal').classList.add('active');
+            
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
         };
 
@@ -761,8 +1013,11 @@
         };
 
         window.closeEditModal = function(e) {
-            if (e && e.target !== e.currentTarget && e.target.id !== 'editModal') return;
-            document.getElementById('editModal').classList.remove('active');
+            if (e && e.target !== e.currentTarget && !e.target.closest('.modal-content-advanced')) return;
+            
+            const modal = document.getElementById('editModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
             document.body.style.overflow = '';
         };
 
@@ -770,8 +1025,9 @@
             e.preventDefault();
             
             const btn = document.getElementById('editSubmitBtn');
+            const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.classList.add('btn-disabled');
+            btn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري الحفظ...';
             
             try {
                 const id = document.getElementById('editId').value;
@@ -784,7 +1040,6 @@
                 const newDept = document.getElementById('editDept').value;
                 const newNote = document.getElementById('editNote').value;
                 
-                // إعادة حساب الأرصدة
                 await recalculateBalances(oldTx, {
                     type: newType,
                     amount: newType === 'transfer' ? 0 : (newType === 'sales' ? newAmount : -newAmount),
@@ -799,13 +1054,15 @@
                 });
                 
                 closeEditModal();
-                alert('تم التعديل بنجاح');
+                
+                // إغلاق البطاقة الموسعة
+                expandedCardId = null;
             } catch (error) {
                 console.error('Error:', error);
                 alert('حدث خطأ: ' + error.message);
             } finally {
                 btn.disabled = false;
-                btn.classList.remove('btn-disabled');
+                btn.innerHTML = originalText;
             }
         };
 
@@ -815,12 +1072,17 @@
 
         window.openDeleteModal = function(id) {
             document.getElementById('deleteId').value = id;
-            document.getElementById('deleteModal').classList.add('active');
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         };
 
         window.closeDeleteModal = function(e) {
-            if (e && e.target !== e.currentTarget && e.target.id !== 'deleteModal') return;
-            document.getElementById('deleteModal').classList.remove('active');
+            if (e && e.target !== e.currentTarget && !e.target.closest('.bg-white')) return;
+            
+            const modal = document.getElementById('deleteModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         };
 
         window.confirmDelete = async function() {
@@ -833,13 +1095,9 @@
             }
             
             try {
-                // إعادة حساب الأرصدة (عكس العملية)
                 await reverseTransaction(tx);
-                
-                // حذف العملية
                 await remove(ref(database, `transactions/${id}`));
                 
-                // حذف الدمغة المرتبطة إن وجدت
                 if (tx.bankFee && tx.bankFee > 0) {
                     const feeTx = allTransactions.find(t => t.linkedTo === id && t.type === 'bankFee');
                     if (feeTx) {
@@ -848,7 +1106,7 @@
                 }
                 
                 closeDeleteModal();
-                alert('تم الحذف بنجاح');
+                expandedCardId = null;
             } catch (error) {
                 console.error('Error:', error);
                 alert('حدث خطأ: ' + error.message);
@@ -941,6 +1199,40 @@
                 return { cash, bank };
             });
         }
+
+        // ==========================================
+        // التصدير
+        // ==========================================
+
+        window.exportToExcel = function() {
+            const headers = ['رقم العملية', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل', 'الحالة'];
+            
+            const rows = filteredTransactions.map(tx => {
+                const isOld = tx.timestamp < getTodayStart();
+                
+                return [
+                    tx.operationNumber || tx.id,
+                    formatDate(tx.timestamp),
+                    formatTime(tx.timestamp),
+                    tx.type,
+                    tx.calculatedPeriod,
+                    tx.dept || '-',
+                    tx.payment || '-',
+                    tx.amount || tx.transferAmount || 0,
+                    tx.title || '',
+                    isOld ? 'تاريخ قديم' : 'اليوم'
+                ];
+            });
+            
+            // إنشاء CSV مع BOM للعربية
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const date = new Date().toISOString().split('T')[0];
+            link.href = URL.createObjectURL(blob);
+            link.download = `سجلات_${date}.csv`;
+            link.click();
+        };
 
     </script>
 </body>
