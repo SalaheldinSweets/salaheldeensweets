@@ -569,6 +569,8 @@
         const database = getDatabase(app);
 
         let allTransactions = [];
+        let allDebts = [];
+        let combinedRecords = [];
         let filteredTransactions = [];
         let displayedCount = 0;
         const ITEMS_PER_PAGE = 10;
@@ -601,34 +603,77 @@
         };
 
         function initApp() {
+            // Listen to balances
             onValue(ref(database, 'balances'), (snap) => {
                 balances = snap.val() || { cash: 0, bank: 0 };
             });
 
+            // Listen to transactions
             onValue(ref(database, 'transactions'), (snap) => {
                 const txs = [];
                 snap.forEach((child) => {
                     const tx = child.val();
                     txs.push({ 
                         id: child.key,
+                        source: 'transactions',
                         ...tx,
                         calculatedPeriod: calculatePeriod(tx.timestamp)
                     });
                 });
-
                 allTransactions = txs;
+                combineRecords();
+            });
 
-                // ترتيب حسب الزمن (timestamp) تنازليًا - الأحدث فوق
-                allTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-                applyFilters();
-                updateClock();
-                setInterval(updateClock, 1000);
+            // Listen to debts - إضافة مستمع للديون
+            onValue(ref(database, 'debts'), (snap) => {
+                const debts = [];
+                if (snap.exists()) {
+                    snap.forEach((child) => {
+                        const debt = child.val();
+                        debts.push({ 
+                            id: child.key,
+                            source: 'debts',
+                            type: debt.status === 'paid' ? 'debt_paid' : 'debt_pending',
+                            title: debt.note || debt.dept || 'دين',
+                            amount: parseFloat(debt.amount) || 0,
+                            originalAmount: parseFloat(debt.originalAmount) || parseFloat(debt.amount) || 0,
+                            timestamp: debt.createdAt || Date.now(),
+                            uid: debt.uid || child.key.slice(-6),
+                            operationNumber: debt.operationNumber || child.key.slice(-6),
+                            customer: debt.customer,
+                            payment: debt.paidMethod || '-',
+                            dept: debt.dept,
+                            status: debt.status,
+                            paidAt: debt.paidAt,
+                            partialPayment: debt.partialPayment || 0,
+                            calculatedPeriod: calculatePeriod(debt.createdAt)
+                        });
+                    });
+                }
+                allDebts = debts;
+                combineRecords();
             });
 
             // تعيين تواريخ افتراضية
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('dateTo').value = today;
+            
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // دمج المعاملات والديون
+        function combineRecords() {
+            combinedRecords = [...allTransactions, ...allDebts];
+            
+            // ترتيب حسب الزمن (timestamp) تنازليًا - الأحدث فوق
+            combinedRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+            console.log('إجمالي السجلات:', combinedRecords.length);
+            console.log('المعاملات:', allTransactions.length);
+            console.log('الديون:', allDebts.length);
+            
+            applyFilters();
         }
 
         // ==========================================
@@ -740,12 +785,13 @@
             currentFilters.dateFrom = dateFrom ? new Date(dateFrom).getTime() : null;
             currentFilters.dateTo = dateTo ? new Date(dateTo).setHours(23, 59, 59, 999) : null;
 
-            filteredTransactions = allTransactions.filter(tx => {
+            filteredTransactions = combinedRecords.filter(tx => {
                 // فلتر النوع
                 if (currentFilters.type !== 'all') {
                     let txType = tx.type;
                     if (txType === 'shopExpense' || txType === 'personalExpense') txType = 'expenses';
-                    if (txType === 'debt_full_repayment' || txType === 'debt_partial_repayment') txType = 'debt';
+                    if (txType === 'debt_full_repayment' || txType === 'debt_partial_repayment' || 
+                        txType === 'debt_paid' || txType === 'debt_pending' || txType === 'debt') txType = 'debt';
                     if (currentFilters.type !== txType) return false;
                 }
 
@@ -916,6 +962,20 @@
                     amountClass = 'text-orange-600';
                     amountText = '+' + formatNumber(Math.abs(tx.amount)) + ' ج';
                     break;
+                case 'debt_paid':
+                    cardClass += 'card-debt';
+                    typeIcon = '✅';
+                    typeLabel = 'دين مسدد';
+                    amountClass = 'text-orange-600';
+                    amountText = formatNumber(tx.originalAmount || tx.amount) + ' ج';
+                    break;
+                case 'debt_pending':
+                    cardClass += 'card-debt';
+                    typeIcon = '📝';
+                    typeLabel = 'دين مستحق';
+                    amountClass = 'text-orange-600';
+                    amountText = formatNumber(tx.amount) + ' ج';
+                    break;
                 default:
                     cardClass += 'card-safe';
                     typeIcon = '🏦';
@@ -939,7 +999,7 @@
                             </div>
                             
                             <div class="flex items-center gap-3 text-xs text-slate-500 mb-2">
-                                <span class="op-badge px-2 py-1 rounded">#${tx.operationNumber || '---'}</span>
+                                <span class="op-badge px-2 py-1 rounded">#${tx.operationNumber || tx.uid || '---'}</span>
                                 <span>${formatDate(tx.timestamp)}</span>
                                 <span class="px-2 py-0.5 rounded-full ${tx.calculatedPeriod === 'صباحية' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}">
                                     ${tx.calculatedPeriod === 'صباحية' ? '☀️' : '🌙'} ${tx.calculatedPeriod}
@@ -998,14 +1058,14 @@
         // ==========================================
 
         window.openEditModal = function(id) {
-            const tx = allTransactions.find(t => t.id === id);
+            const tx = combinedRecords.find(t => t.id === id);
             if (!tx) return;
 
             document.getElementById('editId').value = id;
             document.getElementById('editOldType').value = tx.type;
             document.getElementById('editOldAmount').value = tx.amount || 0;
             document.getElementById('editOldPayment').value = tx.payment || 'كاش';
-            document.getElementById('editOpNumber').textContent = tx.operationNumber || '---';
+            document.getElementById('editOpNumber').textContent = tx.operationNumber || tx.uid || '---';
 
             const typeSelect = document.getElementById('editType');
             typeSelect.value = tx.type === 'shopExpense' || tx.type === 'personalExpense' ? tx.type : tx.type;
@@ -1061,7 +1121,7 @@
 
             try {
                 const id = document.getElementById('editId').value;
-                const oldTx = allTransactions.find(t => t.id === id);
+                const oldTx = combinedRecords.find(t => t.id === id);
 
                 const newType = document.getElementById('editType').value;
                 const newAmount = parseFloat(document.getElementById('editAmount').value) || 0;
@@ -1070,6 +1130,9 @@
                 const newDept = document.getElementById('editDept').value;
                 const newNote = document.getElementById('editNote').value;
 
+                // تحديد المصدر (transactions أو debts)
+                const source = oldTx.source || 'transactions';
+                
                 await recalculateBalances(oldTx, {
                     type: newType,
                     amount: newType === 'transfer' ? 0 : (newType === 'sales' ? newAmount : -newAmount),
@@ -1081,7 +1144,7 @@
                     dept: newDept,
                     title: newNote,
                     calculatedPeriod: calculatePeriod(newDateTime)
-                });
+                }, source);
 
                 closeEditModal();
 
@@ -1117,7 +1180,7 @@
 
         window.confirmDelete = async function() {
             const id = document.getElementById('deleteId').value;
-            const tx = allTransactions.find(t => t.id === id);
+            const tx = combinedRecords.find(t => t.id === id);
 
             if (!tx) {
                 closeDeleteModal();
@@ -1125,13 +1188,19 @@
             }
 
             try {
-                await reverseTransaction(tx);
-                await remove(ref(database, `transactions/${id}`));
+                const source = tx.source || 'transactions';
+                
+                if (source === 'debts') {
+                    await remove(ref(database, `debts/${id}`));
+                } else {
+                    await reverseTransaction(tx);
+                    await remove(ref(database, `transactions/${id}`));
 
-                if (tx.bankFee && tx.bankFee > 0) {
-                    const feeTx = allTransactions.find(t => t.linkedTo === id && t.type === 'bankFee');
-                    if (feeTx) {
-                        await remove(ref(database, `transactions/${feeTx.id}`));
+                    if (tx.bankFee && tx.bankFee > 0) {
+                        const feeTx = allTransactions.find(t => t.linkedTo === id && t.type === 'bankFee');
+                        if (feeTx) {
+                            await remove(ref(database, `transactions/${feeTx.id}`));
+                        }
                     }
                 }
 
@@ -1147,7 +1216,7 @@
         // إعادة حساب الأرصدة
         // ==========================================
 
-        async function recalculateBalances(oldTx, newTx) {
+        async function recalculateBalances(oldTx, newTx, source = 'transactions') {
             await runTransaction(ref(database, 'balances'), (currentBalances) => {
                 let { cash, bank } = currentBalances || { cash: 0, bank: 0 };
 
@@ -1200,7 +1269,7 @@
                 id: undefined
             };
 
-            await update(ref(database, `transactions/${oldTx.id}`), updates);
+            await update(ref(database, `${source}/${oldTx.id}`), updates);
         }
 
         async function reverseTransaction(tx) {
@@ -1235,13 +1304,13 @@
         // ==========================================
 
         window.exportToExcel = function() {
-            const headers = ['رقم العملية', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل', 'الحالة', 'الزبون'];
+            const headers = ['رقم العملية', 'التاريخ', 'الوقت', 'النوع', 'الفترة', 'القسم', 'الطريقة', 'المبلغ', 'التفاصيل', 'الحالة', 'الزبون', 'المصدر'];
 
             const rows = filteredTransactions.map(tx => {
                 const isOld = tx.timestamp < getTodayStart();
 
                 return [
-                    tx.operationNumber || tx.id,
+                    tx.operationNumber || tx.uid || tx.id,
                     formatDate(tx.timestamp),
                     formatTime(tx.timestamp),
                     tx.type,
@@ -1251,7 +1320,8 @@
                     tx.amount || tx.transferAmount || 0,
                     tx.title || '',
                     isOld ? 'متأخر' : 'اليوم',
-                    tx.customer || '-'
+                    tx.customer || '-',
+                    tx.source === 'debts' ? 'ديون' : 'معاملات'
                 ];
             });
 
