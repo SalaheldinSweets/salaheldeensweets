@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تصفية الوردية - مدير حسابات صلاح الدين</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: #f8fafc;
+            min-height: 100vh;
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+        }
+        
+        .btn-press:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .comparison-bar {
+            height: 12px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .comparison-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        
+        .comparison-marker {
+            position: absolute;
+            top: -4px;
+            width: 4px;
+            height: 20px;
+            background: #1e293b;
+            border-radius: 2px;
+            transform: translateX(-50%);
+        }
+        
+        .modal {
+            display: none;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid #667eea;
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .tab-inactive {
+            border-bottom: 3px solid transparent;
+            color: #64748b;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .variance-positive {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 2px solid #10b981;
+        }
+        
+        .variance-negative {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 2px solid #ef4444;
+        }
+        
+        .warning-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #ef4444;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: transform 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .warning-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .success-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #10b981;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: transform 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .success-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .editable-amount {
+            background: #f0f9ff;
+            border: 2px dashed #3b82f6;
+            cursor: text;
+        }
+        
+        .editable-amount:focus {
+            background: white;
+            border-style: solid;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- رسائل التنبيه -->
+    <div id="warningToast" class="warning-toast">⚠️ رسالة تحذير</div>
+    <div id="successToast" class="success-toast">✅ تم بنجاح</div>
+
+    <!-- التطبيق الرئيسي -->
+    <div class="app-container" id="app">
+        
+        <!-- الهيدر -->
+        <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg">
+            <div class="flex justify-between items-center mb-2">
+                <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-slate-700 transition">
+                    <span class="text-2xl">☰</span>
+                </button>
+                <h1 class="text-lg font-bold">🧮 تصفية الوردية</h1>
+                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">
+                    خروج
+                </button>
+            </div>
+            
+            <div class="text-center mt-4">
+                <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg">
+                    00:00:00
+                </div>
+                <div id="date" class="text-slate-300 text-sm mt-1">
+                    جاري التحميل...
+                </div>
+                <div class="text-xs text-emerald-400 mt-1" id="userEmail"></div>
+            </div>
+        </header>
+
+        <!-- القائمة الجانبية -->
+        <div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50" onclick="toggleSidebar()">
+            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
+                <div class="p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-lg">القائمة</h2>
+                        <button onclick="toggleSidebar()" class="text-2xl">&times;</button>
+                    </div>
+                </div>
+                <div class="p-4 space-y-2">
+                    <a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 text-slate-700 flex items-center gap-3">
+                        <span>🏠</span>
+                        <span>الرئيسية</span>
+                    </a>
+                    <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700">
+                        <span>📝</span>
+                        <span>الديون</span>
+                    </a>
+                    <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
+                        <span>🏦</span>
+                        <span>الصندوق الجانبي</span>
+                    </a>
+                    <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
+                        <span>📊</span>
+                        <span>التقارير</span>
+                    </a>
+                    <a href="shift.html" class="w-full text-right p-3 rounded-xl bg-purple-50 text-purple-700 font-semibold flex items-center gap-3">
+                        <span>🧮</span>
+                        <span>تصفية الوردية</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- تبويبات التنقل -->
+        <div class="bg-white shadow-sm sticky top-0 z-30">
+            <div class="flex justify-around">
+                <button onclick="switchTab('overview')" id="tab-overview" class="flex-1 py-3 text-sm tab-active">
+                    📊 الملخص
+                </button>
+                <button onclick="switchTab('comparison')" id="tab-comparison" class="flex-1 py-3 text-sm tab-inactive">
+                    ⚖️ المقارنة
+                </button>
+                <button onclick="switchTab('liabilities')" id="tab-liabilities" class="flex-1 py-3 text-sm tab-inactive">
+                    📋 الالتزامات
+                </button>
+            </div>
+        </div>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="p-4 space-y-4 pb-24" id="mainContent">
+            
+            <!-- تبويب الملخص -->
+            <div id="content-overview" class="space-y-4">
+                
+                <!-- بطاقة الموقف المالي -->
+                <div class="glass-card rounded-2xl p-4 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800 text-lg">💰 موقف اليوم</h3>
+                        <span id="dayStatus" class="status-badge bg-emerald-100 text-emerald-700">
+                            مفتوح
+                        </span>
+                    </div>
+
+                    <!-- الأرصدة الفعلية -->
+                    <div class="space-y-3 mb-4">
+                        <div class="flex justify-between items-center p-3 bg-emerald-50 rounded-xl">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">💵</span>
+                                <span class="font-semibold text-slate-700">الكاش الفعلي</span>
+                            </div>
+                            <span id="actualCash" class="text-xl font-bold text-emerald-700">0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">💳</span>
+                                <span class="font-semibold text-slate-700">البنك الفعلي</span>
+                            </div>
+                            <span id="actualBank" class="text-xl font-bold text-blue-700">0</span>
+                        </div>
+                    </div>
+
+                    <!-- ملخص الحركات -->
+                    <div class="bg-slate-50 rounded-xl p-3 space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">إجمالي المبيعات</span>
+                            <span id="summarySales" class="font-bold text-emerald-600">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">المصاريف الفعلية</span>
+                            <span id="summaryExpenses" class="font-bold text-red-600">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">الالتزامات المستحقة</span>
+                            <span id="summaryLiabilities" class="font-bold text-amber-600">0</span>
+                        </div>
+                        <div class="flex justify-between pt-2 border-t border-slate-200 font-bold">
+                            <span class="text-slate-800">الصافي المتوقع</span>
+                            <span id="summaryNet" class="text-slate-800">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- زر تقفيل اليوم -->
+                <button onclick="closeDay()" id="closeDayBtn" class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-2xl p-5 font-bold text-lg btn-press shadow-lg hover:from-purple-700 hover:to-purple-800 transition flex items-center justify-center gap-2">
+                    <span>🔒</span>
+                    <span>تقفيل يومية اليوم</span>
+                </button>
+
+            </div>
+
+            <!-- تبويب المقارنة (الجديد) -->
+            <div id="content-comparison" class="space-y-4 hidden">
+                
+                <!-- مقارنة الكاش -->
+                <div class="glass-card rounded-2xl p-4 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800 text-lg">💵 مقارنة الكاش</h3>
+                        <button onclick="editActual('cash')" class="text-sm text-blue-600 font-bold hover:text-blue-700">
+                            ✏️ تعديل الفعلي
+                        </button>
+                    </div>
+
+                    <!-- القيم -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-slate-100 rounded-xl p-3 text-center">
+                            <div class="text-xs text-slate-500 mb-1">الافتراضي (المحاسبي)</div>
+                            <div id="expectedCash" class="text-xl font-bold text-slate-700">0</div>
+                            <div class="text-xs text-slate-400">حسب السجل</div>
+                        </div>
+                        <div class="bg-emerald-50 rounded-xl p-3 text-center border-2 border-emerald-200">
+                            <div class="text-xs text-emerald-600 mb-1">الفعلي (الموجود)</div>
+                            <div id="comparisonCash" class="text-xl font-bold text-emerald-700">0</div>
+                            <div class="text-xs text-emerald-500">في الصندوق</div>
+                        </div>
+                    </div>
+
+                    <!-- شريط المقارنة -->
+                    <div class="mb-3">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-slate-600">نسبة التطابق</span>
+                            <span id="cashMatchPercent" class="font-bold text-slate-800">100%</span>
+                        </div>
+                        <div class="comparison-bar">
+                            <div id="cashMatchBar" class="comparison-fill bg-emerald-500" style="width: 100%"></div>
+                            <div id="cashMarker" class="comparison-marker" style="left: 100%"></div>
+                        </div>
+                    </div>
+
+                    <!-- الفرق -->
+                    <div id="cashVariance" class="variance-positive rounded-xl p-3 text-center">
+                        <div class="text-sm font-bold mb-1">الفرق</div>
+                        <div id="cashVarianceAmount" class="text-2xl font-bold">0</div>
+                        <div id="cashVarianceText" class="text-xs">مطابق تماماً ✅</div>
+                    </div>
+                </div>
+
+                <!-- مقارنة البنك -->
+                <div class="glass-card rounded-2xl p-4 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800 text-lg">💳 مقارنة البنك</h3>
+                        <button onclick="editActual('bank')" class="text-sm text-blue-600 font-bold hover:text-blue-700">
+                            ✏️ تعديل الفعلي
+                        </button>
+                    </div>
+
+                    <!-- القيم -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-slate-100 rounded-xl p-3 text-center">
+                            <div class="text-xs text-slate-500 mb-1">الافتراضي (المحاسبي)</div>
+                            <div id="expectedBank" class="text-xl font-bold text-slate-700">0</div>
+                            <div class="text-xs text-slate-400">حسب السجل</div>
+                        </div>
+                        <div class="bg-blue-50 rounded-xl p-3 text-center border-2 border-blue-200">
+                            <div class="text-xs text-blue-600 mb-1">الفعلي (الموجود)</div>
+                            <div id="comparisonBank" class="text-xl font-bold text-blue-700">0</div>
+                            <div class="text-xs text-blue-500">في الحساب</div>
+                        </div>
+                    </div>
+
+                    <!-- شريط المقارنة -->
+                    <div class="mb-3">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-slate-600">نسبة التطابق</span>
+                            <span id="bankMatchPercent" class="font-bold text-slate-800">100%</span>
+                        </div>
+                        <div class="comparison-bar">
+                            <div id="bankMatchBar" class="comparison-fill bg-blue-500" style="width: 100%"></div>
+                            <div id="bankMarker" class="comparison-marker" style="left: 100%"></div>
+                        </div>
+                    </div>
+
+                    <!-- الفرق -->
+                    <div id="bankVariance" class="variance-positive rounded-xl p-3 text-center">
+                        <div class="text-sm font-bold mb-1">الفرق</div>
+                        <div id="bankVarianceAmount" class="text-2xl font-bold">0</div>
+                        <div id="bankVarianceText" class="text-xs">مطابق تماماً ✅</div>
+                    </div>
+                </div>
+
+                <!-- ملخص المقارنة -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h3 class="font-bold text-slate-700 mb-3">📊 ملخص الفروقات</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                            <span class="text-slate-600">إجمالي الافتراضي</span>
+                            <span id="totalExpected" class="font-bold text-slate-800">0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                            <span class="text-slate-600">إجمالي الفعلي</span>
+                            <span id="totalActual" class="font-bold text-slate-800">0</span>
+                        </div>
+                        <div id="totalVarianceBox" class="flex justify-between items-center p-3 rounded-xl variance-positive">
+                            <span class="font-bold">الفرق الكلي</span>
+                            <span id="totalVariance" class="font-bold text-xl">0</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- تبويب الالتزامات -->
+            <div id="content-liabilities" class="space-y-4 hidden">
+                
+                <!-- الالتزامات الثابتة -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h3 class="font-bold text-slate-700 mb-3">📋 الالتزامات الأساسية</h3>
+                    <div id="fixedLiabilities" class="space-y-3">
+                        <!-- تُملأ ديناميكياً -->
+                    </div>
+                </div>
+
+                <!-- إضافة التزام حر -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h3 class="font-bold text-slate-700 mb-3">➕ إضافة التزام آخر</h3>
+                    <form id="customLiabilityForm" class="space-y-3" onsubmit="addCustomLiability(event)">
+                        <input type="text" id="customLiabilityName" 
+                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none" 
+                            placeholder="اسم الجهة..." required>
+                        <input type="text" id="customLiabilityAmount" 
+                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-purple-500 focus:outline-none" 
+                            placeholder="المبلغ..." oninput="formatNumberInput(this)" required>
+                        <button type="submit" class="w-full bg-purple-500 text-white rounded-xl p-3 font-bold btn-press hover:bg-purple-600 transition">
+                            ✅ إضافة
+                        </button>
+                    </form>
+                </div>
+
+                <!-- الالتزامات المضافة -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h3 class="font-bold text-slate-700 mb-3">📝 التزامات إضافية</h3>
+                    <div id="customLiabilitiesList" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar">
+                        <div class="text-center text-slate-400 py-4">لا توجد التزامات إضافية</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+        <!-- شريط التنقل السفلي -->
+        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
+            <div class="flex justify-around items-center">
+                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏠</span>
+                    <span class="text-xs mt-1">الرئيسية</span>
+                </a>
+                <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">📝</span>
+                    <span class="text-xs mt-1">الديون</span>
+                </a>
+                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">🏦</span>
+                    <span class="text-xs mt-1">الجانبي</span>
+                </a>
+                <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400">
+                    <span class="text-xl">📊</span>
+                    <span class="text-xs mt-1">التقارير</span>
+                </a>
+                <a href="shift.html" class="flex flex-col items-center p-2 text-purple-600">
+                    <span class="text-xl">🧮</span>
+                    <span class="text-xs mt-1 font-semibold">الوردية</span>
+                </a>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- مودال تعديل الفعلي -->
+    <div id="editActualModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('editActual')">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-slate-800">✏️ تعديل الرصيد الفعلي</h2>
+                <button onclick="closeModal('editActual')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <form id="editActualForm" class="space-y-4" onsubmit="saveActualBalance(event)">
+                <input type="hidden" id="editActualType">
+                
+                <div class="text-center mb-4">
+                    <div id="editActualLabel" class="text-lg font-bold text-slate-700">الكاش الفعلي</div>
+                    <div class="text-sm text-slate-400">أدخل المبلغ الموجود فعلياً في الصندوق</div>
+                </div>
+
+                <div>
+                    <input type="text" id="editActualAmount" 
+                        class="w-full border-2 border-blue-200 rounded-xl p-4 text-2xl text-center font-bold focus:border-blue-500 focus:outline-none bg-blue-50" 
+                        placeholder="0" oninput="formatNumberInput(this)" required>
+                </div>
+
+                <div class="bg-amber-50 rounded-xl p-3 text-sm text-amber-700">
+                    <div class="font-semibold mb-1">⚠️ تنبيه</div>
+                    <div>تعديل هذا المبلغ سيؤثر على حساب الفرق في المقارنة فقط، ولن يغير الأرصدة الفعلية في النظام.</div>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-blue-600 transition">
+                    💾 حفظ
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال تسديد التزام -->
+    <div id="payLiabilityModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('payLiability')">
+        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-purple-800">💵 تسديد التزام</h2>
+                <button onclick="closeModal('payLiability')" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+
+            <form id="payLiabilityForm" class="space-y-4" onsubmit="confirmPayLiability(event)">
+                <input type="hidden" id="payLiabilityKey">
+                
+                <div class="bg-purple-50 rounded-xl p-4 text-center mb-4">
+                    <div id="payLiabilityName" class="text-lg font-bold text-purple-800 mb-1">---</div>
+                    <div class="text-sm text-purple-600">المبلغ المستحق</div>
+                    <div id="payLiabilityAmountDisplay" class="text-2xl font-bold text-purple-700">0</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">المبلغ المسدد</label>
+                    <input type="text" id="payLiabilityInput" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-purple-500 focus:outline-none" 
+                        placeholder="0" oninput="formatNumberInput(this)" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="pay-method-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="cash" onclick="selectPayMethod(this)">
+                            <span class="text-2xl">💵</span>
+                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
+                        </button>
+                        <button type="button" class="pay-method-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="bank" onclick="selectPayMethod(this)">
+                            <span class="text-2xl">💳</span>
+                            <div class="text-sm mt-1">بنكك</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="payLiabilityMethod" value="cash">
+                </div>
+
+                <button type="submit" class="w-full bg-purple-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-purple-600 transition">
+                    ✅ تأكيد التسديد
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase & App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged,
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getDatabase, 
+            ref, 
+            set, 
+            push, 
+            onValue, 
+            update, 
+            get
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+            authDomain: "salahsweetmanage.firebaseapp.com",
+            databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+            projectId: "salahsweetmanage",
+            storageBucket: "salahsweetmanage.firebasestorage.app",
+            messagingSenderId: "126049780562",
+            appId: "1:126049780562:web:147daa036e56273263308b",
+            measurementId: "G-E7FLGBQ397"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        let currentUser = null;
+        let balances = { cash: 0, bank: 0 };
+        let todayStats = { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+        let actualBalances = { cash: 0, bank: 0 };
+        
+        // الالتزامات الثابتة
+        const FIXED_LIABILITIES = [
+            { key: 'factory', name: '🏭 المصنع', defaultAmount: 0 },
+            { key: 'kassah', name: '🚚 الكساح', defaultAmount: 0 },
+            { key: 'imran', name: '👤 عمران', defaultAmount: 0 },
+            { key: 'oil', name: '🛢️ الدهن', defaultAmount: 0 }
+        ];
+        
+        let liabilities = {};
+        let customLiabilities = [];
+        let currentTab = 'overview';
+
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+
+        window.formatNumber = function(num) {
+            if (num === null || num === undefined || isNaN(num)) return '0';
+            return parseInt(num).toLocaleString('en-US');
+        };
+
+        window.formatNumberInput = function(input) {
+            let value = input.value.replace(/[^\d]/g, '');
+            if (value) {
+                input.value = parseInt(value).toLocaleString('en-US');
+            } else {
+                input.value = '';
+            }
+        };
+
+        window.parseFormattedNumber = function(inputId) {
+            const value = document.getElementById(inputId).value.replace(/,/g, '');
+            return parseFloat(value) || 0;
+        };
+
+        window.showWarning = function(message) {
+            const toast = document.getElementById('warningToast');
+            toast.textContent = '⚠️ ' + message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        };
+
+        window.showSuccess = function(message) {
+            const toast = document.getElementById('successToast');
+            toast.textContent = '✅ ' + message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        };
+
+        // ==========================================
+        // DATE LOGIC
+        // ==========================================
+
+        function getTodayKey() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        // ==========================================
+        // AUTHENTICATION
+        // ==========================================
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            if (!user.emailVerified) {
+                alert('⚠️ يرجى توثيق حسابك أولاً');
+                signOut(auth);
+                return;
+            }
+            
+            currentUser = user;
+            document.getElementById('userEmail').textContent = '👤 ' + user.email;
+            initApp();
+        });
+
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        };
+
+        // ==========================================
+        // APP INITIALIZATION
+        // ==========================================
+
+        function initApp() {
+            const todayKey = getTodayKey();
+
+            // Listen to balances
+            onValue(ref(database, 'balances'), (snap) => {
+                balances = snap.val() || { cash: 0, bank: 0 };
+                document.getElementById('actualCash').textContent = formatNumber(balances.cash);
+                document.getElementById('actualBank').textContent = formatNumber(balances.bank);
+                updateComparison();
+                updateSummary();
+            });
+
+            // Listen to today's stats
+            onValue(ref(database, 'stats/today'), (snap) => {
+                todayStats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
+                updateSummary();
+                updateComparison();
+            });
+
+            // Listen to actual balances (for comparison)
+            onValue(ref(database, 'shift/actualBalances'), (snap) => {
+                actualBalances = snap.val() || { cash: balances.cash, bank: balances.bank };
+                updateComparison();
+            });
+
+            // Listen to fixed liabilities
+            onValue(ref(database, 'liabilities/fixed'), (snap) => {
+                const data = snap.val() || {};
+                liabilities = {};
+                FIXED_LIABILITIES.forEach(fixed => {
+                    liabilities[fixed.key] = {
+                        ...fixed,
+                        amount: data[fixed.key]?.amount || 0,
+                        paid: data[fixed.key]?.paid || 0
+                    };
+                });
+                renderFixedLiabilities();
+                updateSummary();
+            });
+
+            // Listen to custom liabilities
+            onValue(ref(database, 'liabilities/custom'), (snap) => {
+                const data = snap.val() || {};
+                customLiabilities = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+                renderCustomLiabilities();
+                updateSummary();
+            });
+
+            // Initialize fixed liabilities if not exist
+            get(ref(database, 'liabilities/fixed')).then(snap => {
+                if (!snap.exists()) {
+                    const initial = {};
+                    FIXED_LIABILITIES.forEach(f => {
+                        initial[f.key] = { amount: 0, paid: 0 };
+                    });
+                    set(ref(database, 'liabilities/fixed'), initial);
+                }
+            });
+
+            // Start clock
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+        }
+
+        // ==========================================
+        // COMPARISON LOGIC
+        // ==========================================
+
+        function updateComparison() {
+            // Calculate expected (from records)
+            const expectedCash = balances.cash;
+            const expectedBank = balances.bank;
+            
+            // Get actual (user input or default to expected)
+            const actualCash = actualBalances.cash || expectedCash;
+            const actualBank = actualBalances.bank || expectedBank;
+
+            // Update display
+            document.getElementById('expectedCash').textContent = formatNumber(expectedCash);
+            document.getElementById('expectedBank').textContent = formatNumber(expectedBank);
+            document.getElementById('comparisonCash').textContent = formatNumber(actualCash);
+            document.getElementById('comparisonBank').textContent = formatNumber(actualBank);
+
+            // Calculate variances
+            const cashVariance = actualCash - expectedCash;
+            const bankVariance = actualBank - expectedBank;
+            const totalVariance = cashVariance + bankVariance;
+
+            // Update cash variance display
+            updateVarianceDisplay('cash', cashVariance, expectedCash);
+            updateVarianceDisplay('bank', bankVariance, expectedBank);
+
+            // Update totals
+            document.getElementById('totalExpected').textContent = formatNumber(expectedCash + expectedBank);
+            document.getElementById('totalActual').textContent = formatNumber(actualCash + actualBank);
+            document.getElementById('totalVariance').textContent = formatNumber(Math.abs(totalVariance));
+            
+            const totalBox = document.getElementById('totalVarianceBox');
+            if (totalVariance === 0) {
+                totalBox.className = 'flex justify-between items-center p-3 rounded-xl variance-positive';
+            } else if (totalVariance > 0) {
+                totalBox.className = 'flex justify-between items-center p-3 rounded-xl variance-positive';
+                document.getElementById('totalVariance').textContent = '+' + formatNumber(totalVariance) + ' (فائض)';
+            } else {
+                totalBox.className = 'flex justify-between items-center p-3 rounded-xl variance-negative';
+                document.getElementById('totalVariance').textContent = formatNumber(totalVariance) + ' (عجز)';
+            }
+        }
+
+        function updateVarianceDisplay(type, variance, expected) {
+            const amountEl = document.getElementById(type + 'VarianceAmount');
+            const textEl = document.getElementById(type + 'VarianceText');
+            const boxEl = document.getElementById(type + 'Variance');
+            const barEl = document.getElementById(type + 'MatchBar');
+            const percentEl = document.getElementById(type + 'MatchPercent');
+            const markerEl = document.getElementById(type + 'Marker');
+
+            amountEl.textContent = formatNumber(Math.abs(variance));
+
+            if (variance === 0) {
+                boxEl.className = 'variance-positive rounded-xl p-3 text-center';
+                textEl.textContent = 'مطابق تماماً ✅';
+                percentEl.textContent = '100%';
+                barEl.style.width = '100%';
+                barEl.className = 'comparison-fill bg-emerald-500';
+                markerEl.style.left = '100%';
+            } else if (variance > 0) {
+                boxEl.className = 'variance-positive rounded-xl p-3 text-center';
+                textEl.textContent = 'فائض (أكثر من المتوقع) 📈';
+                const matchPercent = expected > 0 ? Math.round((expected / (expected + variance)) * 100) : 0;
+                percentEl.textContent = matchPercent + '%';
+                barEl.style.width = '100%';
+                barEl.className = 'comparison-fill bg-emerald-400';
+                markerEl.style.left = Math.min(100, ((expected + variance) / expected) * 50) + '%';
+            } else {
+                boxEl.className = 'variance-negative rounded-xl p-3 text-center';
+                textEl.textContent = 'عجز (أقل من المتوقع) 📉';
+                const actual = expected + variance;
+                const matchPercent = expected > 0 ? Math.round((actual / expected) * 100) : 0;
+                percentEl.textContent = matchPercent + '%';
+                barEl.style.width = matchPercent + '%';
+                barEl.className = 'comparison-fill bg-red-500';
+                markerEl.style.left = matchPercent + '%';
+            }
+        }
+
+        // ==========================================
+        // SUMMARY LOGIC
+        // ==========================================
+
+        function updateSummary() {
+            const totalLiabilities = Object.values(liabilities).reduce((sum, l) => sum + (l.amount - l.paid), 0) +
+                customLiabilities.reduce((sum, l) => sum + l.amount, 0);
+
+            document.getElementById('summarySales').textContent = formatNumber(todayStats.sales || 0);
+            document.getElementById('summaryExpenses').textContent = formatNumber((todayStats.shopExpenses || 0) + (todayStats.personalExpenses || 0));
+            document.getElementById('summaryLiabilities').textContent = formatNumber(totalLiabilities);
+            
+            const net = (todayStats.sales || 0) - (todayStats.shopExpenses || 0) - (todayStats.personalExpenses || 0);
+            document.getElementById('summaryNet').textContent = formatNumber(net);
+        }
+
+        // ==========================================
+        // UI FUNCTIONS
+        // ==========================================
+
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('sidebarContent');
+            
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('translate-x-full'), 10);
+            } else {
+                content.classList.add('translate-x-full');
+                setTimeout(() => sidebar.classList.add('hidden'), 300);
+            }
+        };
+
+        window.switchTab = function(tab) {
+            currentTab = tab;
+            
+            ['overview', 'comparison', 'liabilities'].forEach(t => {
+                const btn = document.getElementById('tab-' + t);
+                const content = document.getElementById('content-' + t);
+                
+                if (t === tab) {
+                    btn.classList.remove('tab-inactive');
+                    btn.classList.add('tab-active');
+                    content.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('tab-active');
+                    btn.classList.add('tab-inactive');
+                    content.classList.add('hidden');
+                }
+            });
+        };
+
+        window.openModal = function(type) {
+            const modal = document.getElementById(type + 'Modal');
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        window.closeModal = function(type) {
+            const modal = document.getElementById(type + 'Modal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+                
+                const form = document.getElementById(type + 'Form');
+                if (form) form.reset();
+            }
+        };
+
+        window.selectPayMethod = function(btn) {
+            document.querySelectorAll('.pay-method-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+                b.classList.add('border-slate-200');
+            });
+            const isCash = btn.dataset.value === 'cash';
+            btn.classList.remove('border-slate-200');
+            btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+            document.getElementById('payLiabilityMethod').value = btn.dataset.value;
+        };
+
+        // ==========================================
+        // EDIT ACTUAL BALANCE
+        // ==========================================
+
+        window.editActual = function(type) {
+            document.getElementById('editActualType').value = type;
+            document.getElementById('editActualLabel').textContent = type === 'cash' ? 'الكاش الفعلي' : 'البنك الفعلي';
+            document.getElementById('editActualAmount').value = formatNumber(actualBalances[type] || balances[type]);
+            openModal('editActual');
+        };
+
+        window.saveActualBalance = async function(e) {
+            e.preventDefault();
+            
+            const type = document.getElementById('editActualType').value;
+            const amount = parseFormattedNumber('editActualAmount');
+            
+            await update(ref(database, 'shift/actualBalances'), {
+                [type]: amount
+            });
+
+            closeModal('editActual');
+            showSuccess('تم تحديث الرصيد الفعلي');
+        };
+
+        // ==========================================
+        // FIXED LIABILITIES
+        // ==========================================
+
+        function renderFixedLiabilities() {
+            const container = document.getElementById('fixedLiabilities');
+            
+            container.innerHTML = FIXED_LIABILITIES.map(l => {
+                const data = liabilities[l.key] || { amount: 0, paid: 0 };
+                const remaining = data.amount - data.paid;
+                
+                return `
+                    <div class="bg-slate-50 rounded-xl p-3 border-r-4 ${remaining > 0 ? 'border-amber-500' : 'border-emerald-500'}">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-slate-700">${l.name}</span>
+                            <span class="text-lg font-bold ${remaining > 0 ? 'text-amber-700' : 'text-emerald-700'}">
+                                ${formatNumber(remaining)}
+                            </span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editLiabilityAmount('${l.key}')" class="flex-1 bg-slate-200 text-slate-700 rounded-lg py-2 text-sm font-bold hover:bg-slate-300 transition">
+                                ✏️ تعديل المبلغ
+                            </button>
+                            ${remaining > 0 ? `
+                            <button onclick="payLiability('${l.key}', '${l.name}', ${remaining})" class="flex-1 bg-purple-500 text-white rounded-lg py-2 text-sm font-bold hover:bg-purple-600 transition">
+                                💵 تسديد
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.editLiabilityAmount = async function(key) {
+            const current = liabilities[key] || { amount: 0 };
+            const newAmount = prompt('أدخل المبلغ الجديد:', current.amount);
+            
+            if (newAmount === null) return;
+            
+            const amount = parseFloat(newAmount.replace(/,/g, ''));
+            if (isNaN(amount) || amount < 0) {
+                showWarning('المبلغ غير صحيح');
+                return;
+            }
+
+            await update(ref(database, `liabilities/fixed/${key}`), { amount });
+            showSuccess('تم تحديث المبلغ');
+        };
+
+        window.payLiability = function(key, name, amount) {
+            document.getElementById('payLiabilityKey').value = key;
+            document.getElementById('payLiabilityName').textContent = name;
+            document.getElementById('payLiabilityAmountDisplay').textContent = formatNumber(amount);
+            document.getElementById('payLiabilityInput').value = amount;
+            openModal('payLiability');
+        };
+
+        window.confirmPayLiability = async function(e) {
+            e.preventDefault();
+            
+            const key = document.getElementById('payLiabilityKey').value;
+            const amount = parseFormattedNumber('payLiabilityInput');
+            const method = document.getElementById('payLiabilityMethod').value;
+            
+            const liability = liabilities[key];
+            const remaining = liability.amount - liability.paid;
+            
+            if (amount <= 0 || amount > remaining) {
+                showWarning('المبلغ غير صحيح');
+                return;
+            }
+
+            const currentBalance = method === 'cash' ? balances.cash : balances.bank;
+            if (amount > currentBalance) {
+                showWarning(`رصيد ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`);
+                return;
+            }
+
+            const newPaid = liability.paid + amount;
+            const timestamp = Date.now();
+
+            await Promise.all([
+                // Update balance
+                update(ref(database, 'balances'), {
+                    [method]: currentBalance - amount
+                }),
+                // Update liability
+                update(ref(database, `liabilities/fixed/${key}`), {
+                    paid: newPaid
+                }),
+                // Log transaction
+                push(ref(database, 'transactions'), {
+                    type: 'liability_payment',
+                    title: `تسديد ${liability.name}`,
+                    amount: -amount,
+                    timestamp,
+                    payment: method,
+                    liabilityKey: key,
+                    note: 'تسديد التزام ثابت'
+                })
+            ]);
+
+            closeModal('payLiability');
+            showSuccess(`تم تسديد ${formatNumber(amount)} ج`);
+        };
+
+        // ==========================================
+        // CUSTOM LIABILITIES
+        // ==========================================
+
+        function renderCustomLiabilities() {
+            const container = document.getElementById('customLiabilitiesList');
+            
+            if (customLiabilities.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد التزامات إضافية</div>';
+                return;
+            }
+
+            container.innerHTML = customLiabilities.map(l => `
+                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
+                    <div>
+                        <div class="font-bold text-slate-700">${l.name}</div>
+                        <div class="text-xs text-slate-500">${new Date(l.createdAt).toLocaleDateString('ar-SA')}</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold text-purple-700">${formatNumber(l.amount)} ج</span>
+                        <button onclick="deleteCustomLiability('${l.id}')" class="text-red-500 hover:text-red-700">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.addCustomLiability = async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('customLiabilityName').value.trim();
+            const amount = parseFormattedNumber('customLiabilityAmount');
+            
+            if (!name || amount <= 0) {
+                showWarning('الرجاء إدخال البيانات بشكل صحيح');
+                return;
+            }
+
+            await push(ref(database, 'liabilities/custom'), {
+                name,
+                amount,
+                createdAt: Date.now()
+            });
+
+            document.getElementById('customLiabilityForm').reset();
+            showSuccess('تم إضافة الالتزام');
+        };
+
+        window.deleteCustomLiability = async function(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الالتزام؟')) return;
+            
+            await remove(ref(database, `liabilities/custom/${id}`));
+            showSuccess('تم الحذف');
+        };
+
+        // ==========================================
+        // CLOSE DAY
+        // ==========================================
+
+        window.closeDay = async function() {
+            if (!confirm('🔒 هل أنت متأكد من تقفيل يومية اليوم؟\n\nسيتم حفظ جميع البيانات في الأرشيف.')) {
+                return;
+            }
+
+            const todayKey = getTodayKey();
+            const timestamp = Date.now();
+
+            const archiveData = {
+                date: todayKey,
+                closedAt: timestamp,
+                balances: { ...balances },
+                actualBalances: { ...actualBalances },
+                stats: { ...todayStats },
+                liabilities: { ...liabilities },
+                customLiabilities: [...customLiabilities],
+                variances: {
+                    cash: actualBalances.cash - balances.cash,
+                    bank: actualBalances.bank - balances.bank,
+                    total: (actualBalances.cash + actualBalances.bank) - (balances.cash + balances.bank)
+                }
+            };
+
+            try {
+                await set(ref(database, `dayArchive/${todayKey}`), archiveData);
+                await set(ref(database, 'stats/today'), {
+                    sales: 0, shopExpenses: 0, personalExpenses: 0, newDebts: 0, repayments: 0
+                });
+                await set(ref(database, 'shift/actualBalances'), { cash: 0, bank: 0 });
+                
+                // Reset fixed liabilities paid amounts
+                const resetLiabilities = {};
+                FIXED_LIABILITIES.forEach(l => {
+                    resetLiabilities[l.key] = { amount: 0, paid: 0 };
+                });
+                await set(ref(database, 'liabilities/fixed'), resetLiabilities);
+                
+                // Clear custom liabilities
+                await set(ref(database, 'liabilities/custom'), null);
+
+                showSuccess('✅ تم تقفيل اليوم وحفظ البيانات');
+                setTimeout(() => location.reload(), 1500);
+                
+            } catch (error) {
+                console.error(error);
+                showWarning('حدث خطأ أثناء التقفيل');
+            }
+        };
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    const type = this.id.replace('Modal', '');
+                    closeModal(type);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
