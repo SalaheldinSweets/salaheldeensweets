@@ -41,34 +41,73 @@
             scrollbar-width: none;
         }
         
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        /* بطاقات التعليق الذكي */
+        .feedback-card {
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
         }
         
-        .comparison-bar {
-            height: 12px;
-            border-radius: 6px;
-            background: #e2e8f0;
-            overflow: hidden;
+        .feedback-excellent {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 2px solid #10b981;
+            color: #065f46;
+        }
+        
+        .feedback-good {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            color: #92400e;
+        }
+        
+        .feedback-warning {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+        
+        .feedback-hidden {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        
+        /* مؤشر الدقة */
+        .accuracy-ring {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
             position: relative;
+            background: conic-gradient(var(--ring-color) var(--ring-deg), #e2e8f0 0deg);
         }
         
-        .comparison-fill {
-            height: 100%;
-            border-radius: 6px;
-            transition: width 0.5s ease;
+        .accuracy-inner {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         
-        .comparison-marker {
-            position: absolute;
-            top: -4px;
-            width: 4px;
-            height: 20px;
-            background: #1e293b;
-            border-radius: 2px;
-            transform: translateX(-50%);
+        /* حقول الإدخال */
+        .input-actual {
+            background: #f0f9ff;
+            border: 2px dashed #3b82f6;
+            transition: all 0.3s;
+        }
+        
+        .input-actual:focus {
+            background: white;
+            border-style: solid;
+            border-color: #2563eb;
+            outline: none;
         }
         
         .modal {
@@ -86,34 +125,6 @@
         
         .modal.active .modal-content {
             transform: translateY(0);
-        }
-        
-        .tab-active {
-            border-bottom: 3px solid #667eea;
-            color: #667eea;
-            font-weight: 700;
-        }
-        
-        .tab-inactive {
-            border-bottom: 3px solid transparent;
-            color: #64748b;
-        }
-        
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-        
-        .variance-positive {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border: 2px solid #10b981;
-        }
-        
-        .variance-negative {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            border: 2px solid #ef4444;
         }
         
         .warning-toast {
@@ -158,17 +169,11 @@
             transform: translateX(-50%) translateY(0);
         }
         
-        .editable-amount {
-            background: #f0f9ff;
-            border: 2px dashed #3b82f6;
-            cursor: text;
-        }
-        
-        .editable-amount:focus {
-            background: white;
-            border-style: solid;
-            outline: none;
-        }
+        /* تمييز العمليات */
+        .tx-sale { border-right: 4px solid #10b981; }
+        .tx-expense { border-right: 4px solid #ef4444; }
+        .tx-debt { border-right: 4px solid #f59e0b; }
+        .tx-repay { border-right: 4px solid #3b82f6; }
     </style>
 </head>
 <body>
@@ -237,229 +242,136 @@
             </div>
         </div>
 
-        <!-- تبويبات التنقل -->
-        <div class="bg-white shadow-sm sticky top-0 z-30">
-            <div class="flex justify-around">
-                <button onclick="switchTab('overview')" id="tab-overview" class="flex-1 py-3 text-sm tab-active">
-                    📊 الملخص
-                </button>
-                <button onclick="switchTab('comparison')" id="tab-comparison" class="flex-1 py-3 text-sm tab-inactive">
-                    ⚖️ المقارنة
-                </button>
-                <button onclick="switchTab('liabilities')" id="tab-liabilities" class="flex-1 py-3 text-sm tab-inactive">
-                    📋 الالتزامات
-                </button>
-            </div>
-        </div>
-
         <!-- المحتوى الرئيسي -->
         <main class="p-4 space-y-4 pb-24" id="mainContent">
             
-            <!-- تبويب الملخص -->
-            <div id="content-overview" class="space-y-4">
-                
-                <!-- بطاقة الموقف المالي -->
-                <div class="glass-card rounded-2xl p-4 shadow-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-slate-800 text-lg">💰 موقف اليوم</h3>
-                        <span id="dayStatus" class="status-badge bg-emerald-100 text-emerald-700">
-                            مفتوح
-                        </span>
+            <!-- 1. الميزان اللحظي (قراءة فقط) -->
+            <div class="bg-white rounded-2xl p-4 shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-800 text-lg">⚖️ الميزان اللحظي</h3>
+                    <span id="shiftStatus" class="status-badge bg-emerald-100 text-emerald-700 text-xs">
+                        🟢 وردية مفتوحة
+                    </span>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- المبيعات -->
+                    <div class="flex justify-between items-center p-3 bg-emerald-50 rounded-xl">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">💵</span>
+                            <span class="text-sm text-slate-600">إجمالي المبيعات</span>
+                        </div>
+                        <span id="liveSales" class="text-lg font-bold text-emerald-700">0</span>
                     </div>
 
-                    <!-- الأرصدة الفعلية -->
-                    <div class="space-y-3 mb-4">
-                        <div class="flex justify-between items-center p-3 bg-emerald-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <span class="text-2xl">💵</span>
-                                <span class="font-semibold text-slate-700">الكاش الفعلي</span>
+                    <!-- المنصرفات -->
+                    <div class="flex justify-between items-center p-3 bg-red-50 rounded-xl">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">➖</span>
+                            <span class="text-sm text-slate-600">المنصرفات/النفقات</span>
+                        </div>
+                        <span id="liveExpenses" class="text-lg font-bold text-red-700">0</span>
+                    </div>
+
+                    <!-- الالتزام التلقائي -->
+                    <div class="flex justify-between items-center p-3 bg-amber-50 rounded-xl border-2 border-amber-200">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">👷</span>
+                            <div>
+                                <span class="text-sm text-amber-700 block">التزام تلقائي (أجور)</span>
+                                <span class="text-xs text-amber-500">يُضاف يومياً الساعة 6 صباحاً</span>
                             </div>
-                            <span id="actualCash" class="text-xl font-bold text-emerald-700">0</span>
                         </div>
-                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <span class="text-2xl">💳</span>
-                                <span class="font-semibold text-slate-700">البنك الفعلي</span>
+                        <span id="autoWages" class="text-lg font-bold text-amber-700">40,000</span>
+                    </div>
+
+                    <!-- الخط الفاصل -->
+                    <div class="border-t-2 border-slate-200 my-2"></div>
+
+                    <!-- الرصيد الافتراضي -->
+                    <div class="flex justify-between items-center p-4 bg-slate-800 rounded-xl text-white">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🎯</span>
+                            <div>
+                                <span class="text-sm text-slate-300 block">الرصيد الافتراضي المتوقع</span>
+                                <span class="text-xs text-slate-400">مبيعات - منصرفات - التزامات</span>
                             </div>
-                            <span id="actualBank" class="text-xl font-bold text-blue-700">0</span>
                         </div>
+                        <span id="expectedBalance" class="text-2xl font-bold text-yellow-400">0</span>
                     </div>
+                </div>
+            </div>
 
-                    <!-- ملخص الحركات -->
-                    <div class="bg-slate-50 rounded-xl p-3 space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-slate-600">إجمالي المبيعات</span>
-                            <span id="summarySales" class="font-bold text-emerald-600">0</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-600">المصاريف الفعلية</span>
-                            <span id="summaryExpenses" class="font-bold text-red-600">0</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-600">الالتزامات المستحقة</span>
-                            <span id="summaryLiabilities" class="font-bold text-amber-600">0</span>
-                        </div>
-                        <div class="flex justify-between pt-2 border-t border-slate-200 font-bold">
-                            <span class="text-slate-800">الصافي المتوقع</span>
-                            <span id="summaryNet" class="text-slate-800">0</span>
+            <!-- 2. مطابقة الخزينة (إدخال يدوي) -->
+            <div class="bg-white rounded-2xl p-4 shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-800 text-lg">✋ مطابقة الخزينة</h3>
+                    <span class="text-xs text-slate-400">إدخال يدوي</span>
+                </div>
+
+                <!-- حقل الكاش الفعلي -->
+                <div class="mb-4">
+                    <label class="block text-sm text-slate-600 mb-2">الكاش الفعلي في الدرج</label>
+                    <input type="text" id="actualCashInput" 
+                        class="input-actual w-full rounded-xl p-4 text-2xl text-center font-bold text-slate-800" 
+                        placeholder="0" 
+                        oninput="formatNumberInput(this); calculateVariance()"
+                        value="">
+                    <div class="text-xs text-slate-400 mt-1 text-center">أدخل المبلغ الموجود فعلياً بعد العد</div>
+                </div>
+
+                <!-- حقل ملاحظات الإغلاق -->
+                <div class="mb-4">
+                    <label class="block text-sm text-slate-600 mb-2">ملاحظات الإغلاق</label>
+                    <textarea id="closingNotes" 
+                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none resize-none" 
+                        rows="2"
+                        placeholder="أي تبرير للفرق (اختياري)..."></textarea>
+                </div>
+
+                <!-- نتيجة المطابقة -->
+                <div id="varianceResult" class="hidden">
+                    <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl mb-3">
+                        <span class="text-sm text-slate-600">الفرق بالأرقام</span>
+                        <span id="varianceAmount" class="text-xl font-bold">0</span>
+                    </div>
+                    
+                    <!-- مؤشر الدقة -->
+                    <div class="text-center mb-4">
+                        <div class="accuracy-ring" id="accuracyRing" style="--ring-color: #10b981; --ring-deg: 360deg;">
+                            <div class="accuracy-inner">
+                                <span id="accuracyPercent" class="text-2xl font-bold text-slate-800">100%</span>
+                                <span class="text-xs text-slate-500">دقة</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- زر تقفيل اليوم -->
-                <button onclick="closeDay()" id="closeDayBtn" class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-2xl p-5 font-bold text-lg btn-press shadow-lg hover:from-purple-700 hover:to-purple-800 transition flex items-center justify-center gap-2">
-                    <span>🔒</span>
-                    <span>تقفيل يومية اليوم</span>
-                </button>
-
             </div>
 
-            <!-- تبويب المقارنة (الجديد) -->
-            <div id="content-comparison" class="space-y-4 hidden">
+            <!-- 3. التعليق الذكي -->
+            <div id="feedbackSection" class="feedback-card feedback-hidden">
+                <div class="text-3xl mb-2" id="feedbackIcon">🏆</div>
+                <div class="font-bold text-lg mb-1" id="feedbackTitle">---</div>
+                <div class="text-sm" id="feedbackMessage">---</div>
+            </div>
+
+            <!-- 4. سجل الوردية المصغر -->
+            <div class="bg-white rounded-2xl p-4 shadow-md">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-700">📝 سجل الوردية الحالية</h3>
+                    <span id="txCount" class="text-xs text-slate-400">0 عملية</span>
+                </div>
                 
-                <!-- مقارنة الكاش -->
-                <div class="glass-card rounded-2xl p-4 shadow-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-slate-800 text-lg">💵 مقارنة الكاش</h3>
-                        <button onclick="editActual('cash')" class="text-sm text-blue-600 font-bold hover:text-blue-700">
-                            ✏️ تعديل الفعلي
-                        </button>
-                    </div>
-
-                    <!-- القيم -->
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-slate-100 rounded-xl p-3 text-center">
-                            <div class="text-xs text-slate-500 mb-1">الافتراضي (المحاسبي)</div>
-                            <div id="expectedCash" class="text-xl font-bold text-slate-700">0</div>
-                            <div class="text-xs text-slate-400">حسب السجل</div>
-                        </div>
-                        <div class="bg-emerald-50 rounded-xl p-3 text-center border-2 border-emerald-200">
-                            <div class="text-xs text-emerald-600 mb-1">الفعلي (الموجود)</div>
-                            <div id="comparisonCash" class="text-xl font-bold text-emerald-700">0</div>
-                            <div class="text-xs text-emerald-500">في الصندوق</div>
-                        </div>
-                    </div>
-
-                    <!-- شريط المقارنة -->
-                    <div class="mb-3">
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-slate-600">نسبة التطابق</span>
-                            <span id="cashMatchPercent" class="font-bold text-slate-800">100%</span>
-                        </div>
-                        <div class="comparison-bar">
-                            <div id="cashMatchBar" class="comparison-fill bg-emerald-500" style="width: 100%"></div>
-                            <div id="cashMarker" class="comparison-marker" style="left: 100%"></div>
-                        </div>
-                    </div>
-
-                    <!-- الفرق -->
-                    <div id="cashVariance" class="variance-positive rounded-xl p-3 text-center">
-                        <div class="text-sm font-bold mb-1">الفرق</div>
-                        <div id="cashVarianceAmount" class="text-2xl font-bold">0</div>
-                        <div id="cashVarianceText" class="text-xs">مطابق تماماً ✅</div>
-                    </div>
+                <div id="miniLog" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar text-sm">
+                    <div class="text-center text-slate-400 py-4">جاري تحميل العمليات...</div>
                 </div>
-
-                <!-- مقارنة البنك -->
-                <div class="glass-card rounded-2xl p-4 shadow-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-slate-800 text-lg">💳 مقارنة البنك</h3>
-                        <button onclick="editActual('bank')" class="text-sm text-blue-600 font-bold hover:text-blue-700">
-                            ✏️ تعديل الفعلي
-                        </button>
-                    </div>
-
-                    <!-- القيم -->
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-slate-100 rounded-xl p-3 text-center">
-                            <div class="text-xs text-slate-500 mb-1">الافتراضي (المحاسبي)</div>
-                            <div id="expectedBank" class="text-xl font-bold text-slate-700">0</div>
-                            <div class="text-xs text-slate-400">حسب السجل</div>
-                        </div>
-                        <div class="bg-blue-50 rounded-xl p-3 text-center border-2 border-blue-200">
-                            <div class="text-xs text-blue-600 mb-1">الفعلي (الموجود)</div>
-                            <div id="comparisonBank" class="text-xl font-bold text-blue-700">0</div>
-                            <div class="text-xs text-blue-500">في الحساب</div>
-                        </div>
-                    </div>
-
-                    <!-- شريط المقارنة -->
-                    <div class="mb-3">
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-slate-600">نسبة التطابق</span>
-                            <span id="bankMatchPercent" class="font-bold text-slate-800">100%</span>
-                        </div>
-                        <div class="comparison-bar">
-                            <div id="bankMatchBar" class="comparison-fill bg-blue-500" style="width: 100%"></div>
-                            <div id="bankMarker" class="comparison-marker" style="left: 100%"></div>
-                        </div>
-                    </div>
-
-                    <!-- الفرق -->
-                    <div id="bankVariance" class="variance-positive rounded-xl p-3 text-center">
-                        <div class="text-sm font-bold mb-1">الفرق</div>
-                        <div id="bankVarianceAmount" class="text-2xl font-bold">0</div>
-                        <div id="bankVarianceText" class="text-xs">مطابق تماماً ✅</div>
-                    </div>
-                </div>
-
-                <!-- ملخص المقارنة -->
-                <div class="bg-white rounded-2xl p-4 shadow-md">
-                    <h3 class="font-bold text-slate-700 mb-3">📊 ملخص الفروقات</h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-                            <span class="text-slate-600">إجمالي الافتراضي</span>
-                            <span id="totalExpected" class="font-bold text-slate-800">0</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-                            <span class="text-slate-600">إجمالي الفعلي</span>
-                            <span id="totalActual" class="font-bold text-slate-800">0</span>
-                        </div>
-                        <div id="totalVarianceBox" class="flex justify-between items-center p-3 rounded-xl variance-positive">
-                            <span class="font-bold">الفرق الكلي</span>
-                            <span id="totalVariance" class="font-bold text-xl">0</span>
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
-            <!-- تبويب الالتزامات -->
-            <div id="content-liabilities" class="space-y-4 hidden">
-                
-                <!-- الالتزامات الثابتة -->
-                <div class="bg-white rounded-2xl p-4 shadow-md">
-                    <h3 class="font-bold text-slate-700 mb-3">📋 الالتزامات الأساسية</h3>
-                    <div id="fixedLiabilities" class="space-y-3">
-                        <!-- تُملأ ديناميكياً -->
-                    </div>
-                </div>
-
-                <!-- إضافة التزام حر -->
-                <div class="bg-white rounded-2xl p-4 shadow-md">
-                    <h3 class="font-bold text-slate-700 mb-3">➕ إضافة التزام آخر</h3>
-                    <form id="customLiabilityForm" class="space-y-3" onsubmit="addCustomLiability(event)">
-                        <input type="text" id="customLiabilityName" 
-                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none" 
-                            placeholder="اسم الجهة..." required>
-                        <input type="text" id="customLiabilityAmount" 
-                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-purple-500 focus:outline-none" 
-                            placeholder="المبلغ..." oninput="formatNumberInput(this)" required>
-                        <button type="submit" class="w-full bg-purple-500 text-white rounded-xl p-3 font-bold btn-press hover:bg-purple-600 transition">
-                            ✅ إضافة
-                        </button>
-                    </form>
-                </div>
-
-                <!-- الالتزامات المضافة -->
-                <div class="bg-white rounded-2xl p-4 shadow-md">
-                    <h3 class="font-bold text-slate-700 mb-3">📝 التزامات إضافية</h3>
-                    <div id="customLiabilitiesList" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar">
-                        <div class="text-center text-slate-400 py-4">لا توجد التزامات إضافية</div>
-                    </div>
-                </div>
-
-            </div>
+            <!-- 5. زر التقفيل النهائي -->
+            <button onclick="closeShift()" id="closeShiftBtn" class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-2xl p-5 font-bold text-lg btn-press shadow-lg hover:from-purple-700 hover:to-purple-800 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span>🔒</span>
+                <span>إغلاق الوردية وترحيل البيانات</span>
+            </button>
 
         </main>
 
@@ -489,90 +401,6 @@
             </div>
         </nav>
 
-    </div>
-
-    <!-- مودال تعديل الفعلي -->
-    <div id="editActualModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('editActual')">
-        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
-            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
-            
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-slate-800">✏️ تعديل الرصيد الفعلي</h2>
-                <button onclick="closeModal('editActual')" class="text-slate-400 text-2xl">&times;</button>
-            </div>
-
-            <form id="editActualForm" class="space-y-4" onsubmit="saveActualBalance(event)">
-                <input type="hidden" id="editActualType">
-                
-                <div class="text-center mb-4">
-                    <div id="editActualLabel" class="text-lg font-bold text-slate-700">الكاش الفعلي</div>
-                    <div class="text-sm text-slate-400">أدخل المبلغ الموجود فعلياً في الصندوق</div>
-                </div>
-
-                <div>
-                    <input type="text" id="editActualAmount" 
-                        class="w-full border-2 border-blue-200 rounded-xl p-4 text-2xl text-center font-bold focus:border-blue-500 focus:outline-none bg-blue-50" 
-                        placeholder="0" oninput="formatNumberInput(this)" required>
-                </div>
-
-                <div class="bg-amber-50 rounded-xl p-3 text-sm text-amber-700">
-                    <div class="font-semibold mb-1">⚠️ تنبيه</div>
-                    <div>تعديل هذا المبلغ سيؤثر على حساب الفرق في المقارنة فقط، ولن يغير الأرصدة الفعلية في النظام.</div>
-                </div>
-
-                <button type="submit" class="w-full bg-blue-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-blue-600 transition">
-                    💾 حفظ
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- مودال تسديد التزام -->
-    <div id="payLiabilityModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('payLiability')">
-        <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
-            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
-            
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-purple-800">💵 تسديد التزام</h2>
-                <button onclick="closeModal('payLiability')" class="text-slate-400 text-2xl">&times;</button>
-            </div>
-
-            <form id="payLiabilityForm" class="space-y-4" onsubmit="confirmPayLiability(event)">
-                <input type="hidden" id="payLiabilityKey">
-                
-                <div class="bg-purple-50 rounded-xl p-4 text-center mb-4">
-                    <div id="payLiabilityName" class="text-lg font-bold text-purple-800 mb-1">---</div>
-                    <div class="text-sm text-purple-600">المبلغ المستحق</div>
-                    <div id="payLiabilityAmountDisplay" class="text-2xl font-bold text-purple-700">0</div>
-                </div>
-
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">المبلغ المسدد</label>
-                    <input type="text" id="payLiabilityInput" 
-                        class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-purple-500 focus:outline-none" 
-                        placeholder="0" oninput="formatNumberInput(this)" required>
-                </div>
-
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" class="pay-method-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="cash" onclick="selectPayMethod(this)">
-                            <span class="text-2xl">💵</span>
-                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
-                        </button>
-                        <button type="button" class="pay-method-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="bank" onclick="selectPayMethod(this)">
-                            <span class="text-2xl">💳</span>
-                            <div class="text-sm mt-1">بنكك</div>
-                        </button>
-                    </div>
-                    <input type="hidden" id="payLiabilityMethod" value="cash">
-                </div>
-
-                <button type="submit" class="w-full bg-purple-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-purple-600 transition">
-                    ✅ تأكيد التسديد
-                </button>
-            </form>
-        </div>
     </div>
 
     <!-- Firebase & App Logic -->
@@ -609,21 +437,10 @@
         const database = getDatabase(app);
 
         let currentUser = null;
-        let balances = { cash: 0, bank: 0 };
-        let todayStats = { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-        let actualBalances = { cash: 0, bank: 0 };
-        
-        // الالتزامات الثابتة
-        const FIXED_LIABILITIES = [
-            { key: 'factory', name: '🏭 المصنع', defaultAmount: 0 },
-            { key: 'kassah', name: '🚚 الكساح', defaultAmount: 0 },
-            { key: 'imran', name: '👤 عمران', defaultAmount: 0 },
-            { key: 'oil', name: '🛢️ الدهن', defaultAmount: 0 }
-        ];
-        
-        let liabilities = {};
-        let customLiabilities = [];
-        let currentTab = 'overview';
+        let todayStats = { sales: 0, shopExpenses: 0, personalExpenses: 0, newDebts: 0, repayments: 0 };
+        let shiftTransactions = [];
+        let wagesAddedToday = false;
+        const DAILY_WAGES = 40000;
 
         // ==========================================
         // UTILITY FUNCTIONS
@@ -643,9 +460,8 @@
             }
         };
 
-        window.parseFormattedNumber = function(inputId) {
-            const value = document.getElementById(inputId).value.replace(/,/g, '');
-            return parseFloat(value) || 0;
+        window.parseFormattedNumber = function(value) {
+            return parseFloat(value.replace(/,/g, '')) || 0;
         };
 
         window.showWarning = function(message) {
@@ -663,12 +479,29 @@
         };
 
         // ==========================================
-        // DATE LOGIC
+        // SHIFT DATE LOGIC (6 AM to 6 AM)
         // ==========================================
 
-        function getTodayKey() {
+        function getShiftInfo() {
             const now = new Date();
-            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const hours = now.getHours();
+            let shiftDate = new Date(now);
+            
+            // If before 6 AM, it's still yesterday's shift
+            if (hours < 6) {
+                shiftDate.setDate(shiftDate.getDate() - 1);
+            }
+            
+            const shiftKey = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
+            const isNewDay = hours === 6 && now.getMinutes() < 5; // First 5 minutes of new day
+            
+            return {
+                key: shiftKey,
+                date: shiftDate,
+                isNewDay: isNewDay,
+                startTime: new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 6, 0, 0).getTime(),
+                endTime: new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate() + 1, 6, 0, 0).getTime()
+            };
         }
 
         // ==========================================
@@ -706,67 +539,47 @@
         // ==========================================
 
         function initApp() {
-            const todayKey = getTodayKey();
-
-            // Listen to balances
-            onValue(ref(database, 'balances'), (snap) => {
-                balances = snap.val() || { cash: 0, bank: 0 };
-                document.getElementById('actualCash').textContent = formatNumber(balances.cash);
-                document.getElementById('actualBank').textContent = formatNumber(balances.bank);
-                updateComparison();
-                updateSummary();
-            });
-
+            const shift = getShiftInfo();
+            
+            // Check and add daily wages if needed
+            checkAndAddWages(shift.key);
+            
             // Listen to today's stats
             onValue(ref(database, 'stats/today'), (snap) => {
-                todayStats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-                updateSummary();
-                updateComparison();
+                todayStats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0, newDebts: 0, repayments: 0 };
+                updateLiveBalance();
             });
 
-            // Listen to actual balances (for comparison)
-            onValue(ref(database, 'shift/actualBalances'), (snap) => {
-                actualBalances = snap.val() || { cash: balances.cash, bank: balances.bank };
-                updateComparison();
-            });
-
-            // Listen to fixed liabilities
-            onValue(ref(database, 'liabilities/fixed'), (snap) => {
-                const data = snap.val() || {};
-                liabilities = {};
-                FIXED_LIABILITIES.forEach(fixed => {
-                    liabilities[fixed.key] = {
-                        ...fixed,
-                        amount: data[fixed.key]?.amount || 0,
-                        paid: data[fixed.key]?.paid || 0
-                    };
+            // Listen to today's transactions
+            onValue(ref(database, 'transactions'), (snap) => {
+                const txs = [];
+                snap.forEach((child) => {
+                    const tx = { id: child.key, ...child.val() };
+                    // Filter for current shift only
+                    if (tx.timestamp >= shift.startTime && tx.timestamp < shift.endTime) {
+                        txs.push(tx);
+                    }
                 });
-                renderFixedLiabilities();
-                updateSummary();
+                shiftTransactions = txs.sort((a, b) => b.timestamp - a.timestamp);
+                updateMiniLog();
             });
 
-            // Listen to custom liabilities
-            onValue(ref(database, 'liabilities/custom'), (snap) => {
-                const data = snap.val() || {};
-                customLiabilities = Object.entries(data).map(([id, val]) => ({ id, ...val }));
-                renderCustomLiabilities();
-                updateSummary();
-            });
-
-            // Initialize fixed liabilities if not exist
-            get(ref(database, 'liabilities/fixed')).then(snap => {
-                if (!snap.exists()) {
-                    const initial = {};
-                    FIXED_LIABILITIES.forEach(f => {
-                        initial[f.key] = { amount: 0, paid: 0 };
-                    });
-                    set(ref(database, 'liabilities/fixed'), initial);
-                }
+            // Listen to wages status
+            onValue(ref(database, 'shift/wagesAdded'), (snap) => {
+                const lastWagesDate = snap.val();
+                wagesAddedToday = lastWagesDate === shift.key;
+                updateWagesDisplay();
             });
 
             // Start clock
             updateClock();
             setInterval(updateClock, 1000);
+            
+            // Check for day change every minute
+            setInterval(() => {
+                const newShift = getShiftInfo();
+                checkAndAddWages(newShift.key);
+            }, 60000);
         }
 
         function updateClock() {
@@ -778,102 +591,318 @@
         }
 
         // ==========================================
-        // COMPARISON LOGIC
+        // WAGES MANAGEMENT
         // ==========================================
 
-        function updateComparison() {
-            // Calculate expected (from records)
-            const expectedCash = balances.cash;
-            const expectedBank = balances.bank;
+        async function checkAndAddWages(shiftKey) {
+            const snapshot = await get(ref(database, 'shift/wagesAdded'));
+            const lastWagesDate = snapshot.val();
             
-            // Get actual (user input or default to expected)
-            const actualCash = actualBalances.cash || expectedCash;
-            const actualBank = actualBalances.bank || expectedBank;
-
-            // Update display
-            document.getElementById('expectedCash').textContent = formatNumber(expectedCash);
-            document.getElementById('expectedBank').textContent = formatNumber(expectedBank);
-            document.getElementById('comparisonCash').textContent = formatNumber(actualCash);
-            document.getElementById('comparisonBank').textContent = formatNumber(actualBank);
-
-            // Calculate variances
-            const cashVariance = actualCash - expectedCash;
-            const bankVariance = actualBank - expectedBank;
-            const totalVariance = cashVariance + bankVariance;
-
-            // Update cash variance display
-            updateVarianceDisplay('cash', cashVariance, expectedCash);
-            updateVarianceDisplay('bank', bankVariance, expectedBank);
-
-            // Update totals
-            document.getElementById('totalExpected').textContent = formatNumber(expectedCash + expectedBank);
-            document.getElementById('totalActual').textContent = formatNumber(actualCash + actualBank);
-            document.getElementById('totalVariance').textContent = formatNumber(Math.abs(totalVariance));
-            
-            const totalBox = document.getElementById('totalVarianceBox');
-            if (totalVariance === 0) {
-                totalBox.className = 'flex justify-between items-center p-3 rounded-xl variance-positive';
-            } else if (totalVariance > 0) {
-                totalBox.className = 'flex justify-between items-center p-3 rounded-xl variance-positive';
-                document.getElementById('totalVariance').textContent = '+' + formatNumber(totalVariance) + ' (فائض)';
-            } else {
-                totalBox.className = 'flex justify-between items-center p-3 rounded-xl variance-negative';
-                document.getElementById('totalVariance').textContent = formatNumber(totalVariance) + ' (عجز)';
+            if (lastWagesDate !== shiftKey) {
+                // New day, add wages
+                const currentStats = (await get(ref(database, 'stats/today'))).val() || {};
+                
+                await update(ref(database, 'stats/today'), {
+                    ...currentStats,
+                    wagesLiability: (currentStats.wagesLiability || 0) + DAILY_WAGES
+                });
+                
+                await set(ref(database, 'shift/wagesAdded'), shiftKey);
+                
+                // Log the automatic wages
+                await push(ref(database, 'transactions'), {
+                    type: 'auto_wages',
+                    title: '👷 التزام تلقائي - أجور يومية',
+                    amount: DAILY_WAGES,
+                    timestamp: Date.now(),
+                    isSystem: true,
+                    note: 'إضافة تلقائية عند بداية يوم جديد'
+                });
+                
+                wagesAddedToday = true;
+                showSuccess('تم إضافة التزام الأجور اليومي: 40,000 ج');
             }
         }
 
-        function updateVarianceDisplay(type, variance, expected) {
-            const amountEl = document.getElementById(type + 'VarianceAmount');
-            const textEl = document.getElementById(type + 'VarianceText');
-            const boxEl = document.getElementById(type + 'Variance');
-            const barEl = document.getElementById(type + 'MatchBar');
-            const percentEl = document.getElementById(type + 'MatchPercent');
-            const markerEl = document.getElementById(type + 'Marker');
+        function updateWagesDisplay() {
+            const wagesAmount = wagesAddedToday ? DAILY_WAGES : 0;
+            document.getElementById('autoWages').textContent = formatNumber(wagesAmount);
+        }
 
-            amountEl.textContent = formatNumber(Math.abs(variance));
+        // ==========================================
+        // LIVE BALANCE
+        // ==========================================
 
+        function updateLiveBalance() {
+            const sales = todayStats.sales || 0;
+            const expenses = (todayStats.shopExpenses || 0) + (todayStats.personalExpenses || 0);
+            const wages = todayStats.wagesLiability || (wagesAddedToday ? DAILY_WAGES : 0);
+            
+            // Expected balance = sales - expenses - wages + repayments - new debts
+            // Simplified: sales - expenses - wages (as per your requirement)
+            const expected = sales - expenses - wages;
+
+            document.getElementById('liveSales').textContent = formatNumber(sales);
+            document.getElementById('liveExpenses').textContent = formatNumber(expenses);
+            document.getElementById('expectedBalance').textContent = formatNumber(expected);
+            
+            // Store for variance calculation
+            window.currentExpectedBalance = expected;
+        }
+
+        // ==========================================
+        // VARIANCE CALCULATION
+        // ==========================================
+
+        window.calculateVariance = function() {
+            const actualInput = document.getElementById('actualCashInput').value;
+            if (!actualInput) {
+                document.getElementById('varianceResult').classList.add('hidden');
+                document.getElementById('feedbackSection').classList.add('feedback-hidden');
+                return;
+            }
+
+            const actual = parseFormattedNumber(actualInput);
+            const expected = window.currentExpectedBalance || 0;
+            const variance = actual - expected;
+            const varianceAbs = Math.abs(variance);
+            
+            // Show variance section
+            document.getElementById('varianceResult').classList.remove('hidden');
+            
+            // Update variance display
+            const varianceEl = document.getElementById('varianceAmount');
             if (variance === 0) {
-                boxEl.className = 'variance-positive rounded-xl p-3 text-center';
-                textEl.textContent = 'مطابق تماماً ✅';
-                percentEl.textContent = '100%';
-                barEl.style.width = '100%';
-                barEl.className = 'comparison-fill bg-emerald-500';
-                markerEl.style.left = '100%';
+                varianceEl.textContent = 'مطابق تماماً ✅';
+                varianceEl.className = 'text-xl font-bold text-emerald-600';
             } else if (variance > 0) {
-                boxEl.className = 'variance-positive rounded-xl p-3 text-center';
-                textEl.textContent = 'فائض (أكثر من المتوقع) 📈';
-                const matchPercent = expected > 0 ? Math.round((expected / (expected + variance)) * 100) : 0;
-                percentEl.textContent = matchPercent + '%';
-                barEl.style.width = '100%';
-                barEl.className = 'comparison-fill bg-emerald-400';
-                markerEl.style.left = Math.min(100, ((expected + variance) / expected) * 50) + '%';
+                varianceEl.textContent = '+' + formatNumber(variance) + ' (فائض)';
+                varianceEl.className = 'text-xl font-bold text-emerald-600';
             } else {
-                boxEl.className = 'variance-negative rounded-xl p-3 text-center';
-                textEl.textContent = 'عجز (أقل من المتوقع) 📉';
-                const actual = expected + variance;
-                const matchPercent = expected > 0 ? Math.round((actual / expected) * 100) : 0;
-                percentEl.textContent = matchPercent + '%';
-                barEl.style.width = matchPercent + '%';
-                barEl.className = 'comparison-fill bg-red-500';
-                markerEl.style.left = matchPercent + '%';
+                varianceEl.textContent = '-' + formatNumber(varianceAbs) + ' (عجز)';
+                varianceEl.className = 'text-xl font-bold text-red-600';
+            }
+
+            // Calculate accuracy percentage
+            let accuracy;
+            if (expected === 0) {
+                accuracy = actual === 0 ? 100 : 0;
+            } else {
+                accuracy = Math.max(0, Math.min(100, 100 - (varianceAbs / Math.abs(expected)) * 100));
+            }
+            
+            updateAccuracyDisplay(accuracy);
+            updateFeedback(accuracy);
+        };
+
+        function updateAccuracyDisplay(accuracy) {
+            const percentEl = document.getElementById('accuracyPercent');
+            const ringEl = document.getElementById('accuracyRing');
+            
+            percentEl.textContent = Math.round(accuracy) + '%';
+            
+            // Update ring color and degree
+            let color;
+            if (accuracy >= 98) {
+                color = '#10b981'; // Green
+            } else if (accuracy >= 95) {
+                color = '#f59e0b'; // Yellow
+            } else {
+                color = '#ef4444'; // Red
+            }
+            
+            const degrees = (accuracy / 100) * 360;
+            ringEl.style.setProperty('--ring-color', color);
+            ringEl.style.setProperty('--ring-deg', degrees + 'deg');
+        }
+
+        function updateFeedback(accuracy) {
+            const section = document.getElementById('feedbackSection');
+            const icon = document.getElementById('feedbackIcon');
+            const title = document.getElementById('feedbackTitle');
+            const message = document.getElementById('feedbackMessage');
+            
+            section.classList.remove('feedback-hidden', 'feedback-excellent', 'feedback-good', 'feedback-warning');
+            
+            if (accuracy === 100) {
+                section.classList.add('feedback-excellent');
+                icon.textContent = '🏆';
+                title.textContent = 'أداء استثنائي!';
+                message.textContent = 'أنت تسير في الطريق الصحيح تماماً، استمر بهذه الدقة. الأمانة والدقة هما أساس نجاح مصنع صلاح الدين.';
+            } else if (accuracy >= 98) {
+                section.classList.add('feedback-good');
+                icon.textContent = '⭐';
+                title.textContent = 'عمل جيد جداً';
+                message.textContent = 'هناك فرق طفيف جداً، حاول التركيز أكثر في الوردية القادمة. أنت قريب جداً من الدقة المثالية.';
+            } else if (accuracy >= 95) {
+                section.classList.add('feedback-good');
+                icon.textContent = '👍';
+                title.textContent = 'أداء مستقر';
+                message.textContent = 'أداء جيد، لكن يمكن التحسين. راجع سجلك للوصول للدقة المثالية.';
+            } else {
+                section.classList.add('feedback-warning');
+                icon.textContent = '⚠️';
+                title.textContent = 'تنبيه: يجب مراجعة السجلات';
+                message.textContent = 'نلاحظ وجود فرق ملحوظ. يرجى مراجعة سجل المبيعات والمنصرفات للتأكد من عدم نسيان أي عملية.';
             }
         }
 
         // ==========================================
-        // SUMMARY LOGIC
+        // MINI LOG
         // ==========================================
 
-        function updateSummary() {
-            const totalLiabilities = Object.values(liabilities).reduce((sum, l) => sum + (l.amount - l.paid), 0) +
-                customLiabilities.reduce((sum, l) => sum + l.amount, 0);
-
-            document.getElementById('summarySales').textContent = formatNumber(todayStats.sales || 0);
-            document.getElementById('summaryExpenses').textContent = formatNumber((todayStats.shopExpenses || 0) + (todayStats.personalExpenses || 0));
-            document.getElementById('summaryLiabilities').textContent = formatNumber(totalLiabilities);
+        function updateMiniLog() {
+            const container = document.getElementById('miniLog');
+            const countEl = document.getElementById('txCount');
             
-            const net = (todayStats.sales || 0) - (todayStats.shopExpenses || 0) - (todayStats.personalExpenses || 0);
-            document.getElementById('summaryNet').textContent = formatNumber(net);
+            countEl.textContent = shiftTransactions.length + ' عملية';
+            
+            if (shiftTransactions.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد عمليات في هذه الوردية</div>';
+                return;
+            }
+
+            container.innerHTML = shiftTransactions.slice(0, 10).map(tx => {
+                const time = new Date(tx.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+                let typeClass, icon, colorClass;
+                
+                switch(tx.type) {
+                    case 'sales':
+                        typeClass = 'tx-sale';
+                        icon = '💵';
+                        colorClass = 'text-emerald-600';
+                        break;
+                    case 'shopExpense':
+                    case 'personalExpense':
+                        typeClass = 'tx-expense';
+                        icon = '➖';
+                        colorClass = 'text-red-600';
+                        break;
+                    case 'debt_repayment':
+                        typeClass = 'tx-repay';
+                        icon = '💙';
+                        colorClass = 'text-blue-600';
+                        break;
+                    default:
+                        typeClass = 'tx-debt';
+                        icon = '📝';
+                        colorClass = 'text-amber-600';
+                }
+                
+                return `
+                    <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg ${typeClass}">
+                        <div class="flex items-center gap-2">
+                            <span>${icon}</span>
+                            <div>
+                                <div class="font-semibold text-slate-700 text-xs">${tx.title}</div>
+                                <div class="text-xs text-slate-400">${time}</div>
+                            </div>
+                        </div>
+                        <span class="font-bold ${colorClass} text-sm">${formatNumber(Math.abs(tx.amount || 0))}</span>
+                    </div>
+                `;
+            }).join('');
         }
+
+        // ==========================================
+        // CLOSE SHIFT
+        // ==========================================
+
+        window.closeShift = async function() {
+            const actualInput = document.getElementById('actualCashInput').value;
+            if (!actualInput) {
+                showWarning('الرجاء إدخال الكاش الفعلي قبل التقفيل');
+                document.getElementById('actualCashInput').focus();
+                return;
+            }
+
+            const shift = getShiftInfo();
+            const actual = parseFormattedNumber(actualInput);
+            const expected = window.currentExpectedBalance || 0;
+            const variance = actual - expected;
+            const accuracy = expected === 0 ? (actual === 0 ? 100 : 0) : Math.max(0, Math.min(100, 100 - (Math.abs(variance) / Math.abs(expected)) * 100));
+            
+            // Get feedback message
+            let feedbackTitle, feedbackMessage;
+            if (accuracy === 100) {
+                feedbackTitle = 'أداء استثنائي!';
+                feedbackMessage = 'أنت تسير في الطريق الصحيح تماماً، استمر بهذه الدقة.';
+            } else if (accuracy >= 98) {
+                feedbackTitle = 'عمل جيد جداً';
+                feedbackMessage = 'هناك فرق طفيف جداً، حاول التركيز أكثر في الوردية القادمة.';
+            } else if (accuracy >= 95) {
+                feedbackTitle = 'أداء مستقر';
+                feedbackMessage = 'أداء جيد، لكن يمكن التحسين.';
+            } else {
+                feedbackTitle = 'تنبيه: يجب مراجعة السجلات';
+                feedbackMessage = 'نلاحظ وجود فرق ملحوظ. يرجى مراجعة سجل المبيعات والمنصرفات.';
+            }
+
+            if (!confirm(`🔒 هل أنت متأكد من إغلاق الوردية؟\n\nالرصيد الافتراضي: ${formatNumber(expected)}\nالرصيد الفعلي: ${formatNumber(actual)}\nالفرق: ${variance >= 0 ? '+' : ''}${formatNumber(variance)}\nالدقة: ${Math.round(accuracy)}%\n\n${feedbackTitle}`)) {
+                return;
+            }
+
+            const archiveData = {
+                date: shift.key,
+                closedAt: Date.now(),
+                closedBy: currentUser.email,
+                
+                // Financial data
+                sales: todayStats.sales || 0,
+                expenses: (todayStats.shopExpenses || 0) + (todayStats.personalExpenses || 0),
+                wages: todayStats.wagesLiability || DAILY_WAGES,
+                expectedBalance: expected,
+                actualBalance: actual,
+                variance: variance,
+                accuracy: Math.round(accuracy),
+                
+                // Feedback
+                feedbackTitle: feedbackTitle,
+                feedbackMessage: feedbackMessage,
+                closingNotes: document.getElementById('closingNotes').value || '',
+                
+                // Transactions summary
+                transactionCount: shiftTransactions.length,
+                transactions: shiftTransactions.map(tx => ({
+                    type: tx.type,
+                    title: tx.title,
+                    amount: tx.amount,
+                    timestamp: tx.timestamp
+                }))
+            };
+
+            try {
+                // Save to archive
+                await set(ref(database, `shiftArchive/${shift.key}`), archiveData);
+                
+                // Reset today's stats (keep wages for next calculation if needed, or reset)
+                await set(ref(database, 'stats/today'), {
+                    sales: 0,
+                    shopExpenses: 0,
+                    personalExpenses: 0,
+                    newDebts: 0,
+                    repayments: 0,
+                    wagesLiability: 0,
+                    lastReset: Date.now()
+                });
+
+                // Reset actual balances input
+                await set(ref(database, 'shift/lastActualBalance'), actual);
+                
+                showSuccess('✅ تم إغلاق الوردية وحفظ البيانات بنجاح');
+                
+                // Disable close button
+                document.getElementById('closeShiftBtn').disabled = true;
+                document.getElementById('shiftStatus').textContent = '🔴 مغلقة';
+                document.getElementById('shiftStatus').className = 'status-badge bg-red-100 text-red-700 text-xs';
+                
+                setTimeout(() => location.reload(), 2000);
+                
+            } catch (error) {
+                console.error(error);
+                showWarning('حدث خطأ أثناء إغلاق الوردية');
+            }
+        };
 
         // ==========================================
         // UI FUNCTIONS
@@ -892,302 +921,11 @@
             }
         };
 
-        window.switchTab = function(tab) {
-            currentTab = tab;
-            
-            ['overview', 'comparison', 'liabilities'].forEach(t => {
-                const btn = document.getElementById('tab-' + t);
-                const content = document.getElementById('content-' + t);
-                
-                if (t === tab) {
-                    btn.classList.remove('tab-inactive');
-                    btn.classList.add('tab-active');
-                    content.classList.remove('hidden');
-                } else {
-                    btn.classList.remove('tab-active');
-                    btn.classList.add('tab-inactive');
-                    content.classList.add('hidden');
-                }
-            });
-        };
-
-        window.openModal = function(type) {
-            const modal = document.getElementById(type + 'Modal');
-            if (modal) {
-                modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-        };
-
-        window.closeModal = function(type) {
-            const modal = document.getElementById(type + 'Modal');
-            if (modal) {
-                modal.classList.remove('active');
-                document.body.style.overflow = '';
-                
-                const form = document.getElementById(type + 'Form');
-                if (form) form.reset();
-            }
-        };
-
-        window.selectPayMethod = function(btn) {
-            document.querySelectorAll('.pay-method-btn').forEach(b => {
-                b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
-                b.classList.add('border-slate-200');
-            });
-            const isCash = btn.dataset.value === 'cash';
-            btn.classList.remove('border-slate-200');
-            btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
-            document.getElementById('payLiabilityMethod').value = btn.dataset.value;
-        };
-
-        // ==========================================
-        // EDIT ACTUAL BALANCE
-        // ==========================================
-
-        window.editActual = function(type) {
-            document.getElementById('editActualType').value = type;
-            document.getElementById('editActualLabel').textContent = type === 'cash' ? 'الكاش الفعلي' : 'البنك الفعلي';
-            document.getElementById('editActualAmount').value = formatNumber(actualBalances[type] || balances[type]);
-            openModal('editActual');
-        };
-
-        window.saveActualBalance = async function(e) {
-            e.preventDefault();
-            
-            const type = document.getElementById('editActualType').value;
-            const amount = parseFormattedNumber('editActualAmount');
-            
-            await update(ref(database, 'shift/actualBalances'), {
-                [type]: amount
-            });
-
-            closeModal('editActual');
-            showSuccess('تم تحديث الرصيد الفعلي');
-        };
-
-        // ==========================================
-        // FIXED LIABILITIES
-        // ==========================================
-
-        function renderFixedLiabilities() {
-            const container = document.getElementById('fixedLiabilities');
-            
-            container.innerHTML = FIXED_LIABILITIES.map(l => {
-                const data = liabilities[l.key] || { amount: 0, paid: 0 };
-                const remaining = data.amount - data.paid;
-                
-                return `
-                    <div class="bg-slate-50 rounded-xl p-3 border-r-4 ${remaining > 0 ? 'border-amber-500' : 'border-emerald-500'}">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold text-slate-700">${l.name}</span>
-                            <span class="text-lg font-bold ${remaining > 0 ? 'text-amber-700' : 'text-emerald-700'}">
-                                ${formatNumber(remaining)}
-                            </span>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="editLiabilityAmount('${l.key}')" class="flex-1 bg-slate-200 text-slate-700 rounded-lg py-2 text-sm font-bold hover:bg-slate-300 transition">
-                                ✏️ تعديل المبلغ
-                            </button>
-                            ${remaining > 0 ? `
-                            <button onclick="payLiability('${l.key}', '${l.name}', ${remaining})" class="flex-1 bg-purple-500 text-white rounded-lg py-2 text-sm font-bold hover:bg-purple-600 transition">
-                                💵 تسديد
-                            </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        window.editLiabilityAmount = async function(key) {
-            const current = liabilities[key] || { amount: 0 };
-            const newAmount = prompt('أدخل المبلغ الجديد:', current.amount);
-            
-            if (newAmount === null) return;
-            
-            const amount = parseFloat(newAmount.replace(/,/g, ''));
-            if (isNaN(amount) || amount < 0) {
-                showWarning('المبلغ غير صحيح');
-                return;
-            }
-
-            await update(ref(database, `liabilities/fixed/${key}`), { amount });
-            showSuccess('تم تحديث المبلغ');
-        };
-
-        window.payLiability = function(key, name, amount) {
-            document.getElementById('payLiabilityKey').value = key;
-            document.getElementById('payLiabilityName').textContent = name;
-            document.getElementById('payLiabilityAmountDisplay').textContent = formatNumber(amount);
-            document.getElementById('payLiabilityInput').value = amount;
-            openModal('payLiability');
-        };
-
-        window.confirmPayLiability = async function(e) {
-            e.preventDefault();
-            
-            const key = document.getElementById('payLiabilityKey').value;
-            const amount = parseFormattedNumber('payLiabilityInput');
-            const method = document.getElementById('payLiabilityMethod').value;
-            
-            const liability = liabilities[key];
-            const remaining = liability.amount - liability.paid;
-            
-            if (amount <= 0 || amount > remaining) {
-                showWarning('المبلغ غير صحيح');
-                return;
-            }
-
-            const currentBalance = method === 'cash' ? balances.cash : balances.bank;
-            if (amount > currentBalance) {
-                showWarning(`رصيد ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`);
-                return;
-            }
-
-            const newPaid = liability.paid + amount;
-            const timestamp = Date.now();
-
-            await Promise.all([
-                // Update balance
-                update(ref(database, 'balances'), {
-                    [method]: currentBalance - amount
-                }),
-                // Update liability
-                update(ref(database, `liabilities/fixed/${key}`), {
-                    paid: newPaid
-                }),
-                // Log transaction
-                push(ref(database, 'transactions'), {
-                    type: 'liability_payment',
-                    title: `تسديد ${liability.name}`,
-                    amount: -amount,
-                    timestamp,
-                    payment: method,
-                    liabilityKey: key,
-                    note: 'تسديد التزام ثابت'
-                })
-            ]);
-
-            closeModal('payLiability');
-            showSuccess(`تم تسديد ${formatNumber(amount)} ج`);
-        };
-
-        // ==========================================
-        // CUSTOM LIABILITIES
-        // ==========================================
-
-        function renderCustomLiabilities() {
-            const container = document.getElementById('customLiabilitiesList');
-            
-            if (customLiabilities.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد التزامات إضافية</div>';
-                return;
-            }
-
-            container.innerHTML = customLiabilities.map(l => `
-                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                    <div>
-                        <div class="font-bold text-slate-700">${l.name}</div>
-                        <div class="text-xs text-slate-500">${new Date(l.createdAt).toLocaleDateString('ar-SA')}</div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold text-purple-700">${formatNumber(l.amount)} ج</span>
-                        <button onclick="deleteCustomLiability('${l.id}')" class="text-red-500 hover:text-red-700">
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.addCustomLiability = async function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('customLiabilityName').value.trim();
-            const amount = parseFormattedNumber('customLiabilityAmount');
-            
-            if (!name || amount <= 0) {
-                showWarning('الرجاء إدخال البيانات بشكل صحيح');
-                return;
-            }
-
-            await push(ref(database, 'liabilities/custom'), {
-                name,
-                amount,
-                createdAt: Date.now()
-            });
-
-            document.getElementById('customLiabilityForm').reset();
-            showSuccess('تم إضافة الالتزام');
-        };
-
-        window.deleteCustomLiability = async function(id) {
-            if (!confirm('هل أنت متأكد من حذف هذا الالتزام؟')) return;
-            
-            await remove(ref(database, `liabilities/custom/${id}`));
-            showSuccess('تم الحذف');
-        };
-
-        // ==========================================
-        // CLOSE DAY
-        // ==========================================
-
-        window.closeDay = async function() {
-            if (!confirm('🔒 هل أنت متأكد من تقفيل يومية اليوم؟\n\nسيتم حفظ جميع البيانات في الأرشيف.')) {
-                return;
-            }
-
-            const todayKey = getTodayKey();
-            const timestamp = Date.now();
-
-            const archiveData = {
-                date: todayKey,
-                closedAt: timestamp,
-                balances: { ...balances },
-                actualBalances: { ...actualBalances },
-                stats: { ...todayStats },
-                liabilities: { ...liabilities },
-                customLiabilities: [...customLiabilities],
-                variances: {
-                    cash: actualBalances.cash - balances.cash,
-                    bank: actualBalances.bank - balances.bank,
-                    total: (actualBalances.cash + actualBalances.bank) - (balances.cash + balances.bank)
-                }
-            };
-
-            try {
-                await set(ref(database, `dayArchive/${todayKey}`), archiveData);
-                await set(ref(database, 'stats/today'), {
-                    sales: 0, shopExpenses: 0, personalExpenses: 0, newDebts: 0, repayments: 0
-                });
-                await set(ref(database, 'shift/actualBalances'), { cash: 0, bank: 0 });
-                
-                // Reset fixed liabilities paid amounts
-                const resetLiabilities = {};
-                FIXED_LIABILITIES.forEach(l => {
-                    resetLiabilities[l.key] = { amount: 0, paid: 0 };
-                });
-                await set(ref(database, 'liabilities/fixed'), resetLiabilities);
-                
-                // Clear custom liabilities
-                await set(ref(database, 'liabilities/custom'), null);
-
-                showSuccess('✅ تم تقفيل اليوم وحفظ البيانات');
-                setTimeout(() => location.reload(), 1500);
-                
-            } catch (error) {
-                console.error(error);
-                showWarning('حدث خطأ أثناء التقفيل');
-            }
-        };
-
         // Close modals on outside click
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', function(e) {
                 if (e.target === this) {
-                    const type = this.id.replace('Modal', '');
-                    closeModal(type);
+                    this.classList.remove('active');
                 }
             });
         });
