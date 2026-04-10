@@ -9,187 +9,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        * {
-            font-family: 'Cairo', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            min-height: 100vh;
-        }
-        
-        .app-container {
-            max-width: 480px;
-            margin: 0 auto;
-            background: #f8fafc;
-            min-height: 100vh;
-            box-shadow: 0 0 50px rgba(0,0,0,0.3);
-        }
-        
-        .btn-press:active {
-            transform: scale(0.95);
-            transition: transform 0.1s;
-        }
-        
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .tab-active {
-            border-bottom: 3px solid #7c3aed;
-            color: #7c3aed;
-            font-weight: 700;
-            background: linear-gradient(to top, rgba(124, 58, 237, 0.1), transparent);
-        }
-        
-        .tab-inactive {
-            border-bottom: 3px solid transparent;
-            color: #64748b;
-        }
-        
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-        
-        .variance-positive {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border: 2px solid #10b981;
-            color: #047857;
-        }
-        
-        .variance-negative {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            border: 2px solid #ef4444;
-            color: #b91c1c;
-        }
-        
-        .warning-toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background: #ef4444;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            z-index: 100;
-            transition: transform 0.3s ease;
-            font-weight: 600;
-            text-align: center;
-            min-width: 300px;
-        }
-        
-        .warning-toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-        
-        .success-toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background: #10b981;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            z-index: 100;
-            transition: transform 0.3s ease;
-            font-weight: 600;
-            text-align: center;
-            min-width: 300px;
-        }
-        
-        .success-toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-        
-        .modal {
-            display: none;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .modal.active .modal-content {
-            transform: translateY(0);
-        }
-        
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-        
-        .progress-ring-circle {
-            transition: stroke-dashoffset 0.35s;
-            transform-origin: 50% 50%;
-        }
-        
-        .archive-item {
-            border-right: 4px solid;
-        }
-        
-        .archive-closed {
-            border-color: #10b981;
-        }
-        
-        .archive-warning {
-            border-color: #f59e0b;
-        }
-        
-        .archive-danger {
-            border-color: #ef4444;
-        }
-        
-        .worker-card {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border: 2px solid #f59e0b;
-        }
-        
-        .supplier-card {
-            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-            border: 2px solid #6366f1;
-        }
-        
-        .pulse-alert {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        
-        .motivation-message {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border-right: 4px solid #3b82f6;
-        }
-        
-        .demotivation-message {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            border-right: 4px solid #ef4444;
-        }
+        * { font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); min-height: 100vh; }
+        .app-container { max-width: 480px; margin: 0 auto; background: #f8fafc; min-height: 100vh; box-shadow: 0 0 50px rgba(0,0,0,0.3); }
+        .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .tab-active { border-bottom: 3px solid #7c3aed; color: #7c3aed; font-weight: 700; background: linear-gradient(to top, rgba(124, 58, 237, 0.1), transparent); }
+        .tab-inactive { border-bottom: 3px solid transparent; color: #64748b; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .variance-positive { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #10b981; color: #047857; }
+        .variance-negative { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 2px solid #ef4444; color: #b91c1c; }
+        .warning-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #ef4444; color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 100; transition: transform 0.3s ease; font-weight: 600; text-align: center; min-width: 300px; }
+        .warning-toast.show { transform: translateX(-50%) translateY(0); }
+        .success-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #10b981; color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 100; transition: transform 0.3s ease; font-weight: 600; text-align: center; min-width: 300px; }
+        .success-toast.show { transform: translateX(-50%) translateY(0); }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        .modal-content { transform: translateY(100%); transition: transform 0.3s ease; }
+        .modal.active .modal-content { transform: translateY(0); }
+        .archive-item { border-right: 4px solid; }
+        .archive-closed { border-color: #10b981; }
+        .archive-warning { border-color: #f59e0b; }
+        .archive-danger { border-color: #ef4444; }
+        .worker-card { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; }
+        .supplier-card { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); border: 2px solid #6366f1; }
+        .pulse-alert { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .motivation-message { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-right: 4px solid #3b82f6; }
+        .demotivation-message { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-right: 4px solid #ef4444; }
+        .data-loading { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .transaction-item { border-right: 3px solid; transition: all 0.2s ease; }
+        .transaction-item:hover { transform: translateX(-4px); }
+        .tx-sales { border-color: #10b981; background: #ecfdf5; }
+        .tx-expense { border-color: #ef4444; background: #fef2f2; }
+        .tx-transfer { border-color: #f59e0b; background: #fffbeb; }
+        .tx-debt { border-color: #f97316; background: #fff7ed; }
+        .tx-bank { border-color: #3b82f6; background: #eff6ff; }
     </style>
 </head>
 <body>
@@ -208,18 +66,12 @@
                     <span class="text-2xl">☰</span>
                 </button>
                 <h1 class="text-lg font-bold">🧮 تصفية الوردية</h1>
-                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">
-                    خروج
-                </button>
+                <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">خروج</button>
             </div>
             
             <div class="text-center mt-4">
-                <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg">
-                    00:00:00
-                </div>
-                <div id="date" class="text-slate-300 text-sm mt-1">
-                    جاري التحميل...
-                </div>
+                <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg">00:00:00</div>
+                <div id="date" class="text-slate-300 text-sm mt-1">جاري التحميل...</div>
                 <div class="text-xs text-emerald-400 mt-1" id="userEmail"></div>
             </div>
         </header>
@@ -235,24 +87,22 @@
                 </div>
                 <div class="p-4 space-y-2">
                     <a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 text-slate-700 flex items-center gap-3">
-                        <span>🏠</span>
-                        <span>الرئيسية</span>
+                        <span>🏠</span><span>الرئيسية</span>
                     </a>
                     <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700">
-                        <span>📝</span>
-                        <span>الديون</span>
+                        <span>📝</span><span>الديون</span>
                     </a>
                     <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
-                        <span>🏦</span>
-                        <span>الصندوق الجانبي</span>
+                        <span>🏦</span><span>الصندوق الجانبي</span>
                     </a>
                     <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
-                        <span>📊</span>
-                        <span>التقارير</span>
+                        <span>📊</span><span>التقارير</span>
                     </a>
-                    <a href="shift.html" class="w-full text-right p-3 rounded-xl bg-purple-50 text-purple-700 font-semibold flex items-center gap-3">
-                        <span>🧮</span>
-                        <span>تصفية الوردية</span>
+                    <a href="records.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
+                        <span>🗂️</span><span>السجلات</span>
+                    </a>
+                    <a href="shift.html" class="w-full text-right p-3 rounded-xl bg-purple-50 text-purple-700 font-semibold border-r-4 border-purple-500 flex items-center gap-3">
+                        <span>🧮</span><span>تصفية الوردية</span>
                     </a>
                 </div>
             </div>
@@ -261,85 +111,117 @@
         <!-- تبويبات التنقل الأربعة -->
         <div class="bg-white shadow-sm sticky top-0 z-30">
             <div class="flex justify-around text-xs">
-                <button onclick="switchTab('deficit')" id="tab-deficit" class="flex-1 py-3 tab-active">
-                    ⚠️ العجز
-                </button>
-                <button onclick="switchTab('liabilities')" id="tab-liabilities" class="flex-1 py-3 tab-inactive">
-                    📋 الالتزامات
-                </button>
-                <button onclick="switchTab('comparison')" id="tab-comparison" class="flex-1 py-3 tab-inactive">
-                    ⚖️ المطابقة
-                </button>
-                <button onclick="switchTab('archive')" id="tab-archive" class="flex-1 py-3 tab-inactive">
-                    📚 الأرشيف
-                </button>
+                <button onclick="switchTab('deficit')" id="tab-deficit" class="flex-1 py-3 tab-active">⚠️ العجز</button>
+                <button onclick="switchTab('liabilities')" id="tab-liabilities" class="flex-1 py-3 tab-inactive">📋 الالتزامات</button>
+                <button onclick="switchTab('comparison')" id="tab-comparison" class="flex-1 py-3 tab-inactive">⚖️ المطابقة</button>
+                <button onclick="switchTab('archive')" id="tab-archive" class="flex-1 py-3 tab-inactive">📚 الأرشيف</button>
             </div>
         </div>
 
         <!-- المحتوى الرئيسي -->
         <main class="p-4 space-y-4 pb-24" id="mainContent">
             
-            <!-- القسم الأول: العجز/الفائض (الحالي) -->
+            <!-- القسم الأول: العجز (الافتراضي) -->
             <div id="content-deficit" class="space-y-4">
                 
                 <!-- بطاقة الموقف المالي الحالي -->
                 <div class="glass-card rounded-2xl p-4 shadow-lg border-2 border-purple-200">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-slate-800 text-lg">⚠️ موقف الصندوق الحالي</h3>
-                        <span id="deficitStatus" class="status-badge bg-amber-100 text-amber-700 pulse-alert">
-                            تحت المراقبة
-                        </span>
+                        <span id="deficitStatus" class="status-badge bg-amber-100 text-amber-700 pulse-alert">تحت المراقبة</span>
                     </div>
 
-                    <!-- الأرصدة الحالية -->
+                    <!-- الأرصدة الحالية (محسوبة من السجلات) -->
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-emerald-50 rounded-xl p-3 text-center border-2 border-emerald-200">
-                            <div class="text-xs text-emerald-600 mb-1">الكاش</div>
-                            <div id="currentCash" class="text-xl font-bold text-emerald-700">0</div>
+                            <div class="text-xs text-emerald-600 mb-1">الكاش (من السجلات)</div>
+                            <div id="currentCash" class="text-xl font-bold text-emerald-700 data-loading" style="min-height: 28px;">---</div>
                         </div>
                         <div class="bg-blue-50 rounded-xl p-3 text-center border-2 border-blue-200">
-                            <div class="text-xs text-blue-600 mb-1">البنك</div>
-                            <div id="currentBank" class="text-xl font-bold text-blue-700">0</div>
+                            <div class="text-xs text-blue-600 mb-1">البنك (من السجلات)</div>
+                            <div id="currentBank" class="text-xl font-bold text-blue-700 data-loading" style="min-height: 28px;">---</div>
                         </div>
                     </div>
 
                     <div class="bg-slate-100 rounded-xl p-3 text-center mb-4">
                         <div class="text-xs text-slate-500 mb-1">إجمالي الأموال المتاحة</div>
-                        <div id="totalAvailable" class="text-2xl font-bold text-slate-800">0</div>
+                        <div id="totalAvailable" class="text-2xl font-bold text-slate-800 data-loading" style="min-height: 32px;">---</div>
+                    </div>
+
+                    <!-- ملخص السجلات -->
+                    <div class="bg-white rounded-xl p-3 mb-4 border border-slate-200">
+                        <h4 class="font-bold text-slate-700 mb-2 text-sm">📊 ملخص حركات اليوم (من السجلات)</h4>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-emerald-50 rounded-lg p-2">
+                                <div class="text-emerald-600">المبيعات</div>
+                                <div id="todaySales" class="font-bold text-emerald-700">0</div>
+                            </div>
+                            <div class="bg-red-50 rounded-lg p-2">
+                                <div class="text-red-600">المصروفات</div>
+                                <div id="todayExpenses" class="font-bold text-red-700">0</div>
+                            </div>
+                            <div class="bg-amber-50 rounded-lg p-2">
+                                <div class="text-amber-600">التبديلات</div>
+                                <div id="todayTransfers" class="font-bold text-amber-700">0</div>
+                            </div>
+                            <div class="bg-blue-50 rounded-lg p-2">
+                                <div class="text-blue-600">تسديد الديون</div>
+                                <div id="todayDebtPayments" class="font-bold text-blue-700">0</div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- الالتزامات المستحقة -->
                     <div class="bg-amber-50 rounded-xl p-3 mb-4 border-2 border-amber-200">
                         <div class="flex justify-between items-center mb-2">
                             <span class="font-bold text-amber-800">📋 إجمالي الالتزامات المستحقة</span>
-                            <span id="totalLiabilitiesDisplay" class="text-xl font-bold text-amber-700">0</span>
+                            <span id="totalLiabilitiesDisplay" class="text-xl font-bold text-amber-700 data-loading" style="min-height: 28px;">---</span>
                         </div>
-                        <div class="text-xs text-amber-600">
-                            تشمل: العمال + المصنع + الكساح + عمران + الطاحونة + ود الجعلي
-                        </div>
+                        <div class="text-xs text-amber-600">تشمل: العمال + المصنع + الكساح + عمران + الطاحونة + ود الجعلي</div>
                     </div>
 
                     <!-- حساب العجز/الفائض -->
                     <div id="deficitBox" class="rounded-2xl p-4 text-center mb-4 transition-all">
                         <div class="text-sm font-bold mb-2 opacity-80">الموقف النهائي</div>
-                        <div id="deficitAmount" class="text-3xl font-bold mb-2">0</div>
-                        <div id="deficitPercentage" class="text-lg font-bold mb-2">0%</div>
+                        <div id="deficitAmount" class="text-3xl font-bold mb-2 data-loading" style="min-height: 36px;">---</div>
+                        <div id="deficitPercentage" class="text-lg font-bold mb-2">---</div>
                         <div id="deficitLabel" class="text-sm font-semibold">---</div>
                     </div>
 
                     <!-- رسالة تحفيزية/إنذار -->
-                    <div id="motivationMessage" class="rounded-xl p-4 text-center">
+                    <div id="motivationMessage" class="rounded-xl p-4 text-center hidden">
                         <div id="motivationIcon" class="text-3xl mb-2">⚠️</div>
                         <div id="motivationText" class="font-bold text-lg mb-1">---</div>
                         <div id="motivationSubtext" class="text-sm opacity-80">---</div>
                     </div>
                 </div>
 
-                <!-- زر تحديث فوري -->
-                <button onclick="forceCheckMidnight()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-2xl p-4 font-bold btn-press shadow-lg hover:from-amber-600 hover:to-amber-700 transition flex items-center justify-center gap-2">
-                    <span>🔄</span>
-                    <span>فحص وتحديث يدوي</span>
-                </button>
+                <!-- أحدث الحركات من السجلات -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-slate-700">🔄 آخر الحركات (من السجلات)</h3>
+                        <a href="records.html" class="text-sm text-purple-600 font-bold">عرض الكل ↩️</a>
+                    </div>
+                    <div id="recentTransactions" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
+                        <!-- يُملأ ديناميكياً من السجلات -->
+                    </div>
+                </div>
+
+                <!-- أزرار التحكم -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="forceCheckMidnight()" class="bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-2xl p-4 font-bold btn-press shadow-lg hover:from-amber-600 hover:to-amber-700 transition flex items-center justify-center gap-2">
+                        <span>🔄</span><span>فحص يدوي</span>
+                    </button>
+                    <button onclick="initializeDemoData()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl p-4 font-bold btn-press shadow-lg hover:from-blue-600 hover:to-blue-700 transition flex items-center justify-center gap-2">
+                        <span>🧪</span><span>بيانات تجريبية</span>
+                    </button>
+                </div>
+
+                <!-- حالة الاتصال -->
+                <div id="connectionStatus" class="bg-slate-100 rounded-xl p-3 text-center text-sm">
+                    <span class="text-slate-500">حالة الاتصال:</span>
+                    <span id="connectionText" class="font-bold text-amber-600">جاري الاتصال...</span>
+                </div>
 
             </div>
 
@@ -357,23 +239,19 @@
                         <div class="worker-card rounded-xl p-3">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="font-bold text-amber-900">جدو</span>
-                                <span id="jaddoBalance" class="text-lg font-bold text-amber-700">0</span>
+                                <span id="jaddoBalance" class="text-lg font-bold text-amber-700 data-loading">---</span>
                             </div>
                             <div class="text-xs text-amber-800 mb-2">يضاف يومياً: 20,000 ج</div>
-                            <button onclick="payWorker('jaddo', 'جدو')" class="w-full bg-amber-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-amber-700 transition btn-press">
-                                💵 تسديد
-                            </button>
+                            <button onclick="payWorker('jaddo', 'جدو')" class="w-full bg-amber-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-amber-700 transition btn-press">💵 تسديد</button>
                         </div>
                         <!-- هاشم -->
                         <div class="worker-card rounded-xl p-3">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="font-bold text-amber-900">هاشم</span>
-                                <span id="hashimBalance" class="text-lg font-bold text-amber-700">0</span>
+                                <span id="hashimBalance" class="text-lg font-bold text-amber-700 data-loading">---</span>
                             </div>
                             <div class="text-xs text-amber-800 mb-2">يضاف يومياً: 40,000 ج</div>
-                            <button onclick="payWorker('hashim', 'هاشم')" class="w-full bg-amber-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-amber-700 transition btn-press">
-                                💵 تسديد
-                            </button>
+                            <button onclick="payWorker('hashim', 'هاشم')" class="w-full bg-amber-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-amber-700 transition btn-press">💵 تسديد</button>
                         </div>
                     </div>
                     <div class="mt-3 bg-amber-100 rounded-lg p-2 text-xs text-amber-800 text-center">
@@ -396,20 +274,14 @@
                 <div class="bg-white rounded-2xl p-4 shadow-md">
                     <h3 class="font-bold text-slate-700 mb-3">➕ إضافة التزام/مورد جديد</h3>
                     <form id="addSupplierForm" class="space-y-3" onsubmit="addSupplier(event)">
-                        <input type="text" id="supplierName" 
-                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none" 
-                            placeholder="اسم الجهة (مثال: مورد جديد، سلفة، ...)" required>
-                        <input type="text" id="supplierAmount" 
-                            class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-purple-500 focus:outline-none" 
-                            placeholder="المبلغ..." oninput="formatNumberInput(this)" required>
+                        <input type="text" id="supplierName" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none" placeholder="اسم الجهة (مثال: مورد جديد، سلفة، ...)" required>
+                        <input type="text" id="supplierAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-purple-500 focus:outline-none" placeholder="المبلغ..." oninput="formatNumberInput(this)" required>
                         <select id="supplierType" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none">
                             <option value="supplier">مورد/التزام</option>
                             <option value="loan">سلفة</option>
                             <option value="other">أخرى</option>
                         </select>
-                        <button type="submit" class="w-full bg-purple-500 text-white rounded-xl p-3 font-bold btn-press hover:bg-purple-600 transition">
-                            ✅ إضافة
-                        </button>
+                        <button type="submit" class="w-full bg-purple-500 text-white rounded-xl p-3 font-bold btn-press hover:bg-purple-600 transition">✅ إضافة</button>
                     </form>
                 </div>
 
@@ -430,16 +302,16 @@
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-sm mb-2">
                             <div class="text-center">
-                                <div class="text-xs text-slate-500">الافتراضي (المحاسبي)</div>
-                                <div id="expectedCash" class="font-bold text-slate-700">0</div>
+                                <div class="text-xs text-slate-500">الافتراضي (من السجلات)</div>
+                                <div id="expectedCash" class="font-bold text-slate-700 data-loading">---</div>
                             </div>
                             <div class="text-center">
                                 <div class="text-xs text-emerald-600">الفعلي (الموجود)</div>
-                                <div id="actualCashDisplay" class="font-bold text-emerald-700">0</div>
+                                <div id="actualCashDisplay" class="font-bold text-emerald-700 data-loading">---</div>
                             </div>
                         </div>
                         <div id="cashVarianceBox" class="rounded-lg p-2 text-center text-sm font-bold">
-                            الفرق: <span id="cashVariance">0</span>
+                            الفرق: <span id="cashVariance">---</span>
                         </div>
                     </div>
 
@@ -451,16 +323,16 @@
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-sm mb-2">
                             <div class="text-center">
-                                <div class="text-xs text-slate-500">الافتراضي (المحاسبي)</div>
-                                <div id="expectedBank" class="font-bold text-slate-700">0</div>
+                                <div class="text-xs text-slate-500">الافتراضي (من السجلات)</div>
+                                <div id="expectedBank" class="font-bold text-slate-700 data-loading">---</div>
                             </div>
                             <div class="text-center">
                                 <div class="text-xs text-blue-600">الفعلي (الموجود)</div>
-                                <div id="actualBankDisplay" class="font-bold text-blue-700">0</div>
+                                <div id="actualBankDisplay" class="font-bold text-blue-700 data-loading">---</div>
                             </div>
                         </div>
                         <div id="bankVarianceBox" class="rounded-lg p-2 text-center text-sm font-bold">
-                            الفرق: <span id="bankVariance">0</span>
+                            الفرق: <span id="bankVariance">---</span>
                         </div>
                     </div>
 
@@ -469,18 +341,16 @@
                         <div class="text-center mb-3">
                             <div class="text-sm text-purple-600 mb-1">نسبة المطابقة الكلية</div>
                             <div class="flex justify-center items-center gap-2">
-                                <div id="matchPercentage" class="text-3xl font-bold text-purple-700">100%</div>
+                                <div id="matchPercentage" class="text-3xl font-bold text-purple-700 data-loading">---</div>
                             </div>
                         </div>
                         
                         <!-- شريط التقدم -->
                         <div class="w-full bg-slate-200 rounded-full h-4 mb-3 overflow-hidden">
-                            <div id="matchProgressBar" class="bg-purple-500 h-4 rounded-full transition-all duration-500" style="width: 100%"></div>
+                            <div id="matchProgressBar" class="bg-purple-500 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
                         </div>
 
-                        <div id="comparisonMessage" class="text-center p-3 rounded-lg font-bold">
-                            ✅ جميع الأرصدة مطابقة
-                        </div>
+                        <div id="comparisonMessage" class="text-center p-3 rounded-lg font-bold data-loading">جاري التحميل...</div>
                     </div>
                 </div>
 
@@ -502,33 +372,25 @@
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-emerald-50 rounded-xl p-3 text-center">
                             <div class="text-xs text-emerald-600 mb-1">اليوميات المقفلة</div>
-                            <div id="totalClosedDays" class="text-2xl font-bold text-emerald-700">0</div>
+                            <div id="totalClosedDays" class="text-2xl font-bold text-emerald-700 data-loading">---</div>
                         </div>
                         <div class="bg-amber-50 rounded-xl p-3 text-center">
                             <div class="text-xs text-amber-600 mb-1">متوسط الفائض/العجز</div>
-                            <div id="avgVariance" class="text-2xl font-bold text-amber-700">0</div>
+                            <div id="avgVariance" class="text-2xl font-bold text-amber-700 data-loading">---</div>
                         </div>
                     </div>
 
                     <!-- فلترة -->
                     <div class="flex gap-2 mb-4">
                         <input type="date" id="archiveFilterDate" class="flex-1 border-2 border-slate-200 rounded-xl p-2 text-sm focus:border-purple-500 focus:outline-none">
-                        <button onclick="filterArchive()" class="bg-purple-500 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-purple-600 transition">
-                            🔍
-                        </button>
-                        <button onclick="loadArchive()" class="bg-slate-500 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-slate-600 transition">
-                            الكل
-                        </button>
+                        <button onclick="filterArchive()" class="bg-purple-500 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-purple-600 transition">🔍</button>
+                        <button onclick="loadArchive()" class="bg-slate-500 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-slate-600 transition">الكل</button>
                     </div>
                 </div>
 
                 <!-- قائمة الأرشيف -->
                 <div id="archiveList" class="space-y-3 max-h-96 overflow-y-auto hide-scrollbar">
                     <!-- يُملأ ديناميكياً -->
-                    <div class="text-center text-slate-400 py-8">
-                        <div class="text-4xl mb-2">📭</div>
-                        <div>لا توجد يوميات مقفلة بعد</div>
-                    </div>
                 </div>
 
             </div>
@@ -538,21 +400,21 @@
         <!-- شريط التنقل السفلي -->
         <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
             <div class="flex justify-around items-center">
-                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400">
+                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
                     <span class="text-xl">🏠</span>
                     <span class="text-xs mt-1">الرئيسية</span>
                 </a>
-                <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400">
+                <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-amber-600 transition">
                     <span class="text-xl">📝</span>
                     <span class="text-xs mt-1">الديون</span>
                 </a>
-                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400">
+                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-orange-600 transition">
                     <span class="text-xl">🏦</span>
                     <span class="text-xs mt-1">الجانبي</span>
                 </a>
-                <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">📊</span>
-                    <span class="text-xs mt-1">التقارير</span>
+                <a href="records.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-purple-600 transition">
+                    <span class="text-xl">🗂️</span>
+                    <span class="text-xs mt-1">السجلات</span>
                 </a>
                 <a href="shift.html" class="flex flex-col items-center p-2 text-purple-600">
                     <span class="text-xl">🧮</span>
@@ -582,14 +444,10 @@
                 </div>
 
                 <div>
-                    <input type="text" id="editActualAmount" 
-                        class="w-full border-2 border-blue-200 rounded-xl p-4 text-2xl text-center font-bold focus:border-blue-500 focus:outline-none bg-blue-50" 
-                        placeholder="0" oninput="formatNumberInput(this)" required>
+                    <input type="text" id="editActualAmount" class="w-full border-2 border-blue-200 rounded-xl p-4 text-2xl text-center font-bold focus:border-blue-500 focus:outline-none bg-blue-50" placeholder="0" oninput="formatNumberInput(this)" required>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-blue-600 transition">
-                    💾 حفظ
-                </button>
+                <button type="submit" class="w-full bg-blue-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-blue-600 transition">💾 حفظ</button>
             </form>
         </div>
     </div>
@@ -615,9 +473,7 @@
 
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المبلغ المسدد</label>
-                    <input type="text" id="payWorkerAmount" 
-                        class="w-full border-2 border-amber-200 rounded-xl p-3 text-lg text-center focus:border-amber-500 focus:outline-none bg-amber-50" 
-                        placeholder="0" oninput="formatNumberInput(this)" required>
+                    <input type="text" id="payWorkerAmount" class="w-full border-2 border-amber-200 rounded-xl p-3 text-lg text-center focus:border-amber-500 focus:outline-none bg-amber-50" placeholder="0" oninput="formatNumberInput(this)" required>
                 </div>
 
                 <div>
@@ -635,9 +491,7 @@
                     <input type="hidden" id="payWorkerMethod" value="cash">
                 </div>
 
-                <button type="submit" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">
-                    ✅ تأكيد التسديد
-                </button>
+                <button type="submit" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">✅ تأكيد التسديد</button>
             </form>
         </div>
     </div>
@@ -663,9 +517,7 @@
 
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المبلغ المسدد</label>
-                    <input type="text" id="paySupplierInput" 
-                        class="w-full border-2 border-indigo-200 rounded-xl p-3 text-lg text-center focus:border-indigo-500 focus:outline-none bg-indigo-50" 
-                        placeholder="0" oninput="formatNumberInput(this)" required>
+                    <input type="text" id="paySupplierInput" class="w-full border-2 border-indigo-200 rounded-xl p-3 text-lg text-center focus:border-indigo-500 focus:outline-none bg-indigo-50" placeholder="0" oninput="formatNumberInput(this)" required>
                 </div>
 
                 <div>
@@ -683,9 +535,7 @@
                     <input type="hidden" id="paySupplierMethod" value="cash">
                 </div>
 
-                <button type="submit" class="w-full bg-indigo-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-indigo-600 transition">
-                    ✅ تأكيد التسديد
-                </button>
+                <button type="submit" class="w-full bg-indigo-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-indigo-600 transition">✅ تأكيد التسديد</button>
             </form>
         </div>
     </div>
@@ -693,21 +543,8 @@
     <!-- Firebase & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged,
-            signOut 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { 
-            getDatabase, 
-            ref, 
-            set, 
-            push, 
-            onValue, 
-            update, 
-            get,
-            remove
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, push, onValue, update, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
@@ -725,18 +562,19 @@
         const database = getDatabase(app);
 
         let currentUser = null;
-        let balances = { cash: 0, bank: 0 };
-        let actualBalances = { cash: 0, bank: 0 };
-        let todayStats = { sales: 0, shopExpenses: 0, personalExpenses: 0 };
         
-        // العمال - يضاف لهم يومياً 20,000 و 40,000
-        const WORKERS = {
-            jaddo: { name: 'جدو', dailyAmount: 20000 },
-            hashim: { name: 'هاشم', dailyAmount: 40000 }
+        // البيانات الرئيسية - مرتبطة بصفحة السجلات
+        let appData = {
+            transactions: [],      // من سجلات records
+            debts: [],            // من سجلات records
+            calculatedBalances: { cash: 0, bank: 0 },
+            actualBalances: { cash: 0, bank: 0 },
+            workers: { jaddo: 0, hashim: 0 },
+            suppliers: {},
+            archive: {}
         };
-        let workersBalances = { jaddo: 0, hashim: 0 };
 
-        // الموردون الثابتون
+        const WORKERS = { jaddo: { name: 'جدو', dailyAmount: 20000 }, hashim: { name: 'هاشم', dailyAmount: 40000 } };
         const DEFAULT_SUPPLIERS = [
             { id: 'factory', name: '🏭 المصنع', amount: 0, paid: 0 },
             { id: 'kassah', name: '🚚 الكساح', amount: 0, paid: 0 },
@@ -744,11 +582,6 @@
             { id: 'mill', name: '⚙️ طاحونة الدخن', amount: 0, paid: 0 },
             { id: 'wadaljaaly', name: '🏪 ود الجعلي', amount: 0, paid: 0 }
         ];
-        let suppliers = [];
-        let customSuppliers = [];
-
-        let currentTab = 'deficit';
-        let lastMidnightCheck = null;
 
         // ==========================================
         // UTILITY FUNCTIONS
@@ -760,12 +593,9 @@
         };
 
         window.formatNumberInput = function(input) {
-            let value = input.value.replace(/[^\d]/g, '');
-            if (value) {
-                input.value = parseInt(value).toLocaleString('en-US');
-            } else {
-                input.value = '';
-            }
+            let value = input.value.replace(/[^\\d]/g, '');
+            if (value) { input.value = parseInt(value).toLocaleString('en-US'); } 
+            else { input.value = ''; }
         };
 
         window.parseFormattedNumber = function(inputId) {
@@ -792,10 +622,22 @@
             return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         }
 
-        function getYesterdayKey() {
+        function getTodayStart() {
             const now = new Date();
-            now.setDate(now.getDate() - 1);
-            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const start = new Date(now);
+            start.setHours(6, 0, 0, 0);
+            if (now.getHours() < 6) start.setDate(start.getDate() - 1);
+            return start.getTime();
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return '--/--/----';
+            return new Date(timestamp).toLocaleDateString('ar-SA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '--:--';
+            return new Date(timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
         }
 
         // ==========================================
@@ -803,178 +645,200 @@
         // ==========================================
 
         onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            if (!user.emailVerified) {
-                alert('⚠️ يرجى توثيق حسابك أولاً');
-                signOut(auth);
-                return;
-            }
-            
+            if (!user) { window.location.href = 'login.html'; return; }
+            if (!user.emailVerified) { alert('⚠️ يرجى توثيق حسابك أولاً'); signOut(auth); return; }
             currentUser = user;
             document.getElementById('userEmail').textContent = '👤 ' + user.email;
             initApp();
         });
 
         window.logout = async function() {
-            try {
-                await signOut(auth);
-                window.location.href = 'login.html';
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
+            try { await signOut(auth); window.location.href = 'login.html'; } 
+            catch (error) { console.error('Logout error:', error); }
         };
 
         // ==========================================
-        // APP INITIALIZATION
+        // APP INITIALIZATION - الربط مع السجلات
         // ==========================================
 
         function initApp() {
-            // Listen to main balances
-            onValue(ref(database, 'balances'), (snap) => {
-                balances = snap.val() || { cash: 0, bank: 0 };
-                updateDeficitSection();
-                updateComparisonSection();
+            console.log('بدء تهيئة التطبيق - ربط مع السجلات...');
+            
+            // 1. الاستماع للمعاملات (من صفحة السجلات)
+            onValue(ref(database, 'transactions'), (snap) => {
+                const txs = [];
+                if (snap.exists()) snap.forEach((child) => { txs.push({ id: child.key, ...child.val() }); });
+                appData.transactions = txs;
+                calculateBalancesFromRecords();
+                updateRecentTransactions();
             });
 
-            // Listen to actual balances (for comparison)
+            // 2. الاستماع للديون (من صفحة السجلات)
+            onValue(ref(database, 'debts'), (snap) => {
+                const debts = [];
+                if (snap.exists()) snap.forEach((child) => { debts.push({ id: child.key, ...child.val() }); });
+                appData.debts = debts;
+                calculateBalancesFromRecords();
+            });
+
+            // 3. الأرصدة الفعلية
             onValue(ref(database, 'shift/actualBalances'), (snap) => {
-                actualBalances = snap.val() || { cash: balances.cash, bank: balances.bank };
+                appData.actualBalances = snap.val() || { cash: 0, bank: 0 };
                 updateComparisonSection();
             });
 
-            // Listen to today's stats
-            onValue(ref(database, 'stats/today'), (snap) => {
-                todayStats = snap.val() || { sales: 0, shopExpenses: 0, personalExpenses: 0 };
-                updateDeficitSection();
-            });
-
-            // Listen to workers balances
+            // 4. العمال
             onValue(ref(database, 'workers'), (snap) => {
-                const data = snap.val() || {};
-                workersBalances = {
-                    jaddo: data.jaddo || 0,
-                    hashim: data.hashim || 0
-                };
-                updateWorkersDisplay();
+                appData.workers = snap.val() || { jaddo: 0, hashim: 0 };
+                document.getElementById('jaddoBalance').textContent = formatNumber(appData.workers.jaddo);
+                document.getElementById('hashimBalance').textContent = formatNumber(appData.workers.hashim);
+                document.getElementById('jaddoBalance').classList.remove('data-loading');
+                document.getElementById('hashimBalance').classList.remove('data-loading');
                 updateDeficitSection();
             });
 
-            // Listen to suppliers
+            // 5. الموردين
             onValue(ref(database, 'suppliers'), (snap) => {
                 const data = snap.val() || {};
-                suppliers = DEFAULT_SUPPLIERS.map(s => ({
-                    ...s,
-                    amount: data[s.id]?.amount || 0,
-                    paid: data[s.id]?.paid || 0
-                }));
-                customSuppliers = Object.entries(data)
-                    .filter(([key]) => !DEFAULT_SUPPLIERS.find(s => s.id === key))
-                    .map(([id, val]) => ({ id, ...val }));
+                appData.suppliers = {};
+                DEFAULT_SUPPLIERS.forEach(s => {
+                    appData.suppliers[s.id] = { ...s, amount: data[s.id]?.amount || 0, paid: data[s.id]?.paid || 0 };
+                });
+                Object.entries(data).forEach(([key, val]) => {
+                    if (!DEFAULT_SUPPLIERS.find(s => s.id === key)) appData.suppliers[key] = val;
+                });
                 renderSuppliers();
                 updateDeficitSection();
             });
 
-            // Check and initialize workers if not exist
-            get(ref(database, 'workers')).then(snap => {
-                if (!snap.exists()) {
-                    set(ref(database, 'workers'), { jaddo: 0, hashim: 0 });
-                }
+            // 6. الأرشيف
+            onValue(ref(database, 'dayArchive'), (snap) => {
+                appData.archive = snap.val() || {};
+                renderArchive();
             });
 
-            // Initialize suppliers if not exist
-            get(ref(database, 'suppliers')).then(snap => {
+            // تهيئة البيانات الافتراضية
+            get(ref(database, 'workers')).then(snap => { if (!snap.exists()) set(ref(database, 'workers'), { jaddo: 0, hashim: 0 }); });
+            get(ref(database, 'suppliers')).then(snap => { 
                 if (!snap.exists()) {
                     const initial = {};
-                    DEFAULT_SUPPLIERS.forEach(s => {
-                        initial[s.id] = { amount: 0, paid: 0, name: s.name };
-                    });
+                    DEFAULT_SUPPLIERS.forEach(s => { initial[s.id] = { name: s.name, amount: 0, paid: 0 }; });
                     set(ref(database, 'suppliers'), initial);
                 }
             });
 
-            // Setup midnight checker
-            setupMidnightChecker();
-            
-            // Start clock
             updateClock();
             setInterval(updateClock, 1000);
+            setupMidnightChecker();
 
-            // Load archive
-            loadArchive();
-        }
-
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
-            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA-u-ca-gregory', { 
-                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-            })[^1^];
+            setTimeout(() => {
+                document.getElementById('connectionText').textContent = 'متصل ✅';
+                document.getElementById('connectionText').className = 'font-bold text-emerald-600';
+            }, 2000);
         }
 
         // ==========================================
-        // MIDNIGHT AUTO-ADD LOGIC
+        // حساب الأرصدة من السجلات (القلب النابض)
         // ==========================================
 
-        function setupMidnightChecker() {
-            // Check every minute
-            setInterval(checkMidnight, 60000);
-            // Also check immediately on load
-            checkMidnight();
+        function calculateBalancesFromRecords() {
+            let cash = 0, bank = 0;
+            let todaySales = 0, todayExpenses = 0, todayTransfers = 0, todayDebtPayments = 0;
+            const todayStart = getTodayStart();
+
+            appData.transactions.forEach(tx => {
+                const amount = Math.abs(tx.amount || 0);
+                const isToday = tx.timestamp >= todayStart;
+
+                switch(tx.type) {
+                    case 'sales':
+                        if (tx.payment === 'كاش') cash += amount;
+                        else if (tx.payment === 'بنكك') bank += amount;
+                        if (isToday) todaySales += amount;
+                        break;
+                    case 'shopExpense':
+                    case 'personalExpense':
+                        if (tx.payment === 'كاش') cash -= amount;
+                        else if (tx.payment === 'بنكك') { bank -= amount; if (tx.bankFee) bank -= tx.bankFee; }
+                        if (isToday) todayExpenses += amount;
+                        break;
+                    case 'transfer':
+                        const transferAmount = tx.transferAmount || 0;
+                        if (tx.from === 'كاش' && tx.to === 'بنكك') { cash -= transferAmount; bank += transferAmount; }
+                        else if (tx.from === 'بنكك' && tx.to === 'كاش') { bank -= transferAmount; cash += transferAmount; }
+                        if (isToday) todayTransfers += transferAmount;
+                        break;
+                    case 'debt_full_repayment':
+                    case 'debt_partial_repayment':
+                        if (tx.payment === 'كاش') cash += amount;
+                        else if (tx.payment === 'بنكك') bank += amount;
+                        if (isToday) todayDebtPayments += amount;
+                        break;
+                    case 'bankFee':
+                        bank -= amount;
+                        break;
+                }
+            });
+
+            appData.calculatedBalances = { cash, bank };
+
+            document.getElementById('currentCash').textContent = formatNumber(cash);
+            document.getElementById('currentBank').textContent = formatNumber(bank);
+            document.getElementById('currentCash').classList.remove('data-loading');
+            document.getElementById('currentBank').classList.remove('data-loading');
+
+            document.getElementById('totalAvailable').textContent = formatNumber(cash + bank);
+            document.getElementById('totalAvailable').classList.remove('data-loading');
+
+            document.getElementById('todaySales').textContent = formatNumber(todaySales);
+            document.getElementById('todayExpenses').textContent = formatNumber(todayExpenses);
+            document.getElementById('todayTransfers').textContent = formatNumber(todayTransfers);
+            document.getElementById('todayDebtPayments').textContent = formatNumber(todayDebtPayments);
+
+            updateDeficitSection();
+            updateComparisonSection();
         }
 
-        async function checkMidnight() {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            
-            // Check if it's exactly midnight (00:00) or if we haven't checked today
-            const todayKey = getTodayKey();
-            const checkKey = `lastCheck_${todayKey}`;
-            
-            if (hours === 0 && minutes === 0) {
-                // It's midnight! Add daily amounts
-                await addDailyWorkerAmounts();
-                lastMidnightCheck = todayKey;
-            }
-        }
+        // ==========================================
+        // عرض آخر الحركات
+        // ==========================================
 
-        window.forceCheckMidnight = async function() {
-            await addDailyWorkerAmounts();
-            showSuccess('تم الفحص والتحديث اليدوي');
-        };
+        function updateRecentTransactions() {
+            const container = document.getElementById('recentTransactions');
+            let allRecords = [
+                ...appData.transactions.map(t => ({ ...t, source: 'transaction' })),
+                ...appData.debts.map(d => ({ ...d, source: 'debt', type: d.status === 'paid' ? 'debt_paid' : 'debt_pending' }))
+            ];
+            allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            const recent = allRecords.slice(0, 5);
 
-        async function addDailyWorkerAmounts() {
-            const todayKey = getTodayKey();
-            
-            // Check if already added today
-            const snap = await get(ref(database, `dailyAdds/${todayKey}`));
-            if (snap.exists()) {
-                console.log('Daily amounts already added today');
+            if (recent.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد حركات بعد</div>';
                 return;
             }
 
-            // Add to jaddo (20,000)
-            const newJaddo = (workersBalances.jaddo || 0) + 20000;
-            // Add to hashim (40,000)
-            const newHashim = (workersBalances.hashim || 0) + 40000;
-
-            await update(ref(database, 'workers'), {
-                jaddo: newJaddo,
-                hashim: newHashim
-            });
-
-            // Mark as added today
-            await set(ref(database, `dailyAdds/${todayKey}`), {
-                timestamp: Date.now(),
-                jaddoAdded: 20000,
-                hashimAdded: 40000
-            });
-
-            showSuccess('✅ تم إضافة مستحقات العمال اليومية (جدو: 20,000 | هاشم: 40,000)');
+            container.innerHTML = recent.map(tx => {
+                let icon = '📝', colorClass = 'tx-sales', amountText = '', title = tx.title || tx.note || 'عملية';
+                switch(tx.type) {
+                    case 'sales': icon = '💰'; colorClass = 'tx-sales'; amountText = '+' + formatNumber(Math.abs(tx.amount)) + ' ج'; break;
+                    case 'shopExpense': case 'personalExpense': icon = '💸'; colorClass = 'tx-expense'; amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج'; break;
+                    case 'transfer': icon = '🔄'; colorClass = 'tx-transfer'; amountText = '⇄ ' + formatNumber(tx.transferAmount || 0) + ' ج'; break;
+                    case 'debt_full_repayment': case 'debt_partial_repayment': icon = '✅'; colorClass = 'tx-debt'; amountText = '+' + formatNumber(Math.abs(tx.amount)) + ' ج'; break;
+                    case 'bankFee': icon = '💳'; colorClass = 'tx-bank'; amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج'; break;
+                }
+                return `
+                    <div class="transaction-item ${colorClass} rounded-lg p-3 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span>${icon}</span>
+                            <div>
+                                <div class="font-bold text-sm text-slate-800">${title}</div>
+                                <div class="text-xs text-slate-500">${formatDate(tx.timestamp)} ${formatTime(tx.timestamp)}</div>
+                            </div>
+                        </div>
+                        <div class="font-bold text-sm">${amountText}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // ==========================================
@@ -982,53 +846,47 @@
         // ==========================================
 
         function updateDeficitSection() {
-            const currentCash = balances.cash || 0;
-            const currentBank = balances.bank || 0;
+            const currentCash = appData.calculatedBalances.cash || 0;
+            const currentBank = appData.calculatedBalances.bank || 0;
             const totalAvailable = currentCash + currentBank;
 
-            // Calculate total liabilities
-            const workersTotal = (workersBalances.jaddo || 0) + (workersBalances.hashim || 0);
-            const suppliersTotal = suppliers.reduce((sum, s) => sum + (s.amount - s.paid), 0);
-            const customSuppliersTotal = customSuppliers.reduce((sum, s) => sum + s.amount, 0);
-            const totalLiabilities = workersTotal + suppliersTotal + customSuppliersTotal;
-
-            // Calculate deficit/surplus
+            const workersTotal = (appData.workers?.jaddo || 0) + (appData.workers?.hashim || 0);
+            let suppliersTotal = 0;
+            Object.values(appData.suppliers || {}).forEach(s => {
+                if (s && typeof s === 'object') suppliersTotal += (s.amount || 0) - (s.paid || 0);
+            });
+            
+            const totalLiabilities = workersTotal + suppliersTotal;
             const deficit = totalAvailable - totalLiabilities;
             const deficitPercent = totalLiabilities > 0 ? ((deficit / totalLiabilities) * 100) : 0;
 
-            // Update display
-            document.getElementById('currentCash').textContent = formatNumber(currentCash);
-            document.getElementById('currentBank').textContent = formatNumber(currentBank);
-            document.getElementById('totalAvailable').textContent = formatNumber(totalAvailable);
-            document.getElementById('totalLiabilitiesDisplay').textContent = formatNumber(totalLiabilities);
+            const totalLiabilitiesEl = document.getElementById('totalLiabilitiesDisplay');
+            if (totalLiabilitiesEl) {
+                totalLiabilitiesEl.textContent = formatNumber(totalLiabilities);
+                totalLiabilitiesEl.classList.remove('data-loading');
+            }
 
-            // Update deficit box
             const deficitBox = document.getElementById('deficitBox');
             const deficitAmount = document.getElementById('deficitAmount');
             const deficitPercentage = document.getElementById('deficitPercentage');
             const deficitLabel = document.getElementById('deficitLabel');
             const deficitStatus = document.getElementById('deficitStatus');
 
-            deficitAmount.textContent = formatNumber(Math.abs(deficit));
-            deficitPercentage.textContent = Math.abs(deficitPercent).toFixed(1) + '%';
+            if (deficitAmount) {
+                deficitAmount.textContent = formatNumber(Math.abs(deficit));
+                deficitAmount.classList.remove('data-loading');
+            }
+            if (deficitPercentage) deficitPercentage.textContent = Math.abs(deficitPercent).toFixed(1) + '%';
 
             if (deficit >= 0) {
-                // Surplus (فائض)
-                deficitBox.className = 'rounded-2xl p-4 text-center mb-4 variance-positive';
-                deficitLabel.textContent = '✅ فائض (أموال إضافية متاحة)';
-                deficitStatus.textContent = 'وضع جيد';
-                deficitStatus.className = 'status-badge bg-emerald-100 text-emerald-700';
-                
-                // Motivation message
+                if (deficitBox) deficitBox.className = 'rounded-2xl p-4 text-center mb-4 variance-positive';
+                if (deficitLabel) deficitLabel.textContent = '✅ فائض (أموال إضافية متاحة)';
+                if (deficitStatus) { deficitStatus.textContent = 'وضع جيد'; deficitStatus.className = 'status-badge bg-emerald-100 text-emerald-700'; }
                 showMotivation(true, deficit);
             } else {
-                // Deficit (عجز)
-                deficitBox.className = 'rounded-2xl p-4 text-center mb-4 variance-negative pulse-alert';
-                deficitLabel.textContent = '⚠️ عجز (نقص في الأموال)';
-                deficitStatus.textContent = 'تحذير!';
-                deficitStatus.className = 'status-badge bg-red-100 text-red-700 pulse-alert';
-                
-                // Warning message
+                if (deficitBox) deficitBox.className = 'rounded-2xl p-4 text-center mb-4 variance-negative pulse-alert';
+                if (deficitLabel) deficitLabel.textContent = '⚠️ عجز (نقص في الأموال)';
+                if (deficitStatus) { deficitStatus.textContent = 'تحذير!'; deficitStatus.className = 'status-badge bg-red-100 text-red-700 pulse-alert'; }
                 showMotivation(false, Math.abs(deficit));
             }
         }
@@ -1038,156 +896,94 @@
             const icon = document.getElementById('motivationIcon');
             const text = document.getElementById('motivationText');
             const subtext = document.getElementById('motivationSubtext');
+            if (!msgBox || !icon || !text || !subtext) return;
 
+            msgBox.classList.remove('hidden');
             if (isPositive) {
                 msgBox.className = 'motivation-message rounded-xl p-4 text-center';
                 icon.textContent = '🎉';
-                
-                if (amount > 100000) {
-                    text.textContent = 'ممتاز! وضع مالي قوي جداً';
-                    subtext.textContent = 'الأموال المتاحة تغطي الالتزامات بسخاء';
-                } else if (amount > 50000) {
-                    text.textContent = 'جيد! وضع مالي مستقر';
-                    subtext.textContent = 'يوجد احتياطي مالي مناسب';
-                } else {
-                    text.textContent = 'مقبول، لكن يجب الانتباه';
-                    subtext.textContent = 'الفائض ضعيف، حاول زيادة المبيعات';
-                }
+                if (amount > 100000) { text.textContent = 'ممتاز! وضع مالي قوي جداً'; subtext.textContent = 'الأموال المتاحة تغطي الالتزامات بسخاء'; }
+                else if (amount > 50000) { text.textContent = 'جيد! وضع مالي مستقر'; subtext.textContent = 'يوجد احتياطي مالي مناسب'; }
+                else { text.textContent = 'مقبول، لكن يجب الانتباه'; subtext.textContent = 'الفائض ضعيف، حاول زيادة المبيعات'; }
             } else {
                 msgBox.className = 'demotivation-message rounded-xl p-4 text-center';
                 icon.textContent = '🚨';
-                
-                if (amount > 100000) {
-                    text.textContent = 'خطير! عجز كبير جداً';
-                    subtext.textContent = 'يجب اتخاذ إجراءات فورية';
-                } else if (amount > 50000) {
-                    text.textContent = 'تحذير! عجز ملحوظ';
-                    subtext.textContent = 'الالتزامات تتجاوز الأموال المتاحة';
-                } else {
-                    text.textContent = 'انتباه! عجز بسيط';
-                    subtext.textContent = 'حاول تقليل المصاريف أو زيادة المبيعات';
-                }
+                if (amount > 100000) { text.textContent = 'خطير! عجز كبير جداً'; subtext.textContent = 'يجب اتخاذ إجراءات فورية'; }
+                else if (amount > 50000) { text.textContent = 'تحذير! عجز ملحوظ'; subtext.textContent = 'الالتزامات تتجاوز الأموال المتاحة'; }
+                else { text.textContent = 'انتباه! عجز بسيط'; subtext.textContent = 'حاول تقليل المصاريف أو زيادة المبيعات'; }
             }
         }
 
         // ==========================================
-        // SECTION 2: LIABILITIES (WORKERS & SUPPLIERS)
+        // SECTION 2: LIABILITIES
         // ==========================================
-
-        function updateWorkersDisplay() {
-            document.getElementById('jaddoBalance').textContent = formatNumber(workersBalances.jaddo || 0);
-            document.getElementById('hashimBalance').textContent = formatNumber(workersBalances.hashim || 0);
-        }
 
         function renderSuppliers() {
             const container = document.getElementById('suppliersList');
-            
-            const allSuppliers = [
-                ...suppliers.map(s => ({ ...s, isDefault: true })),
-                ...customSuppliers.map(s => ({ ...s, isDefault: false }))
-            ];
-
-            if (allSuppliers.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد التزامات</div>';
-                return;
-            }
-
-            container.innerHTML = allSuppliers.map(s => {
-                const remaining = s.isDefault ? (s.amount - s.paid) : s.amount;
-                return `
+            if (!container) return;
+            let html = '';
+            Object.entries(appData.suppliers || {}).forEach(([id, supplier]) => {
+                if (!supplier || typeof supplier !== 'object') return;
+                const remaining = (supplier.amount || 0) - (supplier.paid || 0);
+                html += `
                     <div class="supplier-card rounded-xl p-3 ${remaining > 0 ? '' : 'opacity-75'}">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold text-indigo-900">${s.name}</span>
-                            <span class="text-lg font-bold ${remaining > 0 ? 'text-indigo-700' : 'text-emerald-600'}">
-                                ${formatNumber(remaining)}
-                            </span>
+                            <span class="font-bold text-indigo-900">${supplier.name || id}</span>
+                            <span class="text-lg font-bold ${remaining > 0 ? 'text-indigo-700' : 'text-emerald-600'}">${formatNumber(remaining)}</span>
                         </div>
-                        ${s.isDefault ? `
-                            <div class="text-xs text-indigo-700 mb-2">
-                                إجمالي: ${formatNumber(s.amount)} | مسدد: ${formatNumber(s.paid)}
-                            </div>
-                        ` : ''}
+                        <div class="text-xs text-indigo-700 mb-2">إجمالي: ${formatNumber(supplier.amount || 0)} | مسدد: ${formatNumber(supplier.paid || 0)}</div>
                         <div class="flex gap-2">
-                            ${s.isDefault ? `
-                                <button onclick="editSupplierAmount('${s.id}')" class="flex-1 bg-slate-200 text-slate-700 rounded-lg py-2 text-sm font-bold hover:bg-slate-300 transition">
-                                    ✏️ تعديل
-                                </button>
-                            ` : `
-                                <button onclick="deleteCustomSupplier('${s.id}')" class="flex-1 bg-red-100 text-red-700 rounded-lg py-2 text-sm font-bold hover:bg-red-200 transition">
-                                    🗑️ حذف
-                                </button>
-                            `}
-                            ${remaining > 0 ? `
-                                <button onclick="paySupplier('${s.id}', '${s.name}', ${remaining})" class="flex-1 bg-indigo-500 text-white rounded-lg py-2 text-sm font-bold hover:bg-indigo-600 transition btn-press">
-                                    💵 تسديد
-                                </button>
-                            ` : ''}
+                            <button onclick="editSupplierAmount('${id}')" class="flex-1 bg-slate-200 text-slate-700 rounded-lg py-2 text-sm font-bold hover:bg-slate-300 transition">✏️ تعديل</button>
+                            ${remaining > 0 ? `<button onclick="paySupplier('${id}', '${supplier.name}', ${remaining})" class="flex-1 bg-indigo-500 text-white rounded-lg py-2 text-sm font-bold hover:bg-indigo-600 transition btn-press">💵 تسديد</button>` : ''}
                         </div>
                     </div>
                 `;
-            }).join('');
+            });
+            container.innerHTML = html || '<div class="text-center text-slate-400 py-4">لا توجد التزامات</div>';
         }
 
         window.payWorker = function(key, name) {
+            const balance = appData.workers?.[key] || 0;
             document.getElementById('payWorkerKey').value = key;
             document.getElementById('payWorkerName').textContent = name;
-            document.getElementById('payWorkerBalance').textContent = formatNumber(workersBalances[key]);
-            document.getElementById('payWorkerAmount').value = workersBalances[key];
+            document.getElementById('payWorkerBalance').textContent = formatNumber(balance);
+            document.getElementById('payWorkerAmount').value = balance;
             openModal('payWorker');
         };
 
         window.confirmPayWorker = async function(e) {
             e.preventDefault();
-            
             const key = document.getElementById('payWorkerKey').value;
             const amount = parseFormattedNumber('payWorkerAmount');
             const method = document.getElementById('payWorkerMethod').value;
+            const currentBalance = appData.workers?.[key] || 0;
             
-            const currentBalance = workersBalances[key] || 0;
+            if (amount <= 0 || amount > currentBalance) { showWarning('المبلغ غير صحيح'); return; }
             
-            if (amount <= 0 || amount > currentBalance) {
-                showWarning('المبلغ غير صحيح');
-                return;
-            }
+            const currentFund = method === 'cash' ? (appData.calculatedBalances.cash) : (appData.calculatedBalances.bank);
+            if (amount > currentFund) { showWarning(`رصيد ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`); return; }
 
-            const currentFund = method === 'cash' ? balances.cash : balances.bank;
-            if (amount > currentFund) {
-                showWarning(`رصيد ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`);
-                return;
-            }
-
-            const newBalance = currentBalance - amount;
-            const newFund = currentFund - amount;
-
-            await Promise.all([
-                update(ref(database, 'workers'), { [key]: newBalance }),
-                update(ref(database, 'balances'), { [method]: newFund }),
-                push(ref(database, 'transactions'), {
-                    type: 'worker_payment',
-                    worker: key,
-                    amount: -amount,
-                    method,
-                    timestamp: Date.now(),
-                    note: `تسديد مستحقات ${WORKERS[key].name}`
-                })
-            ]);
-
-            closeModal('payWorker');
-            showSuccess(`تم تسديد ${formatNumber(amount)} ج للعامل`);
+            try {
+                await Promise.all([
+                    update(ref(database, 'workers'), { [key]: currentBalance - amount }),
+                    update(ref(database, 'shift/actualBalances'), { [method]: currentFund - amount }),
+                    push(ref(database, 'transactions'), {
+                        type: 'worker_payment', worker: key, amount: -amount, method, timestamp: Date.now(),
+                        note: `تسديد مستحقات ${WORKERS[key].name}`
+                    })
+                ]);
+                closeModal('payWorker');
+                showSuccess(`تم تسديد ${formatNumber(amount)} ج`);
+            } catch (error) { showWarning('خطأ في التسديد: ' + error.message); }
         };
 
         window.editSupplierAmount = async function(id) {
-            const supplier = suppliers.find(s => s.id === id);
+            const supplier = appData.suppliers?.[id];
+            if (!supplier) return;
             const newAmount = prompt('أدخل المبلغ الإجمالي الجديد:', supplier.amount);
-            
             if (newAmount === null) return;
-            
             const amount = parseFloat(newAmount.replace(/,/g, ''));
-            if (isNaN(amount) || amount < 0) {
-                showWarning('المبلغ غير صحيح');
-                return;
-            }
-
+            if (isNaN(amount) || amount < 0) { showWarning('المبلغ غير صحيح'); return; }
             await update(ref(database, `suppliers/${id}`), { amount });
             showSuccess('تم تحديث المبلغ');
         };
@@ -1202,74 +998,40 @@
 
         window.confirmPaySupplier = async function(e) {
             e.preventDefault();
-            
             const id = document.getElementById('paySupplierId').value;
             const amount = parseFormattedNumber('paySupplierInput');
             const method = document.getElementById('paySupplierMethod').value;
-            
-            const supplier = suppliers.find(s => s.id === id);
+            const supplier = appData.suppliers[id];
             const remaining = supplier.amount - supplier.paid;
             
-            if (amount <= 0 || amount > remaining) {
-                showWarning('المبلغ غير صحيح');
-                return;
-            }
+            if (amount <= 0 || amount > remaining) { showWarning('المبلغ غير صحيح'); return; }
+            
+            const currentFund = method === 'cash' ? appData.calculatedBalances.cash : appData.calculatedBalances.bank;
+            if (amount > currentFund) { showWarning(`رصيد ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`); return; }
 
-            const currentFund = method === 'cash' ? balances.cash : balances.bank;
-            if (amount > currentFund) {
-                showWarning(`رصيد ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`);
-                return;
-            }
-
-            const newPaid = (supplier.paid || 0) + amount;
-            const newFund = currentFund - amount;
-
-            await Promise.all([
-                update(ref(database, `suppliers/${id}`), { paid: newPaid }),
-                update(ref(database, 'balances'), { [method]: newFund }),
-                push(ref(database, 'transactions'), {
-                    type: 'supplier_payment',
-                    supplier: id,
-                    amount: -amount,
-                    method,
-                    timestamp: Date.now(),
-                    note: `تسديد ${supplier.name}`
-                })
-            ]);
-
-            closeModal('paySupplier');
-            showSuccess(`تم تسديد ${formatNumber(amount)} ج`);
+            try {
+                await Promise.all([
+                    update(ref(database, `suppliers/${id}`), { paid: (supplier.paid || 0) + amount }),
+                    update(ref(database, 'shift/actualBalances'), { [method]: currentFund - amount }),
+                    push(ref(database, 'transactions'), {
+                        type: 'supplier_payment', supplier: id, amount: -amount, method, timestamp: Date.now(),
+                        note: `تسديد ${supplier.name}`
+                    })
+                ]);
+                closeModal('paySupplier');
+                showSuccess(`تم تسديد ${formatNumber(amount)} ج`);
+            } catch (error) { showWarning('خطأ في التسديد: ' + error.message); }
         };
 
         window.addSupplier = async function(e) {
             e.preventDefault();
-            
             const name = document.getElementById('supplierName').value.trim();
             const amount = parseFormattedNumber('supplierAmount');
             const type = document.getElementById('supplierType').value;
-            
-            if (!name || amount <= 0) {
-                showWarning('الرجاء إدخال البيانات بشكل صحيح');
-                return;
-            }
-
-            const newSupplier = {
-                name,
-                amount,
-                type,
-                createdAt: Date.now()
-            };
-
-            await push(ref(database, 'suppliers'), newSupplier);
+            if (!name || amount <= 0) { showWarning('الرجاء إدخال البيانات بشكل صحيح'); return; }
+            await push(ref(database, 'suppliers'), { name, amount, type, createdAt: Date.now() });
             document.getElementById('addSupplierForm').reset();
             showSuccess('تم إضافة الالتزام');
-        };
-
-        window.deleteCustomSupplier = async function(id) {
-            if (!confirm('هل أنت متأكد من حذف هذا الالتزام؟')) return;
-            
-            await remove(ref(database, `suppliers/${id}`));
-            showSuccess('تم الحذف');
         };
 
         // ==========================================
@@ -1277,36 +1039,36 @@
         // ==========================================
 
         function updateComparisonSection() {
-            const expectedCash = balances.cash || 0;
-            const expectedBank = balances.bank || 0;
-            const actualCash = actualBalances.cash || expectedCash;
-            const actualBank = actualBalances.bank || expectedBank;
+            const expectedCash = appData.calculatedBalances.cash || 0;
+            const expectedBank = appData.calculatedBalances.bank || 0;
+            const actualCash = appData.actualBalances.cash || expectedCash;
+            const actualBank = appData.actualBalances.bank || expectedBank;
 
-            // Update displays
             document.getElementById('expectedCash').textContent = formatNumber(expectedCash);
             document.getElementById('expectedBank').textContent = formatNumber(expectedBank);
             document.getElementById('actualCashDisplay').textContent = formatNumber(actualCash);
             document.getElementById('actualBankDisplay').textContent = formatNumber(actualBank);
+            document.getElementById('expectedCash').classList.remove('data-loading');
+            document.getElementById('expectedBank').classList.remove('data-loading');
+            document.getElementById('actualCashDisplay').classList.remove('data-loading');
+            document.getElementById('actualBankDisplay').classList.remove('data-loading');
 
-            // Calculate variances
             const cashVariance = actualCash - expectedCash;
             const bankVariance = actualBank - expectedBank;
             const totalExpected = expectedCash + expectedBank;
             const totalActual = actualCash + actualBank;
             const totalVariance = totalActual - totalExpected;
 
-            // Update variance displays
             updateVarianceBox('cash', cashVariance);
             updateVarianceBox('bank', bankVariance);
 
-            // Calculate match percentage
             const matchPercent = totalExpected > 0 ? Math.max(0, Math.min(100, (totalExpected / (totalExpected + Math.abs(totalVariance))) * 100)) : 100;
-            
             document.getElementById('matchPercentage').textContent = matchPercent.toFixed(1) + '%';
+            document.getElementById('matchPercentage').classList.remove('data-loading');
             document.getElementById('matchProgressBar').style.width = matchPercent + '%';
-            
-            // Update message
+
             const msgEl = document.getElementById('comparisonMessage');
+            msgEl.classList.remove('data-loading');
             if (totalVariance === 0) {
                 msgEl.className = 'text-center p-3 rounded-lg font-bold bg-emerald-100 text-emerald-700';
                 msgEl.textContent = '✅ جميع الأرصدة مطابقة تماماً';
@@ -1318,44 +1080,30 @@
                 msgEl.textContent = `📉 عجز في الفعلي: ${formatNumber(Math.abs(totalVariance))} ج`;
             }
 
-            // Update last comparison date
-            document.getElementById('lastComparisonDate').textContent = new Date().toLocaleDateString('ar-SA', { 
-                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-            })[^1^];
+            document.getElementById('lastComparisonDate').textContent = new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
         function updateVarianceBox(type, variance) {
             const box = document.getElementById(type + 'VarianceBox');
             const amount = document.getElementById(type + 'Variance');
-            
             amount.textContent = (variance >= 0 ? '+' : '') + formatNumber(variance);
-            
-            if (variance === 0) {
-                box.className = 'rounded-lg p-2 text-center text-sm font-bold bg-emerald-100 text-emerald-700';
-            } else if (variance > 0) {
-                box.className = 'rounded-lg p-2 text-center text-sm font-bold bg-blue-100 text-blue-700';
-            } else {
-                box.className = 'rounded-lg p-2 text-center text-sm font-bold bg-red-100 text-red-700';
-            }
+            if (variance === 0) box.className = 'rounded-lg p-2 text-center text-sm font-bold bg-emerald-100 text-emerald-700';
+            else if (variance > 0) box.className = 'rounded-lg p-2 text-center text-sm font-bold bg-blue-100 text-blue-700';
+            else box.className = 'rounded-lg p-2 text-center text-sm font-bold bg-red-100 text-red-700';
         }
 
         window.editActual = function(type) {
             document.getElementById('editActualType').value = type;
             document.getElementById('editActualLabel').textContent = type === 'cash' ? 'الكاش الفعلي' : 'البنك الفعلي';
-            document.getElementById('editActualAmount').value = formatNumber(actualBalances[type] || balances[type]);
+            document.getElementById('editActualAmount').value = formatNumber(appData.actualBalances[type] || appData.calculatedBalances[type]);
             openModal('editActual');
         };
 
         window.saveActualBalance = async function(e) {
             e.preventDefault();
-            
             const type = document.getElementById('editActualType').value;
             const amount = parseFormattedNumber('editActualAmount');
-            
-            await update(ref(database, 'shift/actualBalances'), {
-                [type]: amount
-            });
-
+            await update(ref(database, 'shift/actualBalances'), { [type]: amount });
             closeModal('editActual');
             showSuccess('تم تحديث الرصيد الفعلي');
         };
@@ -1364,101 +1112,12 @@
         // SECTION 4: ARCHIVE
         // ==========================================
 
-        async function loadArchive() {
-            const snap = await get(ref(database, 'dayArchive'));
-            const archive = snap.val() || {};
-            
-            const archiveList = Object.entries(archive)
-                .sort((a, b) => b[0].localeCompare(a[0])); // Newest first
-
-            renderArchive(archiveList);
-            updateArchiveStats(archiveList);
-        }
-
-        window.filterArchive = async function() {
-            const filterDate = document.getElementById('archiveFilterDate').value;
-            if (!filterDate) {
-                loadArchive();
-                return;
-            }
-
-            const snap = await get(ref(database, `dayArchive/${filterDate}`));
-            if (snap.exists()) {
-                renderArchive([[filterDate, snap.val()]]);
-            } else {
-                document.getElementById('archiveList').innerHTML = `
-                    <div class="text-center text-slate-400 py-8">
-                        <div class="text-4xl mb-2">🔍</div>
-                        <div>لا توجد بيانات لهذا اليوم</div>
-                    </div>
-                `;
-            }
-        };
-
-        function renderArchive(archiveList) {
+        function renderArchive() {
             const container = document.getElementById('archiveList');
+            const archiveList = Object.entries(appData.archive || {}).sort((a, b) => b[0].localeCompare(a[0]));
             
-            if (archiveList.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center text-slate-400 py-8">
-                        <div class="text-4xl mb-2">📭</div>
-                        <div>لا توجد يوميات مقفلة بعد</div>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = archiveList.map(([date, data]) => {
-                const variance = data.variances?.total || 0;
-                let statusClass = 'archive-closed';
-                let statusIcon = '✅';
-                
-                if (variance < -50000) {
-                    statusClass = 'archive-danger';
-                    statusIcon = '🔴';
-                } else if (variance < 0) {
-                    statusClass = 'archive-warning';
-                    statusIcon = '⚠️';
-                }
-
-                return `
-                    <div class="archive-item ${statusClass} bg-white rounded-xl p-4 shadow-md">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <div class="font-bold text-slate-800 text-lg">${statusIcon} ${date}</div>
-                                <div class="text-xs text-slate-500">
-                                    تم التقفيل: ${new Date(data.closedAt).toLocaleTimeString('ar-SA')}
-                                </div>
-                            </div>
-                            <button onclick="viewArchiveDetails('${date}')" class="text-blue-600 text-sm font-bold hover:text-blue-800">
-                                التفاصيل ↩️
-                            </button>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-2 text-sm mb-2">
-                            <div class="bg-slate-50 rounded-lg p-2">
-                                <div class="text-xs text-slate-500">المبيعات</div>
-                                <div class="font-bold text-emerald-600">${formatNumber(data.stats?.sales || 0)}</div>
-                            </div>
-                            <div class="bg-slate-50 rounded-lg p-2">
-                                <div class="text-xs text-slate-500">الفرق</div>
-                                <div class="font-bold ${variance >= 0 ? 'text-emerald-600' : 'text-red-600'}">
-                                    ${variance >= 0 ? '+' : ''}${formatNumber(variance)}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="text-xs text-slate-500">
-                            الكاش: ${formatNumber(data.actualBalances?.cash || 0)} | 
-                            البنك: ${formatNumber(data.actualBalances?.bank || 0)}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function updateArchiveStats(archiveList) {
             document.getElementById('totalClosedDays').textContent = archiveList.length;
+            document.getElementById('totalClosedDays').classList.remove('data-loading');
             
             if (archiveList.length > 0) {
                 const totalVariance = archiveList.reduce((sum, [, data]) => sum + (data.variances?.total || 0), 0);
@@ -1467,11 +1126,57 @@
             } else {
                 document.getElementById('avgVariance').textContent = '0';
             }
+            document.getElementById('avgVariance').classList.remove('data-loading');
+
+            if (archiveList.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-8"><div class="text-4xl mb-2">📭</div><div>لا توجد يوميات مقفلة بعد</div></div>';
+                return;
+            }
+
+            container.innerHTML = archiveList.map(([date, data]) => {
+                const variance = data.variances?.total || 0;
+                let statusClass = 'archive-closed', statusIcon = '✅';
+                if (variance < -50000) { statusClass = 'archive-danger'; statusIcon = '🔴'; }
+                else if (variance < 0) { statusClass = 'archive-warning'; statusIcon = '⚠️'; }
+                return `
+                    <div class="archive-item ${statusClass} bg-white rounded-xl p-4 shadow-md">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <div class="font-bold text-slate-800 text-lg">${statusIcon} ${date}</div>
+                                <div class="text-xs text-slate-500">تم التقفيل: ${new Date(data.closedAt).toLocaleTimeString('ar-SA')}</div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm mb-2">
+                            <div class="bg-slate-50 rounded-lg p-2">
+                                <div class="text-xs text-slate-500">المبيعات</div>
+                                <div class="font-bold text-emerald-600">${formatNumber(data.stats?.sales || 0)}</div>
+                            </div>
+                            <div class="bg-slate-50 rounded-lg p-2">
+                                <div class="text-xs text-slate-500">الفرق</div>
+                                <div class="font-bold ${variance >= 0 ? 'text-emerald-600' : 'text-red-600'}">${variance >= 0 ? '+' : ''}${formatNumber(variance)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        window.viewArchiveDetails = function(date) {
-            // Could open a detailed view modal
-            showSuccess(`عرض تفاصيل يوم ${date}`);
+        window.filterArchive = function() {
+            const filterDate = document.getElementById('archiveFilterDate').value;
+            if (!filterDate) { renderArchive(); return; }
+            const data = appData.archive[filterDate];
+            const container = document.getElementById('archiveList');
+            if (data) {
+                container.innerHTML = `
+                    <div class="archive-item archive-closed bg-white rounded-xl p-4 shadow-md">
+                        <div class="font-bold text-slate-800 text-lg mb-2">✅ ${filterDate}</div>
+                        <div class="text-sm text-slate-600">مبيعات: ${formatNumber(data.stats?.sales || 0)}</div>
+                        <div class="text-sm text-slate-600">الفرق: ${formatNumber(data.variances?.total || 0)}</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<div class="text-center text-slate-400 py-8"><div class="text-4xl mb-2">🔍</div><div>لا توجد بيانات لهذا اليوم</div></div>';
+            }
         };
 
         // ==========================================
@@ -1481,7 +1186,6 @@
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('sidebarContent');
-            
             if (sidebar.classList.contains('hidden')) {
                 sidebar.classList.remove('hidden');
                 setTimeout(() => content.classList.remove('translate-x-full'), 10);
@@ -1492,12 +1196,9 @@
         };
 
         window.switchTab = function(tab) {
-            currentTab = tab;
-            
             ['deficit', 'liabilities', 'comparison', 'archive'].forEach(t => {
                 const btn = document.getElementById('tab-' + t);
                 const content = document.getElementById('content-' + t);
-                
                 if (t === tab) {
                     btn.classList.remove('tab-inactive');
                     btn.classList.add('tab-active');
@@ -1508,30 +1209,16 @@
                     content.classList.add('hidden');
                 }
             });
-
-            // Reload archive if switching to it
-            if (tab === 'archive') {
-                loadArchive();
-            }
         };
 
         window.openModal = function(type) {
             const modal = document.getElementById(type + 'Modal');
-            if (modal) {
-                modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
+            if (modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
         };
 
         window.closeModal = function(type) {
             const modal = document.getElementById(type + 'Modal');
-            if (modal) {
-                modal.classList.remove('active');
-                document.body.style.overflow = '';
-                
-                const form = document.getElementById(type + 'Form');
-                if (form) form.reset();
-            }
+            if (modal) { modal.classList.remove('active'); document.body.style.overflow = ''; }
         };
 
         window.selectPayMethod = function(btn) {
@@ -1556,6 +1243,84 @@
             document.getElementById('paySupplierMethod').value = btn.dataset.value;
         };
 
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // ==========================================
+        // MIDNIGHT CHECKER
+        // ==========================================
+
+        function setupMidnightChecker() {
+            setInterval(checkMidnight, 60000);
+            checkMidnight();
+        }
+
+        async function checkMidnight() {
+            const now = new Date();
+            if (now.getHours() === 0 && now.getMinutes() === 0) {
+                const todayKey = getTodayKey();
+                const snap = await get(ref(database, `dailyAdds/${todayKey}`));
+                if (!snap.exists()) await addDailyWorkerAmounts();
+            }
+        }
+
+        window.forceCheckMidnight = async function() {
+            await addDailyWorkerAmounts();
+            showSuccess('تم الفحص والتحديث اليدوي');
+        };
+
+        async function addDailyWorkerAmounts() {
+            const todayKey = getTodayKey();
+            const snap = await get(ref(database, `dailyAdds/${todayKey}`));
+            if (snap.exists()) return;
+            
+            const currentWorkers = appData.workers || { jaddo: 0, hashim: 0 };
+            await update(ref(database, 'workers'), {
+                jaddo: (currentWorkers.jaddo || 0) + 20000,
+                hashim: (currentWorkers.hashim || 0) + 40000
+            });
+            await set(ref(database, `dailyAdds/${todayKey}`), { timestamp: Date.now(), jaddoAdded: 20000, hashimAdded: 40000 });
+            showSuccess('✅ تم إضافة مستحقات العمال اليومية');
+        }
+
+        // ==========================================
+        // DEMO DATA
+        // ==========================================
+
+        window.initializeDemoData = async function() {
+            const demoTransactions = [
+                { type: 'sales', amount: 150000, payment: 'كاش', timestamp: Date.now() - 3600000, title: 'مبيعات صباحية', dept: 'عصائر' },
+                { type: 'sales', amount: 75000, payment: 'بنكك', timestamp: Date.now() - 7200000, title: 'مبيعات بنكك', dept: 'حلويات' },
+                { type: 'shopExpense', amount: 25000, payment: 'كاش', timestamp: Date.now() - 10800000, title: 'مصروفات محل', dept: 'طعمية' },
+                { type: 'transfer', transferAmount: 50000, from: 'كاش', to: 'بنكك', timestamp: Date.now() - 14400000, title: 'تحويل للبنك' }
+            ];
+            
+            const demoDebts = [
+                { customer: 'أحمد', amount: 30000, status: 'pending', createdAt: Date.now() - 86400000, note: 'دين سابق' },
+                { customer: 'محمد', amount: 20000, status: 'paid', createdAt: Date.now() - 172800000, paidAt: Date.now() - 100000, note: 'تم التسديد' }
+            ];
+
+            for (const tx of demoTransactions) {
+                await push(ref(database, 'transactions'), tx);
+            }
+            for (const debt of demoDebts) {
+                await push(ref(database, 'debts'), debt);
+            }
+
+            await set(ref(database, 'workers'), { jaddo: 60000, hashim: 120000 });
+            
+            const suppliers = {};
+            DEFAULT_SUPPLIERS.forEach(s => {
+                suppliers[s.id] = { name: s.name, amount: Math.floor(Math.random() * 50000) + 10000, paid: Math.floor(Math.random() * 10000) };
+            });
+            await set(ref(database, 'suppliers'), suppliers);
+
+            showSuccess('✅ تم إنشاء البيانات التجريبية');
+        };
+
         // Close modals on outside click
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', function(e) {
@@ -1565,6 +1330,7 @@
                 }
             });
         });
+
     </script>
 </body>
 </html>
