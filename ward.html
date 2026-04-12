@@ -83,10 +83,125 @@
         .archive-variance-item.bank { border-top: 3px solid #3b82f6; }
         .archive-variance-item.total { border-top: 3px solid #8b5cf6; }
         
-        /* تنسيقات الصندوق الجانبي */
+        /* ✅ تنسيقات الصندوق الجانبي المُحسّنة */
         .side-fund-card { background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); border: 2px solid #eab308; }
         .trust-badge { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
         .operation-number { font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 1px; background: #1e293b; color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+        
+        /* ✅ تنسيق جديد: عرض الأمانات في صفحة العجز */
+        .trust-display-box { 
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); 
+            border: 2px dashed #eab308; 
+            border-radius: 16px; 
+            padding: 16px; 
+            margin-bottom: 16px;
+        }
+        .trust-display-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #eab308;
+        }
+        .trust-display-title {
+            font-weight: 800;
+            color: #854d0e;
+            font-size: 0.95rem;
+        }
+        .trust-display-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .trust-display-item {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #fde68a;
+        }
+        .trust-display-label {
+            font-size: 0.75rem;
+            color: #a16207;
+            margin-bottom: 4px;
+        }
+        .trust-display-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #854d0e;
+        }
+        .trust-warning {
+            margin-top: 12px;
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            color: #92400e;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        /* ✅ تنسيق جديد: فصل واضح للأرصدة */
+        .real-balance-box {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 2px solid #10b981;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .real-balance-title {
+            font-weight: 800;
+            color: #065f46;
+            font-size: 0.95rem;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .real-balance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .real-balance-item {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 12px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .real-balance-label {
+            font-size: 0.75rem;
+            color: #059669;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .real-balance-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #047857;
+        }
+        .real-balance-total {
+            margin-top: 12px;
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 2px solid #10b981;
+        }
+        .real-balance-total-label {
+            font-size: 0.8rem;
+            color: #065f46;
+            margin-bottom: 4px;
+        }
+        .real-balance-total-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #047857;
+        }
     </style>
 </head>
 <body>
@@ -131,7 +246,7 @@
                     <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700">
                         <span>📝</span><span>الديون</span>
                     </a>
-                    <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
+                    <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-yellow-50 flex items-center gap-3 text-yellow-700 border-r-4 border-yellow-400">
                         <span>🏦</span><span>الصندوق الجانبي</span>
                     </a>
                     <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
@@ -324,7 +439,7 @@
 
             </div>
 
-            <!-- القسم الثاني: العجز -->
+            <!-- ✅ القسم الثاني: العجز - مُحسّن لفصل الأمانات -->
             <div id="content-deficit" class="space-y-4">
                 
                 <!-- بطاقة الموقف المالي الحالي -->
@@ -334,21 +449,46 @@
                         <span id="deficitStatus" class="status-badge bg-amber-100 text-amber-700 pulse-alert">تحت المراقبة</span>
                     </div>
 
-                    <!-- الأرصدة الحالية (الحقيقية من balances) -->
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-emerald-50 rounded-xl p-3 text-center border-2 border-emerald-200">
-                            <div class="text-xs text-emerald-600 mb-1">الكاش (الحقيقي)</div>
-                            <div id="currentCash" class="text-xl font-bold text-emerald-700 data-loading" style="min-height: 28px;">---</div>
+                    <!-- ✅ الأرصدة الحقيقية (الأساسية للعجز) -->
+                    <div class="real-balance-box">
+                        <div class="real-balance-title">💰 الأرصدة الحقيقية (لحساب العجز)</div>
+                        <div class="real-balance-grid">
+                            <div class="real-balance-item">
+                                <div class="real-balance-label">💵 الكاش</div>
+                                <div id="currentCash" class="real-balance-value data-loading">---</div>
+                            </div>
+                            <div class="real-balance-item">
+                                <div class="real-balance-label">💳 البنك</div>
+                                <div id="currentBank" class="real-balance-value data-loading">---</div>
+                            </div>
                         </div>
-                        <div class="bg-blue-50 rounded-xl p-3 text-center border-2 border-blue-200">
-                            <div class="text-xs text-blue-600 mb-1">البنك (الحقيقي)</div>
-                            <div id="currentBank" class="text-xl font-bold text-blue-700 data-loading" style="min-height: 28px;">---</div>
+                        <div class="real-balance-total">
+                            <div class="real-balance-total-label">إجمالي الأموال المتاحة للعمل</div>
+                            <div id="totalAvailable" class="real-balance-total-value data-loading">---</div>
                         </div>
                     </div>
 
-                    <div class="bg-slate-100 rounded-xl p-3 text-center mb-4">
-                        <div class="text-xs text-slate-500 mb-1">إجمالي الأموال المتاحة (غير شامل الأمانات)</div>
-                        <div id="totalAvailable" class="text-2xl font-bold text-slate-800 data-loading" style="min-height: 32px;">---</div>
+                    <!-- ✅ الأمانات (معروضة للعلم فقط - لا تُحسب) -->
+                    <div class="trust-display-box">
+                        <div class="trust-display-header">
+                            <span class="text-2xl">📦</span>
+                            <span class="trust-display-title">الأمانات (الصندوق الجانبي)</span>
+                            <span class="trust-badge mr-auto">لا تُحسب في العجز</span>
+                        </div>
+                        <div class="trust-display-grid">
+                            <div class="trust-display-item">
+                                <div class="trust-display-label">💵 أمانات كاش</div>
+                                <div id="trustCashDisplay" class="trust-display-value data-loading">---</div>
+                            </div>
+                            <div class="trust-display-item">
+                                <div class="trust-display-label">💳 أمانات بنكك</div>
+                                <div id="trustBankDisplay" class="trust-display-value data-loading">---</div>
+                            </div>
+                        </div>
+                        <div class="trust-warning">
+                            <span>⚠️</span>
+                            <span>هذه أموال تحفظ للغير، لا تُستخدم في تغطية الالتزامات</span>
+                        </div>
                     </div>
 
                     <!-- ملخص السجلات -->
@@ -388,7 +528,7 @@
 
                     <!-- حساب العجز/الفائض -->
                     <div id="deficitBox" class="rounded-2xl p-4 text-center mb-4 transition-all">
-                        <div class="text-sm font-bold mb-2 opacity-80">الموقف النهائي</div>
+                        <div class="text-sm font-bold mb-2 opacity-80">الموقف النهائي (بدون الأمانات)</div>
                         <div id="deficitAmount" class="text-3xl font-bold mb-2 data-loading" style="min-height: 36px;">---</div>
                         <div id="deficitPercentage" class="text-lg font-bold mb-2">---</div>
                         <div id="deficitLabel" class="text-sm font-semibold">---</div>
@@ -483,7 +623,7 @@
 
             </div>
 
-            <!-- القسم الرابع: الصندوق الجانبي (الأمانات) -->
+            <!-- ✅ القسم الرابع: الصندوق الجانبي (الأمانات) - صفحة منفصلة -->
             <div id="content-sidefund" class="space-y-4 hidden">
                 
                 <!-- شرح الصندوق الجانبي -->
@@ -507,7 +647,7 @@
                     </div>
                 </div>
 
-                <!-- رصيد الصندوق الجانبي -->
+                <!-- ✅ رصيد الصندوق الجانبي (منفصل تماماً) -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="side-fund-card rounded-2xl p-4 text-center">
                         <div class="text-2xl mb-1">💵</div>
@@ -523,7 +663,7 @@
                     </div>
                 </div>
 
-                <!-- إضافة/سحب من الصندوق الجانبي -->
+                <!-- ✅ إضافة/سحب من الصندوق الجانبي (لا يؤثر على balances) -->
                 <div class="bg-white rounded-2xl p-4 shadow-md">
                     <h3 class="font-bold text-slate-700 mb-3">➕ إضافة/سحب أمانة</h3>
                     <form id="sideFundForm" class="space-y-3" onsubmit="handleSideFund(event)">
@@ -656,6 +796,16 @@
                         </div>
                     </div>
 
+                    <!-- ✅ ملاحظة: الأمانات لا تُحسب في المطابقة -->
+                    <div class="bg-amber-50 rounded-xl p-3 mb-4 border border-amber-200">
+                        <div class="flex items-start gap-2">
+                            <span class="text-amber-600">📦</span>
+                            <p class="text-sm text-amber-800">
+                                <strong>ملاحظة:</strong> الأمانات (الصندوق الجانبي) لا تُحسب في مطابقة الأرصدة لأنها أموال للغير.
+                            </p>
+                        </div>
+                    </div>
+
                     <!-- ملخص المطابقة -->
                     <div class="bg-purple-50 rounded-xl p-4 border-2 border-purple-200">
                         <div class="text-center mb-3">
@@ -715,7 +865,7 @@
                     <span class="text-xl">📝</span>
                     <span class="text-xs mt-1">الديون</span>
                 </a>
-                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-orange-600 transition">
+                <a href="external.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-yellow-600 transition">
                     <span class="text-xl">🏦</span>
                     <span class="text-xs mt-1">الجانبي</span>
                 </a>
@@ -814,17 +964,17 @@
             transactions: [],
             debts: [],
             actualBalances: { cash: 0, bank: 0 },
-            workers: { jaddo: 0, wadah: 0 }, // تغيير هاشم لوضاح
+            workers: { jaddo: 0, wadah: 0 },
             suppliers: {},
             archive: {},
             sideFund: { cash: 0, bank: 0, history: [] },
             shiftNotes: ''
         };
 
-        // العمال - تغيير هاشم لوضاح وتوحيد الأجر
+        // العمال
         const WORKERS = { 
-            jaddo: { name: 'جدو', dailyAmount: 20000 }, // 20,000 بدلاً من 20,000
-            wadah: { name: 'وضاح', dailyAmount: 20000 }  // تغيير من هاشم لوضاح و20,000
+            jaddo: { name: 'جدو', dailyAmount: 20000 },
+            wadah: { name: 'وضاح', dailyAmount: 20000 }
         };
         
         const DEFAULT_SUPPLIERS = [
@@ -839,7 +989,6 @@
         // نظام أرقام العمليات المتقدم
         // ==========================================
 
-        // توليد رقم عملية مميز مع حرف
         async function generateOperationNumber(prefix = 'S') {
             const counterRef = ref(database, 'system/operationCounter');
             try {
@@ -849,7 +998,6 @@
                 const num = result.snapshot.val();
                 return `${prefix}-${String(num).padStart(5, '0')}`;
             } catch (error) {
-                // fallback
                 return `${prefix}-${Date.now().toString().slice(-5)}`;
             }
         }
@@ -939,15 +1087,21 @@
         // ==========================================
 
         function initApp() {
-            // الأرصدة الحقيقية
+            // ✅ الأرصدة الحقيقية (للعمل والعجز)
             onValue(ref(database, 'balances'), (snap) => {
                 appData.balances = snap.val() || { cash: 0, bank: 0 };
+                
+                // ✅ تحديث عرض الأرصدة الحقيقية فقط
                 document.getElementById('currentCash').textContent = formatNumber(appData.balances.cash);
                 document.getElementById('currentBank').textContent = formatNumber(appData.balances.bank);
                 document.getElementById('currentCash').classList.remove('data-loading');
                 document.getElementById('currentBank').classList.remove('data-loading');
-                document.getElementById('totalAvailable').textContent = formatNumber(appData.balances.cash + appData.balances.bank);
+                
+                // ✅ إجمالي الأموال المتاحة للعمل (بدون الأمانات)
+                const availableForWork = appData.balances.cash + appData.balances.bank;
+                document.getElementById('totalAvailable').textContent = formatNumber(availableForWork);
                 document.getElementById('totalAvailable').classList.remove('data-loading');
+                
                 updateDeficitSection();
                 updateComparisonSection();
                 generateDailyReport();
@@ -975,7 +1129,7 @@
                 updateComparisonSection();
             });
 
-            // العمال - تغيير لـ jaddo و wadah
+            // العمال
             onValue(ref(database, 'workers'), (snap) => {
                 appData.workers = snap.val() || { jaddo: 0, wadah: 0 };
                 document.getElementById('jaddoBalance').textContent = formatNumber(appData.workers.jaddo);
@@ -1005,13 +1159,28 @@
                 renderArchive();
             });
 
-            // الصندوق الجانبي
+            // ✅ الصندوق الجانبي (منفصل تماماً)
             onValue(ref(database, 'sideFund'), (snap) => {
                 appData.sideFund = snap.val() || { cash: 0, bank: 0, history: [] };
+                
+                // ✅ تحديث عرض الصندوق الجانبي في تبويبه
                 document.getElementById('sideFundCash').textContent = formatNumber(appData.sideFund.cash || 0);
                 document.getElementById('sideFundBank').textContent = formatNumber(appData.sideFund.bank || 0);
                 document.getElementById('sideFundCash').classList.remove('data-loading');
                 document.getElementById('sideFundBank').classList.remove('data-loading');
+                
+                // ✅ تحديث عرض الأمانات في قسم العجز (للعلم فقط)
+                const trustCashDisplay = document.getElementById('trustCashDisplay');
+                const trustBankDisplay = document.getElementById('trustBankDisplay');
+                if (trustCashDisplay) {
+                    trustCashDisplay.textContent = formatNumber(appData.sideFund.cash || 0);
+                    trustCashDisplay.classList.remove('data-loading');
+                }
+                if (trustBankDisplay) {
+                    trustBankDisplay.textContent = formatNumber(appData.sideFund.bank || 0);
+                    trustBankDisplay.classList.remove('data-loading');
+                }
+                
                 renderSideFundHistory();
                 updateSideFundDatalist();
             });
@@ -1238,23 +1407,30 @@
         };
 
         // ==========================================
-        // العجز والالتزامات
+        // ✅ العجز والالتزامات - مُحسّن لفصل الأمانات
         // ==========================================
 
         function updateDeficitSection() {
-            const currentCash = appData.balances?.cash || 0;
-            const currentBank = appData.balances?.bank || 0;
-            // لا نحسب الأمانات في العجز!
-            const totalAvailable = currentCash + currentBank;
-
-            const workersTotal = (appData.workers?.jaddo || 0) + (appData.workers?.wadah || 0);
-            let suppliersTotal = 0;
-            Object.values(appData.suppliers || {}).forEach(s => {
-                if (s && typeof s === 'object') suppliersTotal += (s.amount || 0) - (s.paid || 0);
-            });
+            // ✅ الأرصدة الحقيقية فقط (من balances)
+            const realCash = appData.balances?.cash || 0;
+            const realBank = appData.balances?.bank || 0;
             
+            // ❌ الأمانات (من sideFund) - لا تُحسب في العجز!
+            const trustCash = appData.sideFund?.cash || 0;
+            const trustBank = appData.sideFund?.bank || 0;
+            
+            // ✅ إجمالي الأموال المتاحة للعمل = الحقيقي فقط
+            const availableForWork = realCash + realBank;
+            
+            // ✅ إجمالي الالتزامات (عمال + موردون)
+            const workersTotal = (appData.workers?.jaddo || 0) + (appData.workers?.wadah || 0);
+            const suppliersTotal = Object.values(appData.suppliers || {}).reduce((sum, s) => {
+                return sum + ((s?.amount || 0) - (s?.paid || 0));
+            }, 0);
             const totalLiabilities = workersTotal + suppliersTotal;
-            const deficit = totalAvailable - totalLiabilities;
+            
+            // ✅ حساب العجز/الفائض (بدون الأمانات نهائياً)
+            const deficit = availableForWork - totalLiabilities;
             const deficitPercent = totalLiabilities > 0 ? ((deficit / totalLiabilities) * 100) : 0;
 
             document.getElementById('totalLiabilitiesDisplay').textContent = formatNumber(totalLiabilities);
@@ -1363,16 +1539,13 @@
             if (amount > currentFund) { showWarning(`رصيد ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`); return; }
 
             try {
-                const opNumber = await generateOperationNumber('W'); // W للعمال
+                const opNumber = await generateOperationNumber('W');
                 const balanceUpdate = {};
                 balanceUpdate[method === 'cash' ? 'cash' : 'bank'] = currentFund - amount;
 
                 await Promise.all([
-                    // تحديث رصيد العامل
                     update(ref(database, 'workers'), { [key]: currentBalance - amount }),
-                    // خصم من الأرصدة
                     update(ref(database, 'balances'), balanceUpdate),
-                    // تسجيل كمصروف محل (مطلوب!)
                     push(ref(database, 'transactions'), {
                         type: 'worker_payment', 
                         worker: key, 
@@ -1381,7 +1554,7 @@
                         timestamp: Date.now(),
                         title: `👷 تسديد مستحقات ${WORKERS[key].name}`,
                         payment: method === 'cash' ? 'كاش' : 'بنكك',
-                        expenseType: 'محل', // مهم: يُحسب في مصروفات المحل
+                        expenseType: 'محل',
                         operationNumber: opNumber
                     })
                 ]);
@@ -1405,7 +1578,6 @@
             let newAmount;
             
             if (remaining <= 0) {
-                // تم السداد بالكامل - إضافة دين جديد
                 const additional = prompt('الالتزام مسدد بالكامل. أدخل مبلغ الدين الجديد:', '0');
                 if (additional === null) return;
                 const addValue = parseFloat(additional.replace(/,/g, ''));
@@ -1415,7 +1587,6 @@
                 }
                 newAmount = currentAmount + addValue;
             } else {
-                // تعديل المبلغ
                 const edited = prompt('أدخل المبلغ الإجمالي الجديد:', currentAmount);
                 if (edited === null) return;
                 newAmount = parseFloat(edited.replace(/,/g, ''));
@@ -1451,7 +1622,7 @@
             if (amount > currentFund) { showWarning(`رصيد ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`); return; }
 
             try {
-                const opNumber = await generateOperationNumber('L'); // L للالتزامات
+                const opNumber = await generateOperationNumber('L');
                 const balanceUpdate = {};
                 balanceUpdate[method === 'cash' ? 'cash' : 'bank'] = currentFund - amount;
 
@@ -1466,7 +1637,7 @@
                         timestamp: Date.now(),
                         title: `🏭 تسديد ${supplier.name}`,
                         payment: method === 'cash' ? 'كاش' : 'بنكك',
-                        expenseType: 'محل', // مهم: يُحسب في مصروفات المحل
+                        expenseType: 'محل',
                         operationNumber: opNumber
                     })
                 ]);
@@ -1487,7 +1658,6 @@
             
             if (!name || amount <= 0) { showWarning('الرجاء إدخال البيانات بشكل صحيح'); return; }
             
-            // التحقق من عدم التكرار
             const existingNames = Object.values(appData.suppliers).map(s => 
                 (s.name || '').toLowerCase().replace(/^ال/, '').trim()
             );
@@ -1511,7 +1681,7 @@
         };
 
         // ==========================================
-        // الصندوق الجانبي (الأمانات)
+        // ✅ الصندوق الجانبي (الأمانات) - منفصل تماماً
         // ==========================================
 
         window.selectSideType = function(btn) {
@@ -1524,7 +1694,6 @@
             btn.classList.add(isDeposit ? 'border-emerald-500' : 'border-red-500', isDeposit ? 'bg-emerald-50' : 'bg-red-50');
             document.getElementById('sideFundType').value = btn.dataset.value;
             
-            // تغيير نص الزر
             document.getElementById('sideFundSubmitBtn').textContent = isDeposit ? '✅ تأكيد الاستلام' : '✅ تأكيد التسليم';
             document.getElementById('sideFundSubmitBtn').className = isDeposit ? 
                 'w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition' :
@@ -1552,31 +1721,30 @@
             
             if (!person || amount <= 0) { showWarning('الرجاء إدخال البيانات كاملة'); return; }
 
-            // في الصندوق الجانبي: لا نخصم/نضيف للأرصدة الحقيقية!
-            // نغير فقط رصيد الأمانات
-            const currentSideFund = appData.sideFund?.[method] || 0;
-            let newSideFund;
+            // ✅ تحديث رصيد الأمانات فقط (sideFund) - لا علاقة لـ balances!
+            const currentTrust = appData.sideFund?.[method] || 0;
+            let newTrust;
             
             if (type === 'deposit') {
-                newSideFund = currentSideFund + amount;
+                newTrust = currentTrust + amount;
             } else {
-                if (amount > currentSideFund) {
+                if (amount > currentTrust) {
                     showWarning('رصيد الأمانات غير كافٍ');
                     return;
                 }
-                newSideFund = currentSideFund - amount;
+                newTrust = currentTrust - amount;
             }
 
             try {
-                const opNumber = await generateOperationNumber('T'); // T للأمانات/الجانبي
+                const opNumber = await generateOperationNumber('T');
                 
                 await Promise.all([
-                    // تحديث رصيد الأمانات فقط (لا تأثير على balances)
+                    // ✅ تحديث sideFund فقط (لا يؤثر على balances نهائياً)
                     update(ref(database, 'sideFund'), { 
-                        [method]: newSideFund,
+                        [method]: newTrust,
                         lastUpdated: Date.now()
                     }),
-                    // إضافة للتاريخ
+                    // ✅ إضافة للتاريخ
                     push(ref(database, 'sideFund/history'), {
                         type,
                         method,
@@ -1586,7 +1754,7 @@
                         timestamp: Date.now(),
                         operationNumber: opNumber
                     }),
-                    // تسجيل في transactions للأرشفة فقط (بدون تأثير على الأرصدة)
+                    // ✅ تسجيل في transactions للأرشفة فقط (بدون تأثير مالي)
                     push(ref(database, 'transactions'), {
                         type: 'side_fund',
                         sideFundType: type,
@@ -1597,13 +1765,11 @@
                         timestamp: Date.now(),
                         title: `${type === 'deposit' ? '📥 استلام' : '📤 تسليم'} أمانة - ${person}`,
                         operationNumber: opNumber,
-                        // مهم: هذه العملية لا تؤثر على balances
-                        noBalanceEffect: true
+                        noBalanceEffect: true // ✅ علامة مهمة: لا تؤثر على الأرصدة
                     })
                 ]);
                 
                 document.getElementById('sideFundForm').reset();
-                // إعادة تعيين الأزرار
                 document.querySelector('.side-type-btn[data-value="deposit"]').click();
                 document.querySelector('.side-method-btn[data-value="cash"]').click();
                 
@@ -1631,7 +1797,7 @@
                     <div class="flex justify-between items-center p-3 ${isDeposit ? 'bg-emerald-50' : 'bg-red-50'} rounded-lg border-r-4 ${isDeposit ? 'border-emerald-500' : 'border-red-500'}">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="operation-number">${item.operationNumber || '--'}</span>
+                                <span class="operation-number text-xs mr-2">${item.operationNumber || '--'}</span>
                                 <span class="font-bold text-sm ${isDeposit ? 'text-emerald-700' : 'text-red-700'}">
                                     ${isDeposit ? '📥 استلام' : '📤 تسليم'}
                                 </span>
@@ -1667,12 +1833,9 @@
         // ==========================================
 
         function updateComparisonSection() {
-            // المتوقع = balances الحالي (الحقيقي)
             const expectedCash = appData.balances?.cash || 0;
             const expectedBank = appData.balances?.bank || 0;
             
-            // الفعلي = نفس القيمة (لأننا نستخدم الأرصدة الحقيقية مباشرة)
-            // أو يمكن تعديله يدوياً عند القفل
             const actualCash = appData.actualBalances?.cash !== undefined ? appData.actualBalances.cash : expectedCash;
             const actualBank = appData.actualBalances?.bank !== undefined ? appData.actualBalances.bank : expectedBank;
 
@@ -1816,7 +1979,7 @@
                         ` : ''}
 
                         <div class="mt-3 text-xs text-slate-400 text-center">
-                            تم القفيل: ${formatTime(data.closedAt)} بواسطة ${data.closedBy?.split('@')[0] || '---'}
+                            تم القفل: ${formatTime(data.closedAt)} بواسطة ${data.closedBy?.split('@')[0] || '---'}
                         </div>
                     </div>
                 `;
@@ -1831,7 +1994,6 @@
             const container = document.getElementById('archiveList');
             
             if (data) {
-                // عرض بطاقة واحدة مفصلة
                 const variance = data.variances?.total || 0;
                 let cardClass = 'success';
                 if (variance < -50000) cardClass = 'danger';
@@ -1876,13 +2038,14 @@
             
             const todayKey = getTodayKey();
             
-            // حفظ الأرصدة الحقيقية كـ "فعلية"
+            // ✅ حفظ الأرصدة الحقيقية كـ "فعلية"
             await update(ref(database, 'shift/actualBalances'), {
                 cash: appData.balances.cash,
                 bank: appData.balances.bank,
                 lastUpdated: Date.now()
             });
 
+            // ✅ حساب الفروقات (بدون الأمانات)
             const variance = (appData.actualBalances.cash + appData.actualBalances.bank) - 
                            ((appData.balances.cash + appData.balances.bank) + 
                             Object.values(appData.suppliers).reduce((a, s) => a + (s.amount - s.paid), 0) +
@@ -1891,7 +2054,7 @@
             const archiveData = {
                 closedAt: Date.now(),
                 closedBy: currentUser.email,
-                balances: { ...appData.balances }, // الأرصدة الحقيقية
+                balances: { ...appData.balances }, // ✅ الأرصدة الحقيقية فقط
                 actualBalances: { ...appData.actualBalances },
                 variances: {
                     cash: appData.actualBalances.cash - appData.balances.cash,
@@ -2063,13 +2226,13 @@
             
             const currentWorkers = appData.workers || { jaddo: 0, wadah: 0 };
             await update(ref(database, 'workers'), {
-                jaddo: (currentWorkers.jaddo || 0) + 20000,  // 20,000 لجدو
-                wadah: (currentWorkers.wadah || 0) + 20000   // 20,000 لوضاح (بدلاً من 40,000)
+                jaddo: (currentWorkers.jaddo || 0) + 20000,
+                wadah: (currentWorkers.wadah || 0) + 20000
             });
             await set(ref(database, `dailyAdds/${todayKey}`), { 
                 timestamp: Date.now(), 
                 jaddoAdded: 20000, 
-                wadahAdded: 20000  // تغيير من hashimAdded
+                wadahAdded: 20000
             });
             showSuccess('✅ تم إضافة مستحقات العمال اليومية (جدو 20,000 + وضاح 20,000)');
         }
