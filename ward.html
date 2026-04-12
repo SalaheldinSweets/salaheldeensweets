@@ -48,6 +48,17 @@
         .tx-bank { border-color: #3b82f6; background: #eff6ff; }
         .old-transaction { opacity: 0.7; background: #f3f4f6 !important; }
         .old-transaction .transaction-title { text-decoration: line-through; color: #9ca3af; }
+        
+        /* تنسيقات التقرير الجديدة */
+        .report-section { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #0ea5e9; }
+        .report-header { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+        .stat-card { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .dept-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .dept-juice { background: #dcfce7; color: #166534; }
+        .dept-sweets { background: #fce7f3; color: #9d174d; }
+        .dept-food { background: #fef3c7; color: #92400e; }
+        .print-btn { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+        .share-btn { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
     </style>
 </head>
 <body>
@@ -108,20 +119,183 @@
             </div>
         </div>
 
-        <!-- تبويبات التنقل الأربعة -->
+        <!-- تبويبات التنقل - 5 تبويبات -->
         <div class="bg-white shadow-sm sticky top-0 z-30">
-            <div class="flex justify-around text-xs">
-                <button onclick="switchTab('deficit')" id="tab-deficit" class="flex-1 py-3 tab-active">⚠️ العجز</button>
-                <button onclick="switchTab('liabilities')" id="tab-liabilities" class="flex-1 py-3 tab-inactive">📋 الالتزامات</button>
-                <button onclick="switchTab('comparison')" id="tab-comparison" class="flex-1 py-3 tab-inactive">⚖️ المطابقة</button>
-                <button onclick="switchTab('archive')" id="tab-archive" class="flex-1 py-3 tab-inactive">📚 الأرشيف</button>
+            <div class="flex justify-around text-xs overflow-x-auto hide-scrollbar">
+                <button onclick="switchTab('report')" id="tab-report" class="flex-1 py-3 tab-inactive min-w-[80px]">📋 التقرير</button>
+                <button onclick="switchTab('deficit')" id="tab-deficit" class="flex-1 py-3 tab-active min-w-[80px]">⚠️ العجز</button>
+                <button onclick="switchTab('liabilities')" id="tab-liabilities" class="flex-1 py-3 tab-inactive min-w-[80px]">📋 الالتزامات</button>
+                <button onclick="switchTab('comparison')" id="tab-comparison" class="flex-1 py-3 tab-inactive min-w-[80px]">⚖️ المطابقة</button>
+                <button onclick="switchTab('archive')" id="tab-archive" class="flex-1 py-3 tab-inactive min-w-[80px]">📚 الأرشيف</button>
             </div>
         </div>
 
         <!-- المحتوى الرئيسي -->
         <main class="p-4 space-y-4 pb-24" id="mainContent">
             
-            <!-- القسم الأول: العجز (الافتراضي) -->
+            <!-- القسم الأول: التقرير اليومي (جديد) -->
+            <div id="content-report" class="space-y-4 hidden">
+                
+                <!-- رأس التقرير -->
+                <div class="report-header rounded-2xl p-4 text-white shadow-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xl font-bold">📋 التقرير اليومي</h2>
+                        <span id="reportDate" class="bg-white/20 px-3 py-1 rounded-full text-sm">--/--/----</span>
+                    </div>
+                    <div class="text-sm opacity-90">وردية: <span id="reportShiftTime">--:--</span> إلى <span id="reportCurrentTime">--:--</span></div>
+                </div>
+
+                <!-- ملخص سريع -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="stat-card border-l-4 border-emerald-500">
+                        <div class="text-xs text-slate-500 mb-1">إجمالي المبيعات</div>
+                        <div id="reportTotalSales" class="text-xl font-bold text-emerald-600">0</div>
+                    </div>
+                    <div class="stat-card border-l-4 border-red-500">
+                        <div class="text-xs text-slate-500 mb-1">إجمالي المصروفات</div>
+                        <div id="reportTotalExpenses" class="text-xl font-bold text-red-600">0</div>
+                    </div>
+                    <div class="stat-card border-l-4 border-blue-500">
+                        <div class="text-xs text-slate-500 mb-1">صافي الربح</div>
+                        <div id="reportNetProfit" class="text-xl font-bold text-blue-600">0</div>
+                    </div>
+                    <div class="stat-card border-l-4 border-purple-500">
+                        <div class="text-xs text-slate-500 mb-1">عدد العمليات</div>
+                        <div id="reportTotalOps" class="text-xl font-bold text-purple-600">0</div>
+                    </div>
+                </div>
+
+                <!-- تفصيل المبيعات حسب القسم -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                        <span>🛍️</span>
+                        <span>مبيعات الأقسام</span>
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-emerald-50 rounded-xl">
+                            <div class="flex items-center gap-2">
+                                <span class="dept-badge dept-juice">🧃 عصائر</span>
+                            </div>
+                            <div class="text-right">
+                                <div id="reportJuiceSales" class="font-bold text-emerald-700">0</div>
+                                <div id="reportJuiceCount" class="text-xs text-emerald-600">0 عملية</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-pink-50 rounded-xl">
+                            <div class="flex items-center gap-2">
+                                <span class="dept-badge dept-sweets">🍰 حلويات</span>
+                            </div>
+                            <div class="text-right">
+                                <div id="reportSweetsSales" class="font-bold text-pink-700">0</div>
+                                <div id="reportSweetsCount" class="text-xs text-pink-600">0 عملية</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-amber-50 rounded-xl">
+                            <div class="flex items-center gap-2">
+                                <span class="dept-badge dept-food">🥙 طعمية</span>
+                            </div>
+                            <div class="text-right">
+                                <div id="reportFoodSales" class="font-bold text-amber-700">0</div>
+                                <div id="reportFoodCount" class="text-xs text-amber-600">0 عملية</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تفصيل حسب طريقة الدفع -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                        <span>💳</span>
+                        <span>حسب طريقة الدفع</span>
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-emerald-100 rounded-xl p-3 text-center">
+                            <div class="text-2xl mb-1">💵</div>
+                            <div class="text-xs text-emerald-600 mb-1">كاش</div>
+                            <div id="reportCashSales" class="font-bold text-emerald-700">0</div>
+                        </div>
+                        <div class="bg-blue-100 rounded-xl p-3 text-center">
+                            <div class="text-2xl mb-1">💳</div>
+                            <div class="text-xs text-blue-600 mb-1">بنكك</div>
+                            <div id="reportBankSales" class="font-bold text-blue-700">0</div>
+                        </div>
+                        <div class="bg-amber-100 rounded-xl p-3 text-center col-span-2">
+                            <div class="text-2xl mb-1">📝</div>
+                            <div class="text-xs text-amber-600 mb-1">مبيعات آجلة (ديون)</div>
+                            <div id="reportCreditSales" class="font-bold text-amber-700">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- المصروفات المفصلة -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                        <span>💸</span>
+                        <span>تفصيل المصروفات</span>
+                    </h3>
+                    <div class="space-y-2" id="reportExpensesList">
+                        <!-- يُملأ ديناميكياً -->
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-200">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-700">الإجمالي:</span>
+                            <span id="reportExpensesTotal" class="font-bold text-red-600">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- حركات الصندوق -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                        <span>🔄</span>
+                        <span>حركات الصندوق</span>
+                    </h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg">
+                            <span class="text-sm text-slate-600">رصيد افتتاحي (6:00 ص)</span>
+                            <span id="reportOpeningBalance" class="font-bold text-slate-700">0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-emerald-50 rounded-lg">
+                            <span class="text-sm text-emerald-600">+ إيرادات نقدية</span>
+                            <span id="reportCashIncome" class="font-bold text-emerald-700">0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-red-50 rounded-lg">
+                            <span class="text-sm text-red-600">- مصروفات نقدية</span>
+                            <span id="reportCashExpense" class="font-bold text-red-700">0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-amber-50 rounded-lg">
+                            <span class="text-sm text-amber-600">⇄ تحويلات</span>
+                            <span id="reportTransfers" class="font-bold text-amber-700">0</span>
+                        </div>
+                        <div class="border-t-2 border-slate-200 pt-2 mt-2">
+                            <div class="flex justify-between items-center p-2 bg-purple-50 rounded-lg">
+                                <span class="font-bold text-purple-700">الرصيد الختامي المتوقع</span>
+                                <span id="reportExpectedClosing" class="font-bold text-purple-700">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ملاحظات التقرير -->
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h3 class="font-bold text-slate-700 mb-3">📝 ملاحظات الوردية</h3>
+                    <textarea id="shiftNotes" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-blue-500 focus:outline-none min-h-[100px]" placeholder="اكتب أي ملاحظات خاصة بالوردية هنا... (مثال: عطل في الفريزر، غياب عامل، إلخ)"></textarea>
+                    <button onclick="saveShiftNotes()" class="w-full mt-2 bg-blue-500 text-white rounded-xl p-3 font-bold btn-press hover:bg-blue-600 transition">💾 حفظ الملاحظات</button>
+                </div>
+
+                <!-- أزرار الطباعة والمشاركة -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="printReport()" class="print-btn text-white rounded-2xl p-4 font-bold btn-press shadow-lg transition flex items-center justify-center gap-2">
+                        <span>🖨️</span><span>طباعة التقرير</span>
+                    </button>
+                    <button onclick="shareReport()" class="share-btn text-white rounded-2xl p-4 font-bold btn-press shadow-lg transition flex items-center justify-center gap-2">
+                        <span>📤</span><span>مشاركة</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- القسم الثاني: العجز -->
             <div id="content-deficit" class="space-y-4">
                 
                 <!-- بطاقة الموقف المالي الحالي -->
@@ -131,7 +305,7 @@
                         <span id="deficitStatus" class="status-badge bg-amber-100 text-amber-700 pulse-alert">تحت المراقبة</span>
                     </div>
 
-                    <!-- الأرصدة الحالية (مربوطة مباشرة بـ balances) -->
+                    <!-- الأرصدة الحالية -->
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-emerald-50 rounded-xl p-3 text-center border-2 border-emerald-200">
                             <div class="text-xs text-emerald-600 mb-1">الكاش (الحقيقي)</div>
@@ -196,7 +370,7 @@
                     </div>
                 </div>
 
-                <!-- أحدث الحركات من السجلات -->
+                <!-- أحدث الحركات -->
                 <div class="bg-white rounded-2xl p-4 shadow-md">
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="font-bold text-slate-700">🔄 آخر الحركات</h3>
@@ -217,15 +391,9 @@
                     </button>
                 </div>
 
-                <!-- حالة الاتصال -->
-                <div id="connectionStatus" class="bg-slate-100 rounded-xl p-3 text-center text-sm">
-                    <span class="text-slate-500">حالة الاتصال:</span>
-                    <span id="connectionText" class="font-bold text-amber-600">جاري الاتصال...</span>
-                </div>
-
             </div>
 
-            <!-- القسم الثاني: الالتزامات -->
+            <!-- القسم الثالث: الالتزامات -->
             <div id="content-liabilities" class="space-y-4 hidden">
                 
                 <!-- العمال -->
@@ -235,7 +403,6 @@
                         <span>عمال الكانولا (يضاف تلقائياً)</span>
                     </h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <!-- جدو -->
                         <div class="worker-card rounded-xl p-3">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="font-bold text-amber-900">جدو</span>
@@ -244,7 +411,6 @@
                             <div class="text-xs text-amber-800 mb-2">يضاف يومياً: 20,000 ج</div>
                             <button onclick="payWorker('jaddo', 'جدو')" class="w-full bg-amber-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-amber-700 transition btn-press">💵 تسديد</button>
                         </div>
-                        <!-- هاشم -->
                         <div class="worker-card rounded-xl p-3">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="font-bold text-amber-900">هاشم</span>
@@ -254,47 +420,32 @@
                             <button onclick="payWorker('hashim', 'هاشم')" class="w-full bg-amber-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-amber-700 transition btn-press">💵 تسديد</button>
                         </div>
                     </div>
-                    <div class="mt-3 bg-amber-100 rounded-lg p-2 text-xs text-amber-800 text-center">
-                        ⏰ يتم الإضافة التلقائية كل يوم في منتصف الليل (12:00 صباحاً)
-                    </div>
                 </div>
 
-                <!-- الموردون والالتزامات الأخرى -->
+                <!-- الموردون -->
                 <div class="bg-white rounded-2xl p-4 shadow-md">
-                    <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
-                        <span>🏭</span>
-                        <span>الموردون والالتزامات</span>
-                    </h3>
-                    <div id="suppliersList" class="space-y-3">
-                        <!-- يُملأ ديناميكياً -->
-                    </div>
+                    <h3 class="font-bold text-slate-700 mb-3">الموردون والالتزامات</h3>
+                    <div id="suppliersList" class="space-y-3"></div>
                 </div>
 
                 <!-- إضافة التزام جديد -->
                 <div class="bg-white rounded-2xl p-4 shadow-md">
-                    <h3 class="font-bold text-slate-700 mb-3">➕ إضافة التزام/مورد جديد</h3>
+                    <h3 class="font-bold text-slate-700 mb-3">➕ إضافة التزام جديد</h3>
                     <form id="addSupplierForm" class="space-y-3" onsubmit="addSupplier(event)">
-                        <input type="text" id="supplierName" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none" placeholder="اسم الجهة (مثال: مورد جديد، سلفة، ...)" required>
+                        <input type="text" id="supplierName" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none" placeholder="اسم الجهة" required>
                         <input type="text" id="supplierAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center focus:border-purple-500 focus:outline-none" placeholder="المبلغ..." oninput="formatNumberInput(this)" required>
-                        <select id="supplierType" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none">
-                            <option value="supplier">مورد/التزام</option>
-                            <option value="loan">سلفة</option>
-                            <option value="other">أخرى</option>
-                        </select>
                         <button type="submit" class="w-full bg-purple-500 text-white rounded-xl p-3 font-bold btn-press hover:bg-purple-600 transition">✅ إضافة</button>
                     </form>
                 </div>
 
             </div>
 
-            <!-- القسم الثالث: المطابقة -->
+            <!-- القسم الرابع: المطابقة -->
             <div id="content-comparison" class="space-y-4 hidden">
                 
-                <!-- ملخص المطابقة -->
                 <div class="glass-card rounded-2xl p-4 shadow-lg">
                     <h3 class="font-bold text-slate-800 text-lg mb-4">⚖️ مطابقة الأرصدة</h3>
                     
-                    <!-- الكاش -->
                     <div class="mb-4 p-3 bg-slate-50 rounded-xl">
                         <div class="flex justify-between items-center mb-2">
                             <span class="font-bold text-slate-700">💵 الكاش</span>
@@ -302,11 +453,11 @@
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-sm mb-2">
                             <div class="text-center">
-                                <div class="text-xs text-slate-500">الافتراضي (من السجلات)</div>
+                                <div class="text-xs text-slate-500">المتوقع</div>
                                 <div id="expectedCash" class="font-bold text-slate-700 data-loading">---</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-xs text-emerald-600">الفعلي (الموجود)</div>
+                                <div class="text-xs text-emerald-600">الفعلي</div>
                                 <div id="actualCashDisplay" class="font-bold text-emerald-700 data-loading">---</div>
                             </div>
                         </div>
@@ -315,7 +466,6 @@
                         </div>
                     </div>
 
-                    <!-- البنك -->
                     <div class="mb-4 p-3 bg-slate-50 rounded-xl">
                         <div class="flex justify-between items-center mb-2">
                             <span class="font-bold text-slate-700">💳 البنك</span>
@@ -323,11 +473,11 @@
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-sm mb-2">
                             <div class="text-center">
-                                <div class="text-xs text-slate-500">الافتراضي (من السجلات)</div>
+                                <div class="text-xs text-slate-500">المتوقع</div>
                                 <div id="expectedBank" class="font-bold text-slate-700 data-loading">---</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-xs text-blue-600">الفعلي (الموجود)</div>
+                                <div class="text-xs text-blue-600">الفعلي</div>
                                 <div id="actualBankDisplay" class="font-bold text-blue-700 data-loading">---</div>
                             </div>
                         </div>
@@ -336,62 +486,45 @@
                         </div>
                     </div>
 
-                    <!-- ملخص المطابقة -->
                     <div class="bg-purple-50 rounded-xl p-4 border-2 border-purple-200">
                         <div class="text-center mb-3">
-                            <div class="text-sm text-purple-600 mb-1">نسبة المطابقة الكلية</div>
-                            <div class="flex justify-center items-center gap-2">
-                                <div id="matchPercentage" class="text-3xl font-bold text-purple-700 data-loading">---</div>
-                            </div>
+                            <div class="text-sm text-purple-600 mb-1">نسبة المطابقة</div>
+                            <div id="matchPercentage" class="text-3xl font-bold text-purple-700 data-loading">---</div>
                         </div>
-                        
-                        <!-- شريط التقدم -->
                         <div class="w-full bg-slate-200 rounded-full h-4 mb-3 overflow-hidden">
                             <div id="matchProgressBar" class="bg-purple-500 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
                         </div>
-
-                        <div id="comparisonMessage" class="text-center p-3 rounded-lg font-bold data-loading">جاري التحميل...</div>
+                        <div id="comparisonMessage" class="text-center p-3 rounded-lg font-bold data-loading">---</div>
                     </div>
-                </div>
-
-                <!-- تاريخ آخر مطابقة -->
-                <div class="bg-white rounded-2xl p-4 shadow-md text-center">
-                    <div class="text-sm text-slate-500 mb-1">آخر تحديث للمطابقة</div>
-                    <div id="lastComparisonDate" class="font-bold text-slate-700">---</div>
                 </div>
 
             </div>
 
-            <!-- القسم الرابع: الأرشيف -->
+            <!-- القسم الخامس: الأرشيف -->
             <div id="content-archive" class="space-y-4 hidden">
                 
-                <!-- إحصائيات الأرشيف -->
                 <div class="glass-card rounded-2xl p-4 shadow-lg">
-                    <h3 class="font-bold text-slate-800 text-lg mb-4">📚 أرشيف اليوميات المقفلة</h3>
+                    <h3 class="font-bold text-slate-800 text-lg mb-4">📚 أرشيف اليوميات</h3>
                     
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-emerald-50 rounded-xl p-3 text-center">
-                            <div class="text-xs text-emerald-600 mb-1">اليوميات المقفلة</div>
+                            <div class="text-xs text-emerald-600 mb-1">المقفلة</div>
                             <div id="totalClosedDays" class="text-2xl font-bold text-emerald-700 data-loading">---</div>
                         </div>
                         <div class="bg-amber-50 rounded-xl p-3 text-center">
-                            <div class="text-xs text-amber-600 mb-1">متوسط الفائض/العجز</div>
+                            <div class="text-xs text-amber-600 mb-1">متوسط الفرق</div>
                             <div id="avgVariance" class="text-2xl font-bold text-amber-700 data-loading">---</div>
                         </div>
                     </div>
 
-                    <!-- فلترة -->
                     <div class="flex gap-2 mb-4">
                         <input type="date" id="archiveFilterDate" class="flex-1 border-2 border-slate-200 rounded-xl p-2 text-sm focus:border-purple-500 focus:outline-none">
-                        <button onclick="filterArchive()" class="bg-purple-500 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-purple-600 transition">🔍</button>
-                        <button onclick="loadArchive()" class="bg-slate-500 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-slate-600 transition">الكل</button>
+                        <button onclick="filterArchive()" class="bg-purple-500 text-white rounded-xl px-4 py-2 text-sm font-bold">🔍</button>
+                        <button onclick="loadArchive()" class="bg-slate-500 text-white rounded-xl px-4 py-2 text-sm font-bold">الكل</button>
                     </div>
                 </div>
 
-                <!-- قائمة الأرشيف -->
-                <div id="archiveList" class="space-y-3 max-h-96 overflow-y-auto hide-scrollbar">
-                    <!-- يُملأ ديناميكياً -->
-                </div>
+                <div id="archiveList" class="space-y-3 max-h-96 overflow-y-auto hide-scrollbar"></div>
 
             </div>
 
@@ -425,116 +558,71 @@
 
     </div>
 
-    <!-- مودال تعديل الفعلي -->
+    <!-- المودالات -->
     <div id="editActualModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('editActual')">
         <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
             <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
-            
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-slate-800">✏️ تعديل الرصيد الفعلي</h2>
-                <button onclick="closeModal('editActual')" class="text-slate-400 text-2xl">&times;</button>
-            </div>
-
+            <h2 class="text-xl font-bold text-slate-800 mb-4">✏️ تعديل الرصيد الفعلي</h2>
             <form id="editActualForm" class="space-y-4" onsubmit="saveActualBalance(event)">
                 <input type="hidden" id="editActualType">
-                
                 <div class="text-center mb-4">
-                    <div id="editActualLabel" class="text-lg font-bold text-slate-700">الكاش الفعلي</div>
-                    <div class="text-sm text-slate-400">أدخل المبلغ الموجود فعلياً</div>
+                    <div id="editActualLabel" class="text-lg font-bold text-slate-700">---</div>
                 </div>
-
-                <div>
-                    <input type="text" id="editActualAmount" class="w-full border-2 border-blue-200 rounded-xl p-4 text-2xl text-center font-bold focus:border-blue-500 focus:outline-none bg-blue-50" placeholder="0" oninput="formatNumberInput(this)" required>
-                </div>
-
+                <input type="text" id="editActualAmount" class="w-full border-2 border-blue-200 rounded-xl p-4 text-2xl text-center font-bold focus:border-blue-500 focus:outline-none bg-blue-50" placeholder="0" oninput="formatNumberInput(this)" required>
                 <button type="submit" class="w-full bg-blue-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-blue-600 transition">💾 حفظ</button>
             </form>
         </div>
     </div>
 
-    <!-- مودال تسديد عامل -->
     <div id="payWorkerModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('payWorker')">
         <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
             <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
-            
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-amber-800">💵 تسديد مستحقات العامل</h2>
-                <button onclick="closeModal('payWorker')" class="text-slate-400 text-2xl">&times;</button>
-            </div>
-
+            <h2 class="text-xl font-bold text-amber-800 mb-4">💵 تسديد مستحقات العامل</h2>
             <form id="payWorkerForm" class="space-y-4" onsubmit="confirmPayWorker(event)">
                 <input type="hidden" id="payWorkerKey">
-                
                 <div class="worker-card rounded-xl p-4 text-center mb-4">
                     <div id="payWorkerName" class="text-lg font-bold text-amber-900 mb-1">---</div>
-                    <div class="text-sm text-amber-700 mb-2">المستحق الحالي</div>
                     <div id="payWorkerBalance" class="text-2xl font-bold text-amber-800">0</div>
                 </div>
-
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">المبلغ المسدد</label>
-                    <input type="text" id="payWorkerAmount" class="w-full border-2 border-amber-200 rounded-xl p-3 text-lg text-center focus:border-amber-500 focus:outline-none bg-amber-50" placeholder="0" oninput="formatNumberInput(this)" required>
+                <input type="text" id="payWorkerAmount" class="w-full border-2 border-amber-200 rounded-xl p-3 text-lg text-center focus:border-amber-500 focus:outline-none bg-amber-50" placeholder="0" oninput="formatNumberInput(this)" required>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" class="pay-method-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center" data-value="cash" onclick="selectPayMethod(this)">
+                        <span class="text-2xl">💵</span>
+                        <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
+                    </button>
+                    <button type="button" class="pay-method-btn border-2 border-slate-200 rounded-xl p-3 text-center" data-value="bank" onclick="selectPayMethod(this)">
+                        <span class="text-2xl">💳</span>
+                        <div class="text-sm mt-1">بنكك</div>
+                    </button>
                 </div>
-
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" class="pay-method-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="cash" onclick="selectPayMethod(this)">
-                            <span class="text-2xl">💵</span>
-                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
-                        </button>
-                        <button type="button" class="pay-method-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="bank" onclick="selectPayMethod(this)">
-                            <span class="text-2xl">💳</span>
-                            <div class="text-sm mt-1">بنكك</div>
-                        </button>
-                    </div>
-                    <input type="hidden" id="payWorkerMethod" value="cash">
-                </div>
-
+                <input type="hidden" id="payWorkerMethod" value="cash">
                 <button type="submit" class="w-full bg-amber-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-amber-600 transition">✅ تأكيد التسديد</button>
             </form>
         </div>
     </div>
 
-    <!-- مودال تسديد مورد -->
     <div id="paySupplierModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('paySupplier')">
         <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
             <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
-            
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-indigo-800">💵 تسديد التزام</h2>
-                <button onclick="closeModal('paySupplier')" class="text-slate-400 text-2xl">&times;</button>
-            </div>
-
+            <h2 class="text-xl font-bold text-indigo-800 mb-4">💵 تسديد التزام</h2>
             <form id="paySupplierForm" class="space-y-4" onsubmit="confirmPaySupplier(event)">
                 <input type="hidden" id="paySupplierId">
-                
                 <div class="supplier-card rounded-xl p-4 text-center mb-4">
                     <div id="paySupplierName" class="text-lg font-bold text-indigo-900 mb-1">---</div>
-                    <div class="text-sm text-indigo-700 mb-2">المبلغ المستحق</div>
                     <div id="paySupplierAmount" class="text-2xl font-bold text-indigo-800">0</div>
                 </div>
-
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">المبلغ المسدد</label>
-                    <input type="text" id="paySupplierInput" class="w-full border-2 border-indigo-200 rounded-xl p-3 text-lg text-center focus:border-indigo-500 focus:outline-none bg-indigo-50" placeholder="0" oninput="formatNumberInput(this)" required>
+                <input type="text" id="paySupplierInput" class="w-full border-2 border-indigo-200 rounded-xl p-3 text-lg text-center focus:border-indigo-500 focus:outline-none bg-indigo-50" placeholder="0" oninput="formatNumberInput(this)" required>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" class="pay-method-btn-supplier border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center" data-value="cash" onclick="selectSupplierPayMethod(this)">
+                        <span class="text-2xl">💵</span>
+                        <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
+                    </button>
+                    <button type="button" class="pay-method-btn-supplier border-2 border-slate-200 rounded-xl p-3 text-center" data-value="bank" onclick="selectSupplierPayMethod(this)">
+                        <span class="text-2xl">💳</span>
+                        <div class="text-sm mt-1">بنكك</div>
+                    </button>
                 </div>
-
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">طريقة الدفع</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" class="pay-method-btn-supplier border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="cash" onclick="selectSupplierPayMethod(this)">
-                            <span class="text-2xl">💵</span>
-                            <div class="text-sm mt-1 font-semibold text-emerald-700">كاش</div>
-                        </button>
-                        <button type="button" class="pay-method-btn-supplier border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="bank" onclick="selectSupplierPayMethod(this)">
-                            <span class="text-2xl">💳</span>
-                            <div class="text-sm mt-1">بنكك</div>
-                        </button>
-                    </div>
-                    <input type="hidden" id="paySupplierMethod" value="cash">
-                </div>
-
+                <input type="hidden" id="paySupplierMethod" value="cash">
                 <button type="submit" class="w-full bg-indigo-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-indigo-600 transition">✅ تأكيد التسديد</button>
             </form>
         </div>
@@ -546,7 +634,6 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getDatabase, ref, set, push, onValue, update, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // 🔴 نفس إعدادات Firebase الأصلية (يجب تغييرها فوراً!)
         const firebaseConfig = {
             apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
             authDomain: "salahsweetmanage.firebaseapp.com",
@@ -563,17 +650,15 @@
         const database = getDatabase(app);
 
         let currentUser = null;
-        
-        // البيانات الرئيسية - مرتبطة مباشرة بالنظام الأصلي
         let appData = {
-            balances: { cash: 0, bank: 0 },      // مربوط مباشرة بـ balances
-            transactions: [],                    // من نفس transactions
-            debts: [],                          // من نفس debts
-            calculatedBalances: { cash: 0, bank: 0 },
+            balances: { cash: 0, bank: 0 },
+            transactions: [],
+            debts: [],
             actualBalances: { cash: 0, bank: 0 },
             workers: { jaddo: 0, hashim: 0 },
             suppliers: {},
-            archive: {}
+            archive: {},
+            shiftNotes: ''
         };
 
         const WORKERS = { 
@@ -589,10 +674,8 @@
             { id: 'wadaljaaly', name: '🏪 ود الجعلي', amount: 0, paid: 0 }
         ];
 
-        const BANK_FEE = 60; // نفس قيمة النظام الأصلي
-
         // ==========================================
-        // UTILITY FUNCTIONS (نفس النظام الأصلي)
+        // UTILITY FUNCTIONS
         // ==========================================
 
         window.formatNumber = function(num) {
@@ -650,12 +733,8 @@
             return new Date(timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
         }
 
-        function formatOperationNumber(num) {
-            return num.toString().padStart(5, '0');
-        }
-
         // ==========================================
-        // AUTHENTICATION (نفس النظام الأصلي)
+        // AUTHENTICATION
         // ==========================================
 
         onAuthStateChanged(auth, (user) => {
@@ -676,13 +755,11 @@
         };
 
         // ==========================================
-        // APP INITIALIZATION - الربط الحقيقي مع النظام
+        // APP INITIALIZATION
         // ==========================================
 
         function initApp() {
-            console.log('بدء تهيئة تصفية الوردية - الربط مع النظام الرئيسي...');
-
-            // 1. الربط المباشر بأرصدة النظام الرئيسي (balances)
+            // الأرصدة
             onValue(ref(database, 'balances'), (snap) => {
                 appData.balances = snap.val() || { cash: 0, bank: 0 };
                 document.getElementById('currentCash').textContent = formatNumber(appData.balances.cash);
@@ -692,31 +769,34 @@
                 document.getElementById('totalAvailable').textContent = formatNumber(appData.balances.cash + appData.balances.bank);
                 document.getElementById('totalAvailable').classList.remove('data-loading');
                 updateDeficitSection();
+                updateComparisonSection();
+                generateDailyReport(); // تحديث التقرير
             });
 
-            // 2. الاستماع للمعاملات (نفس transactions)
+            // المعاملات
             onValue(ref(database, 'transactions'), (snap) => {
                 const txs = [];
                 if (snap.exists()) snap.forEach((child) => { txs.push({ id: child.key, ...child.val() }); });
                 appData.transactions = txs;
-                calculateTodayStats();
+                generateDailyReport(); // تحديث التقرير
                 updateRecentTransactions();
             });
 
-            // 3. الاستماع للديون (نفس debts)
+            // الديون
             onValue(ref(database, 'debts'), (snap) => {
                 const debts = [];
                 if (snap.exists()) snap.forEach((child) => { debts.push({ id: child.key, ...child.val() }); });
                 appData.debts = debts;
+                generateDailyReport(); // تحديث التقرير
             });
 
-            // 4. الأرصدة الفعلية (للمطابقة)
+            // الأرصدة الفعلية
             onValue(ref(database, 'shift/actualBalances'), (snap) => {
                 appData.actualBalances = snap.val() || { cash: 0, bank: 0 };
                 updateComparisonSection();
             });
 
-            // 5. العمال (workers)
+            // العمال
             onValue(ref(database, 'workers'), (snap) => {
                 appData.workers = snap.val() || { jaddo: 0, hashim: 0 };
                 document.getElementById('jaddoBalance').textContent = formatNumber(appData.workers.jaddo);
@@ -726,16 +806,12 @@
                 updateDeficitSection();
             });
 
-            // 6. الموردين (suppliers)
+            // الموردين
             onValue(ref(database, 'suppliers'), (snap) => {
                 const data = snap.val() || {};
                 appData.suppliers = {};
                 DEFAULT_SUPPLIERS.forEach(s => {
-                    appData.suppliers[s.id] = { 
-                        ...s, 
-                        amount: data[s.id]?.amount || 0, 
-                        paid: data[s.id]?.paid || 0 
-                    };
+                    appData.suppliers[s.id] = { ...s, amount: data[s.id]?.amount || 0, paid: data[s.id]?.paid || 0 };
                 });
                 Object.entries(data).forEach(([key, val]) => {
                     if (!DEFAULT_SUPPLIERS.find(s => s.id === key)) appData.suppliers[key] = val;
@@ -744,13 +820,19 @@
                 updateDeficitSection();
             });
 
-            // 7. الأرشيف (dayArchive)
+            // الأرشيف
             onValue(ref(database, 'dayArchive'), (snap) => {
                 appData.archive = snap.val() || {};
                 renderArchive();
             });
 
-            // تهيئة البيانات الافتراضية إذا لم تكن موجودة
+            // ملاحظات الوردية
+            onValue(ref(database, `shiftNotes/${getTodayKey()}`), (snap) => {
+                appData.shiftNotes = snap.val()?.notes || '';
+                document.getElementById('shiftNotes').value = appData.shiftNotes;
+            });
+
+            // تهيئة البيانات الافتراضية
             get(ref(database, 'workers')).then(snap => { 
                 if (!snap.exists()) set(ref(database, 'workers'), { jaddo: 0, hashim: 0 }); 
             });
@@ -763,129 +845,214 @@
                 }
             });
 
-            get(ref(database, 'shift/actualBalances')).then(snap => {
-                if (!snap.exists()) set(ref(database, 'shift/actualBalances'), { cash: 0, bank: 0 });
-            });
-
             updateClock();
             setInterval(updateClock, 1000);
             setupMidnightChecker();
 
-            setTimeout(() => {
-                document.getElementById('connectionText').textContent = 'متصل ✅';
-                document.getElementById('connectionText').className = 'font-bold text-emerald-600';
-            }, 2000);
+            // تعيين تاريخ التقرير
+            document.getElementById('reportDate').textContent = formatDate(Date.now());
+            document.getElementById('reportShiftTime').textContent = '06:00';
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('reportCurrentTime').textContent = formatTime(Date.now());
         }
 
         // ==========================================
-        // حساب إحصائيات اليوم (نفس منطق النظام الأصلي)
+        // التقرير اليومي - الدالة الرئيسية
         // ==========================================
 
-        function calculateTodayStats() {
+        function generateDailyReport() {
             const todayStart = getTodayStart();
-            let todaySales = 0, todayExpenses = 0, todayTransfers = 0, todayDebtPayments = 0;
+            const todayEnd = todayStart + (24 * 60 * 60 * 1000);
+            
+            let totalSales = 0, totalExpenses = 0, totalOps = 0;
+            let juiceSales = 0, sweetsSales = 0, foodSales = 0;
+            let juiceCount = 0, sweetsCount = 0, foodCount = 0;
+            let cashSales = 0, bankSales = 0, creditSales = 0;
+            let cashIncome = 0, cashExpense = 0, transfers = 0;
+            
+            const expensesList = [];
 
             appData.transactions.forEach(tx => {
-                if (tx.timestamp >= todayStart) {
-                    switch(tx.type) {
-                        case 'sales':
-                            todaySales += Math.abs(tx.amount || 0);
-                            break;
-                        case 'shopExpense':
-                        case 'personalExpense':
-                            todayExpenses += Math.abs(tx.amount || 0);
-                            break;
-                        case 'transfer':
-                            todayTransfers += tx.transferAmount || 0;
-                            break;
-                        case 'debt_full_repayment':
-                        case 'debt_partial_repayment':
-                            todayDebtPayments += Math.abs(tx.amount || 0);
-                            break;
+                if (tx.timestamp >= todayStart && tx.timestamp < todayEnd) {
+                    totalOps++;
+                    
+                    // المبيعات
+                    if (tx.type === 'sales') {
+                        const amount = Math.abs(tx.amount || 0);
+                        totalSales += amount;
+                        
+                        // حسب القسم
+                        if (tx.dept === 'عصائر') { juiceSales += amount; juiceCount++; }
+                        else if (tx.dept === 'حلويات') { sweetsSales += amount; sweetsCount++; }
+                        else if (tx.dept === 'طعمية وفطائر') { foodSales += amount; foodCount++; }
+                        
+                        // حسب طريقة الدفع
+                        if (tx.payment === 'كاش') { cashSales += amount; cashIncome += amount; }
+                        else if (tx.payment === 'بنكك') { bankSales += amount; }
+                        else if (tx.payment === 'آجل') { creditSales += amount; }
+                    }
+                    
+                    // المصروفات
+                    else if (tx.type === 'shopExpense' || tx.type === 'personalExpense') {
+                        const amount = Math.abs(tx.amount || 0);
+                        totalExpenses += amount;
+                        
+                        if (tx.payment === 'كاش') cashExpense += amount;
+                        
+                        expensesList.push({
+                            title: tx.title || tx.note || 'مصروف',
+                            amount: amount,
+                            type: tx.type === 'shopExpense' ? 'محل' : 'شخصي'
+                        });
+                    }
+                    
+                    // التحويلات
+                    else if (tx.type === 'transfer') {
+                        transfers += tx.transferAmount || 0;
                     }
                 }
             });
 
-            document.getElementById('todaySales').textContent = formatNumber(todaySales);
-            document.getElementById('todayExpenses').textContent = formatNumber(todayExpenses);
-            document.getElementById('todayTransfers').textContent = formatNumber(todayTransfers);
-            document.getElementById('todayDebtPayments').textContent = formatNumber(todayDebtPayments);
-        }
+            // حساب الرصيد الافتتاحي (أول رصيد قبل اليوم)
+            const openingBalance = (appData.balances.cash + cashExpense - cashIncome + 
+                                   (appData.transactions
+                                    .filter(t => t.type === 'transfer' && t.timestamp >= todayStart && t.timestamp < todayEnd)
+                                    .reduce((sum, t) => sum + (t.from === 'كاش' ? (t.transferAmount || 0) : -(t.transferAmount || 0)), 0)));
 
-        // ==========================================
-        // عرض آخر الحركات (نفس تنسيق النظام الأصلي)
-        // ==========================================
-
-        function updateRecentTransactions() {
-            const container = document.getElementById('recentTransactions');
-            const todayStart = getTodayStart();
+            // تعبئة البيانات في الواجهة
+            document.getElementById('reportTotalSales').textContent = formatNumber(totalSales);
+            document.getElementById('reportTotalExpenses').textContent = formatNumber(totalExpenses);
+            document.getElementById('reportNetProfit').textContent = formatNumber(totalSales - totalExpenses);
+            document.getElementById('reportTotalOps').textContent = totalOps;
             
-            let allRecords = [
-                ...appData.transactions.map(t => ({ ...t, source: 'transaction' })),
-                ...appData.debts.map(d => ({ ...d, source: 'debt', type: d.status === 'paid' ? 'debt_paid' : 'debt_pending' }))
-            ];
+            document.getElementById('reportJuiceSales').textContent = formatNumber(juiceSales);
+            document.getElementById('reportJuiceCount').textContent = juiceCount + ' عملية';
+            document.getElementById('reportSweetsSales').textContent = formatNumber(sweetsSales);
+            document.getElementById('reportSweetsCount').textContent = sweetsCount + ' عملية';
+            document.getElementById('reportFoodSales').textContent = formatNumber(foodSales);
+            document.getElementById('reportFoodCount').textContent = foodCount + ' عملية';
             
-            allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            const recent = allRecords.slice(0, 12);
-
-            if (recent.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد حركات بعد</div>';
-                return;
-            }
-
-            container.innerHTML = recent.map(tx => {
-                let icon = '📝', colorClass = 'tx-sales', amountText = '', title = tx.title || tx.note || 'عملية';
-                const isOld = tx.timestamp < todayStart;
-                
-                switch(tx.type) {
-                    case 'sales': 
-                        icon = '💰'; 
-                        colorClass = 'tx-sales'; 
-                        amountText = '+' + formatNumber(Math.abs(tx.amount)) + ' ج'; 
-                        break;
-                    case 'shopExpense': 
-                    case 'personalExpense': 
-                        icon = '💸'; 
-                        colorClass = 'tx-expense'; 
-                        amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج'; 
-                        break;
-                    case 'transfer': 
-                        icon = '🔄'; 
-                        colorClass = 'tx-transfer'; 
-                        amountText = '⇄ ' + formatNumber(tx.transferAmount || 0) + ' ج'; 
-                        break;
-                    case 'debt_full_repayment': 
-                    case 'debt_partial_repayment': 
-                        icon = '✅'; 
-                        colorClass = 'tx-debt'; 
-                        amountText = '+' + formatNumber(Math.abs(tx.amount)) + ' ج'; 
-                        break;
-                    case 'bankFee': 
-                        icon = '💳'; 
-                        colorClass = 'tx-bank'; 
-                        amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج'; 
-                        break;
-                }
-
-                const oldClass = isOld ? 'old-transaction' : '';
-                
-                return `
-                    <div class="transaction-item ${colorClass} ${oldClass} rounded-lg p-3 flex justify-between items-center">
+            document.getElementById('reportCashSales').textContent = formatNumber(cashSales);
+            document.getElementById('reportBankSales').textContent = formatNumber(bankSales);
+            document.getElementById('reportCreditSales').textContent = formatNumber(creditSales);
+            
+            // حركات الصندوق
+            document.getElementById('reportOpeningBalance').textContent = formatNumber(openingBalance);
+            document.getElementById('reportCashIncome').textContent = '+' + formatNumber(cashIncome);
+            document.getElementById('reportCashExpense').textContent = '-' + formatNumber(cashExpense);
+            document.getElementById('reportTransfers').textContent = formatNumber(transfers);
+            document.getElementById('reportExpectedClosing').textContent = formatNumber(appData.balances.cash);
+            
+            // قائمة المصروفات
+            const expensesContainer = document.getElementById('reportExpensesList');
+            if (expensesList.length === 0) {
+                expensesContainer.innerHTML = '<div class="text-center text-slate-400 py-2">لا توجد مصروفات اليوم</div>';
+            } else {
+                expensesContainer.innerHTML = expensesList.map(exp => `
+                    <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg">
                         <div class="flex items-center gap-2">
-                            <span>${icon}</span>
-                            <div>
-                                <div class="font-bold text-sm ${isOld ? 'text-slate-500' : 'text-slate-800'}">${title}</div>
-                                <div class="text-xs text-slate-500">${formatDate(tx.timestamp)} ${formatTime(tx.timestamp)}</div>
-                            </div>
+                            <span class="text-xs ${exp.type === 'محل' ? 'text-red-600 bg-red-100' : 'text-blue-600 bg-blue-100'} px-2 py-1 rounded-full">${exp.type}</span>
+                            <span class="text-sm text-slate-700">${exp.title}</span>
                         </div>
-                        <div class="font-bold text-sm ${isOld ? 'line-through opacity-50' : ''}">${amountText}</div>
+                        <span class="font-bold text-red-600 text-sm">${formatNumber(exp.amount)}</span>
                     </div>
-                `;
-            }).join('');
+                `).join('');
+            }
+            document.getElementById('reportExpensesTotal').textContent = formatNumber(totalExpenses);
+
+            // تحديث ملخص اليوم في تبويب العجز
+            document.getElementById('todaySales').textContent = formatNumber(totalSales);
+            document.getElementById('todayExpenses').textContent = formatNumber(totalExpenses);
+            document.getElementById('todayTransfers').textContent = formatNumber(transfers);
+            
+            // حساب تسديد الديون
+            let debtPayments = 0;
+            appData.transactions.forEach(tx => {
+                if ((tx.type === 'debt_full_repayment' || tx.type === 'debt_partial_repayment') && 
+                    tx.timestamp >= todayStart && tx.timestamp < todayEnd) {
+                    debtPayments += Math.abs(tx.amount || 0);
+                }
+            });
+            document.getElementById('todayDebtPayments').textContent = formatNumber(debtPayments);
         }
 
         // ==========================================
-        // SECTION 1: DEFICIT CALCULATION
+        // حفظ وطباعة ومشاركة التقرير
+        // ==========================================
+
+        window.saveShiftNotes = async function() {
+            const notes = document.getElementById('shiftNotes').value;
+            await set(ref(database, `shiftNotes/${getTodayKey()}`), { 
+                notes, 
+                updatedAt: Date.now(),
+                updatedBy: currentUser.email 
+            });
+            showSuccess('تم حفظ الملاحظات');
+        };
+
+        window.printReport = function() {
+            const reportContent = document.getElementById('content-report').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html dir="rtl">
+                <head>
+                    <title>تقرير وردية - ${formatDate(Date.now())}</title>
+                    <style>
+                        body { font-family: 'Cairo', sans-serif; padding: 20px; }
+                        .no-print { display: none !important; }
+                        .stat-card { border: 1px solid #ddd; padding: 10px; margin: 5px; display: inline-block; width: 45%; }
+                    </style>
+                </head>
+                <body>
+                    <h1>تقرير وردية يومية</h1>
+                    <p>التاريخ: ${formatDate(Date.now())}</p>
+                    <p>الوقت: ${formatTime(Date.now())}</p>
+                    <hr>
+                    ${reportContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        };
+
+        window.shareReport = async function() {
+            const reportText = `
+📋 *تقرير وردية ${formatDate(Date.now())}*
+
+💰 المبيعات: ${document.getElementById('reportTotalSales').textContent}
+💸 المصروفات: ${document.getElementById('reportTotalExpenses').textContent}
+📈 الصافي: ${document.getElementById('reportNetProfit').textContent}
+
+🧃 عصائر: ${document.getElementById('reportJuiceSales').textContent}
+🍰 حلويات: ${document.getElementById('reportSweetsSales').textContent}
+🥙 طعمية: ${document.getElementById('reportFoodSales').textContent}
+
+💵 كاش: ${document.getElementById('reportCashSales').textContent}
+💳 بنكك: ${document.getElementById('reportBankSales').textContent}
+📝 آجل: ${document.getElementById('reportCreditSales').textContent}
+
+📝 ${document.getElementById('shiftNotes').value || 'لا توجد ملاحظات'}
+            `.trim();
+
+            if (navigator.share) {
+                await navigator.share({
+                    title: 'تقرير وردية',
+                    text: reportText
+                });
+            } else {
+                navigator.clipboard.writeText(reportText);
+                showSuccess('تم نسخ التقرير للحافظة');
+            }
+        };
+
+        // ==========================================
+        // باقي الدوال (العجز، الالتزامات، المطابقة، الأرشيف)
         // ==========================================
 
         function updateDeficitSection() {
@@ -903,11 +1070,8 @@
             const deficit = totalAvailable - totalLiabilities;
             const deficitPercent = totalLiabilities > 0 ? ((deficit / totalLiabilities) * 100) : 0;
 
-            const totalLiabilitiesEl = document.getElementById('totalLiabilitiesDisplay');
-            if (totalLiabilitiesEl) {
-                totalLiabilitiesEl.textContent = formatNumber(totalLiabilities);
-                totalLiabilitiesEl.classList.remove('data-loading');
-            }
+            document.getElementById('totalLiabilitiesDisplay').textContent = formatNumber(totalLiabilities);
+            document.getElementById('totalLiabilitiesDisplay').classList.remove('data-loading');
 
             const deficitBox = document.getElementById('deficitBox');
             const deficitAmount = document.getElementById('deficitAmount');
@@ -915,21 +1079,21 @@
             const deficitLabel = document.getElementById('deficitLabel');
             const deficitStatus = document.getElementById('deficitStatus');
 
-            if (deficitAmount) {
-                deficitAmount.textContent = formatNumber(Math.abs(deficit));
-                deficitAmount.classList.remove('data-loading');
-            }
-            if (deficitPercentage) deficitPercentage.textContent = Math.abs(deficitPercent).toFixed(1) + '%';
+            deficitAmount.textContent = formatNumber(Math.abs(deficit));
+            deficitAmount.classList.remove('data-loading');
+            deficitPercentage.textContent = Math.abs(deficitPercent).toFixed(1) + '%';
 
             if (deficit >= 0) {
-                if (deficitBox) deficitBox.className = 'rounded-2xl p-4 text-center mb-4 variance-positive';
-                if (deficitLabel) deficitLabel.textContent = '✅ فائض (أموال إضافية متاحة)';
-                if (deficitStatus) { deficitStatus.textContent = 'وضع جيد'; deficitStatus.className = 'status-badge bg-emerald-100 text-emerald-700'; }
+                deficitBox.className = 'rounded-2xl p-4 text-center mb-4 variance-positive';
+                deficitLabel.textContent = '✅ فائض (أموال إضافية متاحة)';
+                deficitStatus.textContent = 'وضع جيد';
+                deficitStatus.className = 'status-badge bg-emerald-100 text-emerald-700';
                 showMotivation(true, deficit);
             } else {
-                if (deficitBox) deficitBox.className = 'rounded-2xl p-4 text-center mb-4 variance-negative pulse-alert';
-                if (deficitLabel) deficitLabel.textContent = '⚠️ عجز (نقص في الأموال)';
-                if (deficitStatus) { deficitStatus.textContent = 'تحذير!'; deficitStatus.className = 'status-badge bg-red-100 text-red-700 pulse-alert'; }
+                deficitBox.className = 'rounded-2xl p-4 text-center mb-4 variance-negative pulse-alert';
+                deficitLabel.textContent = '⚠️ عجز (نقص في الأموال)';
+                deficitStatus.textContent = 'تحذير!';
+                deficitStatus.className = 'status-badge bg-red-100 text-red-700 pulse-alert';
                 showMotivation(false, Math.abs(deficit));
             }
         }
@@ -939,7 +1103,6 @@
             const icon = document.getElementById('motivationIcon');
             const text = document.getElementById('motivationText');
             const subtext = document.getElementById('motivationSubtext');
-            if (!msgBox || !icon || !text || !subtext) return;
 
             msgBox.classList.remove('hidden');
             if (isPositive) {
@@ -957,13 +1120,8 @@
             }
         }
 
-        // ==========================================
-        // SECTION 2: LIABILITIES
-        // ==========================================
-
         function renderSuppliers() {
             const container = document.getElementById('suppliersList');
-            if (!container) return;
             let html = '';
             Object.entries(appData.suppliers || {}).forEach(([id, supplier]) => {
                 if (!supplier || typeof supplier !== 'object') return;
@@ -1086,16 +1244,11 @@
             e.preventDefault();
             const name = document.getElementById('supplierName').value.trim();
             const amount = parseFormattedNumber('supplierAmount');
-            const type = document.getElementById('supplierType').value;
             if (!name || amount <= 0) { showWarning('الرجاء إدخال البيانات بشكل صحيح'); return; }
-            await push(ref(database, 'suppliers'), { name, amount, type, createdAt: Date.now() });
+            await push(ref(database, 'suppliers'), { name, amount, type: 'supplier', createdAt: Date.now() });
             document.getElementById('addSupplierForm').reset();
             showSuccess('تم إضافة الالتزام');
         };
-
-        // ==========================================
-        // SECTION 3: COMPARISON
-        // ==========================================
 
         function updateComparisonSection() {
             const expectedCash = appData.balances?.cash || 0;
@@ -1167,10 +1320,6 @@
             showSuccess('تم تحديث الرصيد الفعلي');
         };
 
-        // ==========================================
-        // SECTION 4: ARCHIVE
-        // ==========================================
-
         function renderArchive() {
             const container = document.getElementById('archiveList');
             const archiveList = Object.entries(appData.archive || {}).sort((a, b) => b[0].localeCompare(a[0]));
@@ -1238,10 +1387,6 @@
             }
         };
 
-        // ==========================================
-        // قفل اليومية (إضافة جديدة)
-        // ==========================================
-
         window.closeDay = async function() {
             if (!confirm('هل أنت متأكد من قفل اليومية؟ سيتم أرشفة بيانات اليوم.')) return;
             
@@ -1268,6 +1413,12 @@
                 liabilities: {
                     workers: { ...appData.workers },
                     suppliers: { ...appData.suppliers }
+                },
+                report: {
+                    totalSales: document.getElementById('reportTotalSales').textContent,
+                    totalExpenses: document.getElementById('reportTotalExpenses').textContent,
+                    netProfit: document.getElementById('reportNetProfit').textContent,
+                    notes: document.getElementById('shiftNotes').value
                 }
             };
 
@@ -1296,7 +1447,7 @@
         };
 
         window.switchTab = function(tab) {
-            ['deficit', 'liabilities', 'comparison', 'archive'].forEach(t => {
+            ['report', 'deficit', 'liabilities', 'comparison', 'archive'].forEach(t => {
                 const btn = document.getElementById('tab-' + t);
                 const content = document.getElementById('content-' + t);
                 if (t === tab) {
@@ -1343,14 +1494,50 @@
             document.getElementById('paySupplierMethod').value = btn.dataset.value;
         };
 
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
-            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        function updateRecentTransactions() {
+            const container = document.getElementById('recentTransactions');
+            const todayStart = getTodayStart();
+            
+            let allRecords = [...appData.transactions].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            const recent = allRecords.slice(0, 12);
+
+            if (recent.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد حركات بعد</div>';
+                return;
+            }
+
+            container.innerHTML = recent.map(tx => {
+                let icon = '📝', colorClass = 'tx-sales', amountText = '', title = tx.title || 'عملية';
+                const isOld = tx.timestamp < todayStart;
+                
+                switch(tx.type) {
+                    case 'sales': icon = '💰'; colorClass = 'tx-sales'; amountText = '+' + formatNumber(Math.abs(tx.amount)) + ' ج'; break;
+                    case 'shopExpense': icon = '🔴'; colorClass = 'tx-expense'; amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج'; break;
+                    case 'personalExpense': icon = '🔵'; colorClass = 'tx-expense'; amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج'; break;
+                    case 'transfer': icon = '🔄'; colorClass = 'tx-transfer'; amountText = '⇄ ' + formatNumber(tx.transferAmount || 0) + ' ج'; break;
+                    case 'worker_payment': icon = '👷'; colorClass = 'tx-expense'; amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج'; break;
+                    case 'supplier_payment': icon = '🏭'; colorClass = 'tx-expense'; amountText = '-' + formatNumber(Math.abs(tx.amount)) + ' ج'; break;
+                }
+
+                const oldClass = isOld ? 'old-transaction' : '';
+                
+                return `
+                    <div class="transaction-item ${colorClass} ${oldClass} rounded-lg p-3 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span>${icon}</span>
+                            <div>
+                                <div class="font-bold text-sm transaction-title">${title}</div>
+                                <div class="text-xs text-slate-500">${formatDate(tx.timestamp)} ${formatTime(tx.timestamp)}</div>
+                            </div>
+                        </div>
+                        <div class="font-bold text-sm ${isOld ? 'line-through opacity-50' : ''}">${amountText}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // ==========================================
-        // MIDNIGHT CHECKER - الإضافة التلقائية
+        // MIDNIGHT CHECKER
         // ==========================================
 
         function setupMidnightChecker() {
@@ -1387,10 +1574,9 @@
                 jaddoAdded: 20000, 
                 hashimAdded: 40000 
             });
-            showSuccess('✅ تم إضافة مستحقات العمال اليومية (جدو 20,000 + هاشم 40,000)');
+            showSuccess('✅ تم إضافة مستحقات العمال اليومية');
         }
 
-        // Close modals on outside click
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', function(e) {
                 if (e.target === this) {
