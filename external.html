@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>الصندوق الجانبي - مدير حسابات صلاح الدين</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); min-height: 100vh; }
+        .app-container { max-width: 480px; margin: 0 auto; background: #f8fafc; min-height: 100vh; box-shadow: 0 0 50px rgba(0,0,0,0.3); }
+        .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* تنسيقات الصندوق الجانبي */
+        .trust-card { 
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); 
+            border: 2px solid #eab308; 
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(234, 179, 8, 0.2);
+        }
+        .trust-badge { 
+            background: #fef3c7; 
+            color: #92400e; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+        }
+        .trust-total-box {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 3px solid #f59e0b;
+            border-radius: 16px;
+        }
+        .operation-number { 
+            font-family: 'Courier New', monospace; 
+            font-weight: bold; 
+            letter-spacing: 1px; 
+            background: #1e293b; 
+            color: white; 
+            padding: 2px 8px; 
+            border-radius: 6px; 
+            font-size: 0.7rem; 
+        }
+        .history-item-deposit { 
+            border-right: 4px solid #10b981; 
+            background: #ecfdf5; 
+        }
+        .history-item-withdraw { 
+            border-right: 4px solid #ef4444; 
+            background: #fef2f2; 
+        }
+        .type-btn-active-deposit {
+            border-color: #10b981 !important;
+            background: #d1fae5 !important;
+        }
+        .type-btn-active-withdraw {
+            border-color: #ef4444 !important;
+            background: #fee2e2 !important;
+        }
+        .method-btn-active-cash {
+            border-color: #10b981 !important;
+            background: #d1fae5 !important;
+        }
+        .method-btn-active-bank {
+            border-color: #3b82f6 !important;
+            background: #dbeafe !important;
+        }
+        .warning-toast { 
+            position: fixed; 
+            top: 20px; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(-100px); 
+            background: #ef4444; 
+            color: white; 
+            padding: 16px 24px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            z-index: 100; 
+            transition: transform 0.3s ease; 
+            font-weight: 600; 
+            text-align: center; 
+            min-width: 300px; 
+        }
+        .warning-toast.show { transform: translateX(-50%) translateY(0); }
+        .success-toast { 
+            position: fixed; 
+            top: 20px; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(-100px); 
+            background: #10b981; 
+            color: white; 
+            padding: 16px 24px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            z-index: 100; 
+            transition: transform 0.3s ease; 
+            font-weight: 600; 
+            text-align: center; 
+            min-width: 300px; 
+        }
+        .success-toast.show { transform: translateX(-50%) translateY(0); }
+        .person-tag {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- رسائل التنبيه -->
+    <div id="warningToast" class="warning-toast">⚠️ رسالة تحذير</div>
+    <div id="successToast" class="success-toast">✅ تم بنجاح</div>
+
+    <!-- التطبيق الرئيسي -->
+    <div class="app-container" id="app">
+        
+        <!-- الهيدر -->
+        <header class="bg-gradient-to-r from-yellow-600 to-amber-600 text-white p-4 shadow-lg">
+            <div class="flex justify-between items-center mb-2">
+                <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-yellow-700 transition">
+                    <span class="text-2xl">☰</span>
+                </button>
+                <h1 class="text-lg font-bold">🏦 الصندوق الجانبي</h1>
+                <button onclick="logout()" class="p-2 rounded-lg hover:bg-yellow-700 transition text-sm">خروج</button>
+            </div>
+            
+            <div class="text-center mt-4">
+                <div id="clock" class="text-3xl font-bold font-mono tracking-wider text-yellow-100">00:00:00</div>
+                <div id="date" class="text-yellow-200 text-sm mt-1">جاري التحميل...</div>
+                <div class="text-xs text-yellow-200 mt-1" id="userEmail"></div>
+            </div>
+        </header>
+
+        <!-- القائمة الجانبية -->
+        <div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50" onclick="toggleSidebar()">
+            <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
+                <div class="p-4 bg-gradient-to-r from-yellow-600 to-amber-600 text-white">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-lg">القائمة</h2>
+                        <button onclick="toggleSidebar()" class="text-2xl">&times;</button>
+                    </div>
+                </div>
+                <div class="p-4 space-y-2">
+                    <a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 text-slate-700 flex items-center gap-3">
+                        <span>🏠</span><span>الرئيسية</span>
+                    </a>
+                    <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700">
+                        <span>📝</span><span>الديون</span>
+                    </a>
+                    <a href="external.html" class="w-full text-right p-3 rounded-xl bg-yellow-50 text-yellow-700 font-semibold border-r-4 border-yellow-500 flex items-center gap-3">
+                        <span>🏦</span><span>الصندوق الجانبي</span>
+                    </a>
+                    <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
+                        <span>📊</span><span>التقارير</span>
+                    </a>
+                    <a href="records.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
+                        <span>🗂️</span><span>السجلات</span>
+                    </a>
+                    <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
+                        <span>🧮</span><span>تصفية الوردية</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="p-4 space-y-4 pb-24">
+            
+            <!-- شرح الصندوق الجانبي -->
+            <div class="trust-card p-4">
+                <div class="flex items-start gap-3">
+                    <span class="text-3xl">💡</span>
+                    <div>
+                        <h2 class="font-bold text-amber-900 mb-2 text-lg">ما هو الصندوق الجانبي؟</h2>
+                        <p class="text-sm text-amber-800 leading-relaxed mb-2">
+                            أموال <strong>لا تملكها</strong> ولكنك تحفظها للغير:
+                        </p>
+                        <ul class="text-xs text-amber-700 space-y-1 mr-4 list-disc mb-3">
+                            <li>أموال أستاذ صلاح عندك للحفظ</li>
+                            <li>أموال شخص أعطاك إياها لحفظها</li>
+                            <li>سلفة ستردها لصاحبها</li>
+                        </ul>
+                        <div class="bg-white rounded-lg p-3 text-xs text-red-600 font-bold border border-red-200 flex items-center gap-2">
+                            <span class="text-lg">⚠️</span>
+                            <span>هذه الأمانات لا تُحسب في العجز ولا تُستخدم في تغطية الالتزامات!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- الأرصدة الحالية -->
+            <div class="trust-total-box p-4">
+                <div class="text-center mb-4">
+                    <h3 class="font-bold text-amber-800 text-lg">📦 إجمالي الأمانات</h3>
+                    <div class="trust-badge mt-2">غير محسوب في العجز</div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-white rounded-xl p-4 text-center shadow-sm border-2 border-yellow-200">
+                        <div class="text-3xl mb-1">💵</div>
+                        <div class="text-xs text-amber-600 mb-1">أمانات كاش</div>
+                        <div id="trustCashBalance" class="text-2xl font-bold text-amber-700 data-loading">---</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 text-center shadow-sm border-2 border-blue-200">
+                        <div class="text-3xl mb-1">💳</div>
+                        <div class="text-xs text-blue-600 mb-1">أمانات بنكك</div>
+                        <div id="trustBankBalance" class="text-2xl font-bold text-blue-700 data-loading">---</div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-3 text-center border-2 border-amber-300">
+                    <div class="text-xs text-amber-600 mb-1">الإجمالي الكلي للأمانات</div>
+                    <div id="trustTotalBalance" class="text-3xl font-bold text-amber-800 data-loading">---</div>
+                </div>
+            </div>
+
+            <!-- ملخص سريع -->
+            <div class="summary-card">
+                <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <span>📊</span>
+                    <span>ملخص الأمانات</span>
+                </h3>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="bg-emerald-50 rounded-lg p-3 text-center">
+                        <div class="text-emerald-600 text-xs mb-1">عدد الأشخاص</div>
+                        <div id="totalPersons" class="font-bold text-emerald-700 text-xl">0</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-3 text-center">
+                        <div class="text-blue-600 text-xs mb-1">إجمالي العمليات</div>
+                        <div id="totalOperations" class="font-bold text-blue-700 text-xl">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- إضافة/سحب أمانة -->
+            <div class="bg-white rounded-2xl p-4 shadow-md">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2 text-lg">
+                    <span>➕</span>
+                    <span>عملية جديدة</span>
+                </h3>
+                
+                <form id="trustForm" class="space-y-4" onsubmit="handleTrustOperation(event)">
+                    
+                    <!-- نوع العملية -->
+                    <div>
+                        <label class="block text-sm text-slate-600 mb-2 font-semibold">نوع العملية</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" id="btnDeposit" class="type-btn border-2 border-slate-200 rounded-xl p-4 text-center transition-all duration-200 hover:shadow-md" onclick="selectOperationType('deposit')">
+                                <span class="text-3xl block mb-2">📥</span>
+                                <div class="font-bold text-slate-700">استلام أمانة</div>
+                                <div class="text-xs text-slate-500 mt-1">شخص أعطاني فلوس للحفظ</div>
+                            </button>
+                            <button type="button" id="btnWithdraw" class="type-btn border-2 border-slate-200 rounded-xl p-4 text-center transition-all duration-200 hover:shadow-md" onclick="selectOperationType('withdraw')">
+                                <span class="text-3xl block mb-2">📤</span>
+                                <div class="font-bold text-slate-700">تسليم أمانة</div>
+                                <div class="text-xs text-slate-500 mt-1">رديت الفلوس لصاحبها</div>
+                            </button>
+                        </div>
+                        <input type="hidden" id="operationType" value="deposit">
+                    </div>
+
+                    <!-- اسم الشخص -->
+                    <div>
+                        <label class="block text-sm text-slate-600 mb-2 font-semibold">اسم صاحب الأمانة</label>
+                        <div class="relative">
+                            <input type="text" id="personName" class="w-full border-2 border-slate-200 rounded-xl p-4 text-right focus:border-amber-500 focus:outline-none text-lg" placeholder="مثال: أستاذ صلاح، محمد، أخي..." required list="personsList">
+                            <datalist id="personsList"></datalist>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-2" id="quickPersons">
+                            <!-- يُملأ ديناميكياً -->
+                        </div>
+                    </div>
+
+                    <!-- طريقة التحويل -->
+                    <div>
+                        <label class="block text-sm text-slate-600 mb-2 font-semibold">طريقة التحويل</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" id="btnCash" class="method-btn border-2 border-slate-200 rounded-xl p-4 text-center transition-all duration-200" onclick="selectPaymentMethod('cash')">
+                                <span class="text-3xl block mb-2">💵</span>
+                                <div class="font-bold text-slate-700">كاش</div>
+                                <div class="text-xs text-slate-500 mt-1">نقدي</div>
+                            </button>
+                            <button type="button" id="btnBank" class="method-btn border-2 border-slate-200 rounded-xl p-4 text-center transition-all duration-200" onclick="selectPaymentMethod('bank')">
+                                <span class="text-3xl block mb-2">💳</span>
+                                <div class="font-bold text-slate-700">بنكك</div>
+                                <div class="text-xs text-slate-500 mt-1">تحويل بنكي</div>
+                            </button>
+                        </div>
+                        <input type="hidden" id="paymentMethod" value="cash">
+                    </div>
+
+                    <!-- المبلغ -->
+                    <div>
+                        <label class="block text-sm text-slate-600 mb-2 font-semibold">المبلغ</label>
+                        <input type="text" id="amount" class="w-full border-2 border-slate-200 rounded-xl p-4 text-center text-2xl font-bold focus:border-amber-500 focus:outline-none" placeholder="0" oninput="formatNumberInput(this)" required>
+                        <div class="text-xs text-slate-400 mt-1 text-center">بالجنيه السوداني</div>
+                    </div>
+
+                    <!-- البيان/الملاحظات -->
+                    <div>
+                        <label class="block text-sm text-slate-600 mb-2 font-semibold">البيان (اختياري)</label>
+                        <input type="text" id="note" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-amber-500 focus:outline-none" placeholder="مثال: حفظ مبلغ للشراء، سلفة مؤقتة...">
+                    </div>
+
+                    <!-- زر التأكيد -->
+                    <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:from-emerald-600 hover:to-emerald-700 transition flex items-center justify-center gap-2">
+                        <span>✅</span>
+                        <span>تأكيد الاستلام</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- الأشخاص والأرصدة -->
+            <div class="bg-white rounded-2xl p-4 shadow-md">
+                <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <span>👥</span>
+                    <span>أرصدة الأشخاص</span>
+                </h3>
+                <div id="personsBalances" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
+                    <!-- يُملأ ديناميكياً -->
+                </div>
+            </div>
+
+            <!-- سجل العمليات -->
+            <div class="bg-white rounded-2xl p-4 shadow-md">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <span>📝</span>
+                        <span>سجل العمليات</span>
+                    </h3>
+                    <button onclick="clearAllHistory()" class="text-xs text-red-500 hover:text-red-700 font-semibold">مسح الكل</button>
+                </div>
+                <div id="operationsHistory" class="space-y-2 max-h-80 overflow-y-auto hide-scrollbar">
+                    <!-- يُملأ ديناميكياً -->
+                </div>
+            </div>
+
+        </main>
+
+        <!-- شريط التنقل السفلي -->
+        <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
+            <div class="flex justify-around items-center">
+                <a href="index.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
+                    <span class="text-xl">🏠</span>
+                    <span class="text-xs mt-1">الرئيسية</span>
+                </a>
+                <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-amber-600 transition">
+                    <span class="text-xl">📝</span>
+                    <span class="text-xs mt-1">الديون</span>
+                </a>
+                <a href="external.html" class="flex flex-col items-center p-2 text-yellow-600">
+                    <span class="text-xl">🏦</span>
+                    <span class="text-xs mt-1 font-semibold">الجانبي</span>
+                </a>
+                <a href="records.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-purple-600 transition">
+                    <span class="text-xl">🗂️</span>
+                    <span class="text-xs mt-1">السجلات</span>
+                </a>
+                <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-purple-600 transition">
+                    <span class="text-xl">🧮</span>
+                    <span class="text-xs mt-1">الوردية</span>
+                </a>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- Firebase & App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, push, onValue, update, get, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+            authDomain: "salahsweetmanage.firebaseapp.com",
+            databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+            projectId: "salahsweetmanage",
+            storageBucket: "salahsweetmanage.firebasestorage.app",
+            messagingSenderId: "126049780562",
+            appId: "1:126049780562:web:147daa036e56273263308b",
+            measurementId: "G-E7FLGBQ397"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        let currentUser = null;
+        let trustData = {
+            cash: 0,
+            bank: 0,
+            history: {},
+            persons: {}
+        };
+
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+
+        window.formatNumber = function(num) {
+            if (num === null || num === undefined || isNaN(num)) return '0';
+            return parseInt(num).toLocaleString('en-US');
+        };
+
+        window.formatNumberInput = function(input) {
+            let value = input.value.replace(/[^\d]/g, '');
+            if (value) { 
+                input.value = parseInt(value).toLocaleString('en-US'); 
+            } else { 
+                input.value = ''; 
+            }
+        };
+
+        function parseFormattedNumber(inputId) {
+            const value = document.getElementById(inputId).value.replace(/,/g, '');
+            return parseFloat(value) || 0;
+        }
+
+        window.showWarning = function(message) {
+            const toast = document.getElementById('warningToast');
+            toast.textContent = '⚠️ ' + message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        };
+
+        window.showSuccess = function(message) {
+            const toast = document.getElementById('successToast');
+            toast.textContent = '✅ ' + message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        };
+
+        function formatDate(timestamp) {
+            if (!timestamp) return '--/--/----';
+            return new Date(timestamp).toLocaleDateString('ar-SA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '--:--';
+            return new Date(timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        async function generateOperationNumber(prefix = 'T') {
+            const counterRef = ref(database, 'system/trustCounter');
+            try {
+                const result = await runTransaction(counterRef, (current) => {
+                    return (current || 0) + 1;
+                });
+                const num = result.snapshot.val();
+                return `${prefix}-${String(num).padStart(5, '0')}`;
+            } catch (error) {
+                return `${prefix}-${Date.now().toString().slice(-5)}`;
+            }
+        }
+
+        // ==========================================
+        // AUTHENTICATION
+        // ==========================================
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) { 
+                window.location.href = 'login.html'; 
+                return; 
+            }
+            if (!user.emailVerified) { 
+                alert('⚠️ يرجى توثيق حسابك أولاً'); 
+                signOut(auth); 
+                return; 
+            }
+            currentUser = user;
+            document.getElementById('userEmail').textContent = '👤 ' + user.email;
+            initApp();
+        });
+
+        window.logout = async function() {
+            try { 
+                await signOut(auth); 
+                window.location.href = 'login.html'; 
+            } catch (error) { 
+                console.error('Logout error:', error); 
+            }
+        };
+
+        // ==========================================
+        // APP INITIALIZATION
+        // ==========================================
+
+        function initApp() {
+            // مراقبة تغييرات الصندوق الجانبي
+            onValue(ref(database, 'sideFund'), (snap) => {
+                trustData = snap.val() || { cash: 0, bank: 0, history: {}, persons: {} };
+                updateDisplay();
+            });
+
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // تهيئة النموذج
+            selectOperationType('deposit');
+            selectPaymentMethod('cash');
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+            document.getElementById('date').textContent = now.toLocaleDateString('ar-SA', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        function updateDisplay() {
+            // تحديث الأرصدة
+            const cash = trustData.cash || 0;
+            const bank = trustData.bank || 0;
+            const total = cash + bank;
+
+            document.getElementById('trustCashBalance').textContent = formatNumber(cash);
+            document.getElementById('trustBankBalance').textContent = formatNumber(bank);
+            document.getElementById('trustTotalBalance').textContent = formatNumber(total);
+            
+            document.getElementById('trustCashBalance').classList.remove('data-loading');
+            document.getElementById('trustBankBalance').classList.remove('data-loading');
+            document.getElementById('trustTotalBalance').classList.remove('data-loading');
+
+            // تحديث سجل الأشخاص
+            updatePersonsList();
+            
+            // تحديث سجل العمليات
+            updateHistory();
+            
+            // تحديث الإحصائيات
+            updateStats();
+        }
+
+        function updatePersonsList() {
+            const history = trustData.history || {};
+            const persons = {};
+            
+            // حساب رصيد كل شخص
+            Object.values(history).forEach(op => {
+                if (!op.person) return;
+                if (!persons[op.person]) {
+                    persons[op.person] = { cash: 0, bank: 0, total: 0, lastOp: 0 };
+                }
+                
+                const amount = op.amount || 0;
+                if (op.type === 'deposit') {
+                    persons[op.person].total += amount;
+                    if (op.method === 'cash') persons[op.person].cash += amount;
+                    else persons[op.person].bank += amount;
+                } else {
+                    persons[op.person].total -= amount;
+                    if (op.method === 'cash') persons[op.person].cash -= amount;
+                    else persons[op.person].bank -= amount;
+                }
+                
+                if (op.timestamp > persons[op.person].lastOp) {
+                    persons[op.person].lastOp = op.timestamp;
+                }
+            });
+
+            // حفظ في المتغير العام
+            trustData.persons = persons;
+
+            // عرض الأشخاص
+            const container = document.getElementById('personsBalances');
+            const sortedPersons = Object.entries(persons)
+                .filter(([_, data]) => data.total !== 0)
+                .sort((a, b) => b[1].lastOp - a[1].lastOp);
+
+            if (sortedPersons.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا يوجد أشخاص لديهم أمانات</div>';
+            } else {
+                container.innerHTML = sortedPersons.map(([name, data]) => `
+                    <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="flex items-center gap-2">
+                            <span class="person-tag">👤 ${name}</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-amber-700 text-lg">${formatNumber(data.total)} ج</div>
+                            <div class="text-xs text-slate-500">
+                                ${data.cash > 0 ? `💵 ${formatNumber(data.cash)}` : ''}
+                                ${data.bank > 0 ? `💳 ${formatNumber(data.bank)}` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // تحديث قائمة الأشخاص السريعة
+            updateQuickPersons(Object.keys(persons));
+            
+            // تحديث datalist
+            const datalist = document.getElementById('personsList');
+            datalist.innerHTML = Object.keys(persons).map(p => `<option value="${p}">`).join('');
+        }
+
+        function updateQuickPersons(persons) {
+            const container = document.getElementById('quickPersons');
+            const recentPersons = persons.slice(0, 5);
+            
+            if (recentPersons.length > 0) {
+                container.innerHTML = recentPersons.map(p => `
+                    <button type="button" onclick="selectPerson('${p}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition">
+                        ${p}
+                    </button>
+                `).join('');
+            }
+        }
+
+        window.selectPerson = function(name) {
+            document.getElementById('personName').value = name;
+        };
+
+        function updateHistory() {
+            const history = trustData.history || {};
+            const container = document.getElementById('operationsHistory');
+            
+            const sortedHistory = Object.entries(history)
+                .map(([id, data]) => ({ id, ...data }))
+                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            document.getElementById('totalOperations').textContent = sortedHistory.length;
+
+            if (sortedHistory.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد عمليات بعد</div>';
+                return;
+            }
+
+            container.innerHTML = sortedHistory.map(item => {
+                const isDeposit = item.type === 'deposit';
+                return `
+                    <div class="history-item-${item.type} rounded-xl p-3 flex justify-between items-center">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="operation-number">${item.operationNumber || '--'}</span>
+                                <span class="font-bold text-sm ${isDeposit ? 'text-emerald-700' : 'text-red-700'}">
+                                    ${isDeposit ? '📥 استلام' : '📤 تسليم'}
+                                </span>
+                                <span class="person-tag text-xs">${item.person}</span>
+                            </div>
+                            <div class="text-xs text-slate-500">
+                                ${formatDate(item.timestamp)} ${formatTime(item.timestamp)}
+                            </div>
+                            ${item.note ? `<div class="text-xs text-slate-600 mt-1">📝 ${item.note}</div>` : ''}
+                        </div>
+                        <div class="text-right mr-2">
+                            <div class="font-bold ${isDeposit ? 'text-emerald-700' : 'text-red-700'} text-lg">
+                                ${isDeposit ? '+' : '-'} ${formatNumber(item.amount)}
+                            </div>
+                            <div class="text-xs text-slate-500">
+                                ${item.method === 'cash' ? '💵 كاش' : '💳 بنكك'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const persons = trustData.persons || {};
+            const activePersons = Object.values(persons).filter(p => p.total !== 0).length;
+            document.getElementById('totalPersons').textContent = activePersons;
+        }
+
+        // ==========================================
+        // UI CONTROLS
+        // ==========================================
+
+        window.selectOperationType = function(type) {
+            // إزالة التنشيط السابق
+            document.getElementById('btnDeposit').classList.remove('type-btn-active-deposit');
+            document.getElementById('btnWithdraw').classList.remove('type-btn-active-withdraw');
+            
+            // تنشيط الجديد
+            if (type === 'deposit') {
+                document.getElementById('btnDeposit').classList.add('type-btn-active-deposit');
+            } else {
+                document.getElementById('btnWithdraw').classList.add('type-btn-active-withdraw');
+            }
+            
+            document.getElementById('operationType').value = type;
+            
+            // تحديث نص الزر
+            const btn = document.getElementById('submitBtn');
+            if (type === 'deposit') {
+                btn.innerHTML = '<span>✅</span><span>تأكيد الاستلام</span>';
+                btn.className = 'w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:from-emerald-600 hover:to-emerald-700 transition flex items-center justify-center gap-2';
+            } else {
+                btn.innerHTML = '<span>📤</span><span>تأكيد التسليم</span>';
+                btn.className = 'w-full bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:from-red-600 hover:to-red-700 transition flex items-center justify-center gap-2';
+            }
+        };
+
+        window.selectPaymentMethod = function(method) {
+            // إزالة التنشيط السابق
+            document.getElementById('btnCash').classList.remove('method-btn-active-cash');
+            document.getElementById('btnBank').classList.remove('method-btn-active-bank');
+            
+            // تنشيط الجديد
+            if (method === 'cash') {
+                document.getElementById('btnCash').classList.add('method-btn-active-cash');
+            } else {
+                document.getElementById('btnBank').classList.add('method-btn-active-bank');
+            }
+            
+            document.getElementById('paymentMethod').value = method;
+        };
+
+        // ==========================================
+        // OPERATIONS
+        // ==========================================
+
+        window.handleTrustOperation = async function(e) {
+            e.preventDefault();
+            
+            const type = document.getElementById('operationType').value;
+            const method = document.getElementById('paymentMethod').value;
+            const amount = parseFormattedNumber('amount');
+            const person = document.getElementById('personName').value.trim();
+            const note = document.getElementById('note').value.trim();
+            
+            if (!person) {
+                showWarning('الرجاء إدخال اسم الشخص');
+                return;
+            }
+            
+            if (amount <= 0) {
+                showWarning('الرجاء إدخال مبلغ صحيح');
+                return;
+            }
+
+            // التحقق من الرصيد في حالة التسليم
+            if (type === 'withdraw') {
+                const currentBalance = trustData[method] || 0;
+                if (amount > currentBalance) {
+                    showWarning(`رصيد الأمانات ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`);
+                    return;
+                }
+                
+                // التحقق من رصيد الشخص
+                const personBalance = trustData.persons?.[person]?.[method] || 0;
+                if (amount > personBalance) {
+                    showWarning(`هذا الشخص ليس لديه رصيد كافٍ في ${method === 'cash' ? 'الكاش' : 'البنك'}`);
+                    return;
+                }
+            }
+
+            try {
+                const opNumber = await generateOperationNumber('T');
+                const timestamp = Date.now();
+                
+                // حساب الرصيد الجديد
+                const currentBalance = trustData[method] || 0;
+                const newBalance = type === 'deposit' 
+                    ? currentBalance + amount 
+                    : currentBalance - amount;
+
+                // تنفيذ العملية
+                await Promise.all([
+                    // تحديث الرصيد
+                    update(ref(database, 'sideFund'), {
+                        [method]: newBalance,
+                        lastUpdated: timestamp
+                    }),
+                    
+                    // إضافة للسجل
+                    push(ref(database, 'sideFund/history'), {
+                        type,
+                        method,
+                        amount,
+                        person,
+                        note,
+                        timestamp,
+                        operationNumber: opNumber,
+                        user: currentUser.email
+                    }),
+                    
+                    // تسجيل في transactions (للأرشفة فقط)
+                    push(ref(database, 'transactions'), {
+                        type: 'side_fund',
+                        sideFundType: type,
+                        amount: type === 'deposit' ? amount : -amount,
+                        method,
+                        person,
+                        note,
+                        timestamp,
+                        title: `${type === 'deposit' ? '📥 استلام' : '📤 تسليم'} أمانة - ${person}`,
+                        operationNumber: opNumber,
+                        noBalanceEffect: true,
+                        user: currentUser.email
+                    })
+                ]);
+
+                // إعادة تعيين النموذج
+                document.getElementById('amount').value = '';
+                document.getElementById('note').value = '';
+                
+                showSuccess(type === 'deposit' 
+                    ? `تم استلام الأمانة من ${person} بنجاح` 
+                    : `تم تسليم الأمانة لـ ${person} بنجاح`
+                );
+
+            } catch (error) {
+                showWarning('خطأ في تنفيذ العملية: ' + error.message);
+                console.error(error);
+            }
+        };
+
+        window.clearAllHistory = async function() {
+            if (!confirm('هل أنت متأكد من مسح جميع سجلات الأمانات؟\n⚠️ هذا الإجراء لا يمكن التراجع عنه!')) {
+                return;
+            }
+            
+            if (!confirm('تأكيد نهائي: سيتم مسح جميع البيانات بشكل دائم!')) {
+                return;
+            }
+
+            try {
+                await remove(ref(database, 'sideFund/history'));
+                await set(ref(database, 'sideFund'), { cash: 0, bank: 0, lastUpdated: Date.now() });
+                showSuccess('تم مسح جميع السجلات');
+            } catch (error) {
+                showWarning('خطأ في المسح: ' + error.message);
+            }
+        };
+
+        // ==========================================
+        // SIDEBAR
+        // ==========================================
+
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('sidebarContent');
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('translate-x-full'), 10);
+            } else {
+                content.classList.add('translate-x-full');
+                setTimeout(() => sidebar.classList.add('hidden'), 300);
+            }
+        };
+
+    </script>
+</body>
+</html>
