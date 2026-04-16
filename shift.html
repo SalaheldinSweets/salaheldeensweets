@@ -1868,7 +1868,7 @@
         async function checkMidnight() {
             const now = new Date();
             // ✅ تغيير من الساعة 0:00 إلى الساعة 19:00 (7 مساءً)
-            if (now.getHours() === 19 && now.getMinutes() === 0) {
+            if (now.getHours() === 21 && now.getMinutes() === 0) {
                 const todayKey = getTodayKey();
                 const snap = await get(ref(database, `dailyAdds/${todayKey}`));
                 if (!snap.exists()) await addDailyWorkerAmounts();
