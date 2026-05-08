@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حساب تكلفة صلاح الدين</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #f5f5f0;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* الهيدر */
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        /* البطاقات */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e0e0e0;
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #e67e22;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            font-size: 1.3em;
+        }
+
+        /* شبكة المدخلات */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-weight: 700;
+            color: #34495e;
+            font-size: 0.95em;
+        }
+
+        .input-group input, .input-group select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: 'Tajawal', sans-serif;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #e67e22;
+        }
+
+        .input-hint {
+            font-size: 0.85em;
+            color: #7f8c8d;
+        }
+
+        /* أزرار الزيت */
+        .oil-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .oil-btn {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .oil-btn.active {
+            background: #e67e22;
+            color: white;
+            border-color: #e67e22;
+        }
+
+        /* زر الحساب */
+        .calc-btn {
+            width: 100%;
+            padding: 16px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 800;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: background 0.3s;
+        }
+
+        .calc-btn:hover {
+            background: #219a52;
+        }
+
+        /* النتائج */
+        .results {
+            display: none;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-box {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-top: 4px solid #e67e22;
+        }
+
+        .summary-box.green {
+            border-top-color: #27ae60;
+            background: #e8f5e9;
+        }
+
+        .summary-box.blue {
+            border-top-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .summary-box.red {
+            border-top-color: #e74c3c;
+            background: #ffebee;
+        }
+
+        .summary-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .summary-value {
+            font-size: 1.8em;
+            font-weight: 800;
+            color: #2c3e50;
+        }
+
+        /* الجدول */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #2c3e50;
+            color: white;
+            padding: 14px;
+            text-align: right;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .cost {
+            font-weight: 700;
+            color: #e67e22;
+        }
+
+        .total-row {
+            background: #fff3e0 !important;
+            font-weight: 800;
+        }
+
+        /* ملاحظات */
+        .note {
+            background: #fff8e1;
+            border-right: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #5d4037;
+        }
+
+        .product-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 700;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #e67e22;
+            color: white;
+            border-color: #e67e22;
+        }
+
+        .product-section {
+            display: none;
+        }
+
+        .product-section.active {
+            display: block;
+        }
+
+        .section-divider {
+            height: 2px;
+            background: #ecf0f1;
+            margin: 25px 0;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.6em;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 حساب تكلفة صلاح الدين</h1>
+            <p>حاسبة تكاليف إنتاج الباسطة والبسبوسة</p>
+        </div>
+
+        <!-- إعدادات عامة -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">⚙️</span>
+                الإعدادات العامة
+            </div>
+            <div class="grid">
+                <div class="input-group">
+                    <label>نسبة الربح المطلوبة (%)</label>
+                    <input type="number" id="profitPercent" value="25" min="0" max="100">
+                </div>
+                <div class="input-group">
+                    <label>تكاليف إضافية (كهرباء، ماء، إلخ)</label>
+                    <input type="number" id="extraCost" value="10000" min="0" step="500">
+                    <span class="input-hint">مصاريف تشغيلية متنوعة</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- تبويبات المنتجات -->
+        <div class="product-tabs">
+            <button class="tab-btn active" onclick="switchTab('basta')">🥧 الباسطة</button>
+            <button class="tab-btn" onclick="switchTab('basbousa')">🍰 البسبوسة</button>
+        </div>
+
+        <!-- قسم الباسطة -->
+        <div id="bastaSection" class="product-section active">
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">🌾</span>
+                    مواد الباسطة
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label>سعر شوال الطحين (25 كجم)</label>
+                        <input type="number" id="bastaFlour" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 25 كجم كاملاً</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر صفيحة الزيت</label>
+                        <input type="number" id="bastaOil" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: صفيحة كاملة</span>
+                        <div class="oil-options">
+                            <button class="oil-btn active" onclick="selectOil('basta', 16, this)">16 لتر</button>
+                            <button class="oil-btn" onclick="selectOil('basta', 17, this)">17 لتر</button>
+                            <button class="oil-btn" onclick="selectOil('basta', 18, this)">18 لتر</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر شوال السكر (50 كجم)</label>
+                        <input type="number" id="bastaSugar" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 20 كجم</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر الملح (بالكيلو)</label>
+                        <input type="number" id="bastaSalt" placeholder="0" min="0" step="50">
+                        <span class="input-hint">يستخدم: 50 جرام</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر القرفة (بالكيلو)</label>
+                        <input type="number" id="bastaCinnamon" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 100 جرام</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر الروح (باللتر)</label>
+                        <input type="number" id="bastaSpirit" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 30 مل</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر السمن (بالكيلو)</label>
+                        <input type="number" id="bastaGhee" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 150 جرام</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">💼</span>
+                    تكاليف الباسطة الإضافية
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label>عمالة الباسطة</label>
+                        <input type="number" id="bastaLabor" placeholder="0" min="0" step="100">
+                    </div>
+                    <div class="input-group">
+                        <label>حطب الباسطة</label>
+                        <input type="number" id="bastaWood" placeholder="0" min="0" step="100">
+                        <span class="input-hint">ينتج: 22 صينية تقريباً</span>
+                    </div>
+                    <div class="input-group">
+                        <label>توصيل الباسطة</label>
+                        <input type="number" id="bastaDelivery" placeholder="0" min="0" step="100">
+                    </div>
+                    <div class="input-group">
+                        <label>نجاض صواني الباسطة</label>
+                        <input type="number" id="bastaTrays" placeholder="0" min="0" step="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم البسبوسة -->
+        <div id="basbousaSection" class="product-section">
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">🌾</span>
+                    مواد البسبوسة
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label>سعر دقيق السميد (10 كجم)</label>
+                        <input type="number" id="basSemolina" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 10 كجم كاملة</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر الدقيق العادي (25 كجم)</label>
+                        <input type="number" id="basFlour" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 3 كجم</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر البيكنج بودر (كيلو)</label>
+                        <input type="number" id="basBaking" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 100 جرام</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر شوال السكر (50 كجم)</label>
+                        <input type="number" id="basSugar" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 20 كجم</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر القرفة (بالكيلو)</label>
+                        <input type="number" id="basCinnamon" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 100 جرام</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر صفيحة الزيت</label>
+                        <input type="number" id="basOil" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 2 لتر فقط</span>
+                        <div class="oil-options">
+                            <button class="oil-btn active" onclick="selectOil('bas', 16, this)">16 لتر</button>
+                            <button class="oil-btn" onclick="selectOil('bas', 17, this)">17 لتر</button>
+                            <button class="oil-btn" onclick="selectOil('bas', 18, this)">18 لتر</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">🍶</span>
+                    روائح البسبوسة (باللتر)
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label>سعر روح جوز الهند</label>
+                        <input type="number" id="basCoconut" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 10 مل</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر روح السمنة</label>
+                        <input type="number" id="basGheeSpirit" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 10 مل</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر روح اللبن</label>
+                        <input type="number" id="basMilk" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 10 مل</span>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر روح الفراولة</label>
+                        <input type="number" id="basStrawberry" placeholder="0" min="0" step="100">
+                        <span class="input-hint">يستخدم: 10 مل</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">💼</span>
+                    تكاليف البسبوسة الإضافية
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label>عمالة البسبوسة</label>
+                        <input type="number" id="basLabor" placeholder="0" min="0" step="100">
+                    </div>
+                    <div class="input-group">
+                        <label>حطب البسبوسة</label>
+                        <input type="number" id="basWood" placeholder="0" min="0" step="100">
+                        <span class="input-hint">ينتج: 15 صينية تقريباً</span>
+                    </div>
+                    <div class="input-group">
+                        <label>توصيل البسبوسة</label>
+                        <input type="number" id="basDelivery" placeholder="0" min="0" step="100">
+                    </div>
+                    <div class="input-group">
+                        <label>نجاض صواني البسبوسة</label>
+                        <input type="number" id="basTrays" placeholder="0" min="0" step="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="calc-btn" onclick="calculate()">
+            📊 احسب التكلفة والسعر
+        </button>
+
+        <!-- نتائج الباسطة -->
+        <div id="bastaResults" class="results">
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">📈</span>
+                    نتائج حساب الباسطة
+                </div>
+                <div class="summary">
+                    <div class="summary-box">
+                        <div class="summary-label">التكلفة الإجمالية</div>
+                        <div class="summary-value" id="bastaTotalCost">0</div>
+                    </div>
+                    <div class="summary-box blue">
+                        <div class="summary-label">عدد الصينيات</div>
+                        <div class="summary-value" id="bastaTrays">0</div>
+                    </div>
+                    <div class="summary-box green">
+                        <div class="summary-label">الربح المتوقع</div>
+                        <div class="summary-value" id="bastaProfit">0</div>
+                    </div>
+                    <div class="summary-box red">
+                        <div class="summary-label">سعر بيع الصينية</div>
+                        <div class="summary-value" id="bastaPrice">0</div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>المادة</th>
+                                <th>الكمية</th>
+                                <th>التكلفة</th>
+                                <th>النسبة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bastaTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- نتائج البسبوسة -->
+        <div id="basbousaResults" class="results">
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">📈</span>
+                    نتائج حساب البسبوسة
+                </div>
+                <div class="summary">
+                    <div class="summary-box">
+                        <div class="summary-label">التكلفة الإجمالية</div>
+                        <div class="summary-value" id="basTotalCost">0</div>
+                    </div>
+                    <div class="summary-box blue">
+                        <div class="summary-label">عدد الصينيات</div>
+                        <div class="summary-value" id="basTrays">0</div>
+                    </div>
+                    <div class="summary-box green">
+                        <div class="summary-label">الربح المتوقع</div>
+                        <div class="summary-value" id="basProfit">0</div>
+                    </div>
+                    <div class="summary-box red">
+                        <div class="summary-label">سعر بيع الصينية</div>
+                        <div class="summary-value" id="basPrice">0</div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>المادة</th>
+                                <th>الكمية</th>
+                                <th>التكلفة</th>
+                                <th>النسبة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="basTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bastaOilSize = 16;
+        let basOilSize = 16;
+
+        function switchTab(product) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.product-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.results').forEach(res => res.style.display = 'none');
+            
+            event.target.classList.add('active');
+            document.getElementById(product + 'Section').classList.add('active');
+        }
+
+        function selectOil(product, size, btn) {
+            if (product === 'basta') {
+                bastaOilSize = size;
+            } else {
+                basOilSize = size;
+            }
+            
+            btn.parentElement.querySelectorAll('.oil-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function formatNumber(num) {
+            return Math.round(num).toLocaleString('ar-IQ');
+        }
+
+        function calculate() {
+            const profitPercent = parseFloat(document.getElementById('profitPercent').value) || 25;
+            const extraCost = parseFloat(document.getElementById('extraCost').value) || 10000;
+
+            // حساب الباسطة
+            calculateBasta(profitPercent, extraCost);
+            
+            // حساب البسبوسة
+            calculateBasbousa(profitPercent, extraCost);
+        }
+
+        function calculateBasta(profitPercent, extraCost) {
+            const flour = parseFloat(document.getElementById('bastaFlour').value) || 0;
+            const oil = parseFloat(document.getElementById('bastaOil').value) || 0;
+            const sugar = parseFloat(document.getElementById('bastaSugar').value) || 0;
+            const salt = parseFloat(document.getElementById('bastaSalt').value) || 0;
+            const cinnamon = parseFloat(document.getElementById('bastaCinnamon').value) || 0;
+            const spirit = parseFloat(document.getElementById('bastaSpirit').value) || 0;
+            const ghee = parseFloat(document.getElementById('bastaGhee').value) || 0;
+            const labor = parseFloat(document.getElementById('bastaLabor').value) || 0;
+            const wood = parseFloat(document.getElementById('bastaWood').value) || 0;
+            const delivery = parseFloat(document.getElementById('bastaDelivery').value) || 0;
+            const trays = parseFloat(document.getElementById('bastaTrays').value) || 0;
+
+            // حساب التكاليف
+            const flourCost = flour;
+            const oilCost = oil; // صفيحة كاملة
+            const sugarCost = (sugar / 50) * 20;
+            const saltCost = (salt / 1000) * 50;
+            const cinnamonCost = (cinnamon / 1000) * 100;
+            const spiritCost = (spirit / 1000) * 30;
+            const gheeCost = (ghee / 1000) * 150;
+
+            const totalCost = flourCost + oilCost + sugarCost + saltCost + cinnamonCost + spiritCost + gheeCost + labor + wood + delivery + trays + (extraCost / 2);
+            
+            // عدد الصينيات (22 صينية تقريباً)
+            const trayCount = 22;
+            const costPerTray = totalCost / trayCount;
+            
+            const profit = totalCost * (profitPercent / 100);
+            const sellingPrice = costPerTray + (profit / trayCount);
+
+            // عرض النتائج
+            document.getElementById('bastaTotalCost').textContent = formatNumber(totalCost) + ' د.ع';
+            document.getElementById('bastaTrays').textContent = trayCount + ' صينية';
+            document.getElementById('bastaProfit').textContent = formatNumber(profit) + ' د.ع';
+            document.getElementById('bastaPrice').textContent = formatNumber(sellingPrice) + ' د.ع';
+
+            // جدول التفاصيل
+            const details = [
+                { name: 'طحين', qty: '25 كجم', cost: flourCost },
+                { name: `زيت (${bastaOilSize} لتر)`, qty: 'صفيحة كاملة', cost: oilCost },
+                { name: 'سكر', qty: '20 كجم', cost: sugarCost },
+                { name: 'ملح', qty: '50 جرام', cost: saltCost },
+                { name: 'قرفة', qty: '100 جرام', cost: cinnamonCost },
+                { name: 'روح', qty: '30 مل', cost: spiritCost },
+                { name: 'سمن', qty: '150 جرام', cost: gheeCost },
+                { name: 'عمالة', qty: '-', cost: labor },
+                { name: 'حطب', qty: '-', cost: wood },
+                { name: 'توصيل', qty: '-', cost: delivery },
+                { name: 'نجاض صواني', qty: '-', cost: trays },
+                { name: 'تكاليف إضافية', qty: 'نصف المبلغ', cost: extraCost / 2 }
+            ];
+
+            buildTable('bastaTable', details, totalCost);
+            document.getElementById('bastaResults').style.display = 'block';
+        }
+
+        function calculateBasbousa(profitPercent, extraCost) {
+            const semolina = parseFloat(document.getElementById('basSemolina').value) || 0;
+            const flour = parseFloat(document.getElementById('basFlour').value) || 0;
+            const baking = parseFloat(document.getElementById('basBaking').value) || 0;
+            const sugar = parseFloat(document.getElementById('basSugar').value) || 0;
+            const cinnamon = parseFloat(document.getElementById('basCinnamon').value) || 0;
+            const oil = parseFloat(document.getElementById('basOil').value) || 0;
+            const coconut = parseFloat(document.getElementById('basCoconut').value) || 0;
+            const gheeSpirit = parseFloat(document.getElementById('basGheeSpirit').value) || 0;
+            const milk = parseFloat(document.getElementById('basMilk').value) || 0;
+            const strawberry = parseFloat(document.getElementById('basStrawberry').value) || 0;
+            const labor = parseFloat(document.getElementById('basLabor').value) || 0;
+            const wood = parseFloat(document.getElementById('basWood').value) || 0;
+            const delivery = parseFloat(document.getElementById('basDelivery').value) || 0;
+            const trays = parseFloat(document.getElementById('basTrays').value) || 0;
+
+            // حساب التكاليف
+            const semolinaCost = semolina; // 10 كجم كاملة
+            const flourCost = (flour / 25) * 3; // 3 كجم من شوال 25 كجم
+            const bakingCost = (baking / 1000) * 100; // 100 جرام
+            const sugarCost = (sugar / 50) * 20; // 20 كجم
+            const cinnamonCost = (cinnamon / 1000) * 100; // 100 جرام
+            const oilCost = (oil / basOilSize) * 2; // 2 لتر فقط من الصفيحة
+            
+            // الروائح (كلها 10 مل)
+            const coconutCost = (coconut / 1000) * 10;
+            const gheeSpiritCost = (gheeSpirit / 1000) * 10;
+            const milkCost = (milk / 1000) * 10;
+            const strawberryCost = (strawberry / 1000) * 10;
+
+            const totalCost = semolinaCost + flourCost + bakingCost + sugarCost + cinnamonCost + oilCost + coconutCost + gheeSpiritCost + milkCost + strawberryCost + labor + wood + delivery + trays + (extraCost / 2);
+            
+            // عدد الصينيات (15 صينية تقريباً)
+            const trayCount = 15;
+            const costPerTray = totalCost / trayCount;
+            
+            const profit = totalCost * (profitPercent / 100);
+            const sellingPrice = costPerTray + (profit / trayCount);
+
+            // عرض النتائج
+            document.getElementById('basTotalCost').textContent = formatNumber(totalCost) + ' د.ع';
+            document.getElementById('basTrays').textContent = trayCount + ' صينية';
+            document.getElementById('basProfit').textContent = formatNumber(profit) + ' د.ع';
+            document.getElementById('basPrice').textContent = formatNumber(sellingPrice) + ' د.ع';
+
+            // جدول التفاصيل
+            const details = [
+                { name: 'دقيق سميد', qty: '10 كجم', cost: semolinaCost },
+                { name: 'دقيق عادي', qty: '3 كجم', cost: flourCost },
+                { name: 'بيكنج بودر', qty: '100 جرام', cost: bakingCost },
+                { name: 'سكر', qty: '20 كجم', cost: sugarCost },
+                { name: 'قرفة', qty: '100 جرام', cost: cinnamonCost },
+                { name: `زيت (2 لتر من ${basOilSize})`, qty: '2 لتر', cost: oilCost },
+                { name: 'روح جوز هند', qty: '10 مل', cost: coconutCost },
+                { name: 'روح سمنة', qty: '10 مل', cost: gheeSpiritCost },
+                { name: 'روح لبن', qty: '10 مل', cost: milkCost },
+                { name: 'روح فراولة', qty: '10 مل', cost: strawberryCost },
+                { name: 'عمالة', qty: '-', cost: labor },
+                { name: 'حطب', qty: '-', cost: wood },
+                { name: 'توصيل', qty: '-', cost: delivery },
+                { name: 'نجاض صواني', qty: '-', cost: trays },
+                { name: 'تكاليف إضافية', qty: 'نصف المبلغ', cost: extraCost / 2 }
+            ];
+
+            buildTable('basTable', details, totalCost);
+            document.getElementById('basbousaResults').style.display = 'block';
+        }
+
+        function buildTable(tableId, details, total) {
+            const tbody = document.getElementById(tableId);
+            tbody.innerHTML = '';
+
+            details.forEach(item => {
+                if (item.cost > 0) {
+                    const percent = ((item.cost / total) * 100).toFixed(1);
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.qty}</td>
+                            <td class="cost">${formatNumber(item.cost)} د.ع</td>
+                            <td>${percent}%</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            tbody.innerHTML += `
+                <tr class="total-row">
+                    <td colspan="2"><strong>الإجمالي</strong></td>
+                    <td class="cost"><strong>${formatNumber(total)} د.ع</strong></td>
+                    <td><strong>100%</strong></td>
+                </tr>
+            `;
+        }
+    </script>
+</body>
+</html>
