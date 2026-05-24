@@ -178,6 +178,7 @@
             opacity: 0.6;
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -946,7 +947,11 @@
         function initApp() {
             // مراقبة الأرصدة
             onValue(ref(database, 'balances'), (snap) => {
-                balances = snap.val() || { cash: 0, bank: 0 };
+                const raw = snap.val() || {};
+                balances = {
+                    cash: raw.cash || 0,
+                    bank: raw.bank || 0
+                };
                 updateBalanceDisplay();
             });
             
@@ -1395,9 +1400,9 @@
                 
                 const balanceUpdate = {};
                 if (payment === 'كاش') {
-                    balanceUpdate.cash = balances.cash + amount;
+                    balanceUpdate.cash = (balances.cash || 0) + amount;
                 } else {
-                    balanceUpdate.bank = balances.bank + amount;
+                    balanceUpdate.bank = (balances.bank || 0) + amount;
                 }
                 
                 const isTodayTransaction = isToday(timestamp);
@@ -1558,7 +1563,7 @@
                 
                 const normalizedName = name.replace(/^ال/, '');
                 
-                const currentBalance = payment === 'كاش' ? balances.cash : balances.bank;
+                const currentBalance = payment === 'كاش' ? (balances.cash || 0) : (balances.bank || 0);
                 const totalDeduction = payment === 'بنكك' ? amount + BANK_FEE : amount;
                 
                 if (totalDeduction > currentBalance) {
@@ -1685,11 +1690,11 @@
                 
                 const balanceUpdate = {};
                 if (from === 'كاش') {
-                    balanceUpdate.cash = balances.cash - amount;
-                    balanceUpdate.bank = balances.bank + amount;
+                    balanceUpdate.cash = (balances.cash || 0) - amount;
+                    balanceUpdate.bank = (balances.bank || 0) + amount;
                 } else {
-                    balanceUpdate.bank = balances.bank - amount;
-                    balanceUpdate.cash = balances.cash + amount;
+                    balanceUpdate.bank = (balances.bank || 0) - amount;
+                    balanceUpdate.cash = (balances.cash || 0) + amount;
                 }
 
                 const isTodayTransaction = isToday(timestamp);
