@@ -1,6 +1,4 @@
-
-# Let's write the complete modified HTML file
-html_content = '''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -1032,10 +1030,4 @@ html_content = '''<!DOCTYPE html>
         window.addEventListener('beforeunload', () => { if (unsubscribePhones) unsubscribePhones(); if (galleryInterval) clearInterval(galleryInterval); });
     </script>
 </body>
-</html>'''
-
-with open('/mnt/agents/output/index.html', 'w', encoding='utf-8') as f:
-    f.write(html_content)
-
-print("File written successfully!")
-print(f"Length: {len(html_content)} characters")
+</html>
