@@ -227,18 +227,18 @@
     <div id="shareOverlay" class="share-overlay" onclick="closeShareOverlay()">
         <div class="share-card" onclick="event.stopPropagation()">
             <div class="text-5xl mb-3">📱</div>
-            <h3 class="text-lg font-bold text-slate-800 mb-2">مشاركة ملخص الديون</h3>
-            <p class="text-sm text-slate-500 mb-4">تم نسخ النص تلقائياً! يمكنك الآن:</p>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">مشاركة تقرير الديون</h3>
+            <p class="text-sm text-slate-500 mb-4">تم تحميل ملف CSV ونسخ النص!</p>
 
             <div class="space-y-3">
-                <button onclick="openGroupDirect()" class="w-full whatsapp-btn text-white rounded-xl p-3 font-bold btn-press flex items-center justify-center gap-2">
-                    <span>📲</span>
-                    <span>فتح القروب مباشرة</span>
+                <button onclick="shareViaWebAPI()" class="w-full whatsapp-btn text-white rounded-xl p-3 font-bold btn-press flex items-center justify-center gap-2">
+                    <span>📎</span>
+                    <span>إرسال ملف CSV + النص</span>
                 </button>
 
-                <button onclick="shareViaWebAPI()" class="w-full bg-blue-500 text-white rounded-xl p-3 font-bold btn-press flex items-center justify-center gap-2">
-                    <span>📤</span>
-                    <span>مشاركة عبر التطبيقات</span>
+                <button onclick="openGroupDirect()" class="w-full bg-emerald-500 text-white rounded-xl p-3 font-bold btn-press flex items-center justify-center gap-2">
+                    <span>📲</span>
+                    <span>فتح القروب مباشرة</span>
                 </button>
 
                 <button onclick="copyAgain()" class="w-full bg-slate-100 text-slate-700 rounded-xl p-3 font-bold btn-press flex items-center justify-center gap-2">
@@ -669,7 +669,7 @@
         };
 
         // ==========================================
-        // WHATSAPP SHARE - نسخ + فتح القروب
+        // WHATSAPP SHARE - ملف CSV + نص ملخص
         // ==========================================
 
         function buildWhatsAppMessage() {
@@ -694,41 +694,80 @@
 
             if (debtorsList.length > 0) {
                 message += `*تفاصيل الديون:*\n`;
-                message += debtorsList.slice(0, 15).join("\n");
-                if (debtorsList.length > 15) {
-                    message += `\n... و ${debtorsList.length - 15} آخرين`;
-                }
+                message += debtorsList.join("\n");
             } else {
                 message += `✅ لا توجد ديون مستحقة اليوم!`;
             }
 
-            message += `\n\n🧁 *حلواني صلاح الدين*`;
+            message += `\n\n📎 *ملف CSV مرفق بالتفاصيل الكاملة*`;
+            message += `\n🧁 *حلواني صلاح الدين*`;
             return message;
+        }
+
+        function generateCSVBlob() {
+            const headers = ['التاريخ','الوقت','الزبون','المبلغ الأصلي','المدفوع','المتبقي','الحالة','المصدر','البيان','رقم العملية'];
+            const rows = allDebts.map(d => {
+                const original = parseFloat(d.originalAmount) || parseFloat(d.amount) || 0;
+                const paid = parseFloat(d.partialPayment) || 0;
+                const remaining = d.status === 'paid' ? 0 : (parseFloat(d.amount) || 0);
+                const source = d.fromTreasury === true ? 'من الخزنة' : (d.fromTreasury === false ? 'مبيعات آجلة' : 'غير محدد');
+                const date = d.createdAt ? new Date(d.createdAt).toLocaleDateString('ar-SA') : '';
+                const time = d.createdAt ? new Date(d.createdAt).toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}) : '';
+
+                return [
+                    date, time, d.customer, original, paid, remaining,
+                    d.status === 'paid' ? 'مسدد' : 'مستحق',
+                    source, d.note || d.dept || 'دين',
+                    d.operationNumber || d.uid || d.id.slice(-6)
+                ];
+            });
+
+            let totalPending = 0;
+            Object.values(debtorsSummary).forEach(s => { if (s.pending > 0) totalPending += s.pending; });
+
+            rows.push([]);
+            rows.push(['','','','','','','','','إجمالي المستحق:', totalPending]);
+            rows.push(['','','','','','','','','تاريخ التقرير:', new Date().toLocaleDateString('ar-SA')]);
+
+            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            return new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
         }
 
         window.shareToWhatsApp = async function() {
             lastCopiedMessage = buildWhatsAppMessage();
+            const csvBlob = generateCSVBlob();
+            const fileName = `ديون_صلاح_الدين_${new Date().toISOString().split('T')[0]}.csv`;
 
-            // محاولة 1: Web Share API (للموبايل الحديث - يفتح واتساب مع النص جاهز)
-            if (navigator.share) {
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([csvBlob], fileName, { type: 'text/csv' })] })) {
                 try {
+                    const file = new File([csvBlob], fileName, { type: 'text/csv' });
                     await navigator.share({
                         title: 'ملخص ديون صلاح الدين',
-                        text: lastCopiedMessage
+                        text: lastCopiedMessage,
+                        files: [file]
                     });
                     showSuccess('📱 تم فتح المشاركة! اختر واتساب والقروب');
                     return;
                 } catch (err) {
-                    console.log('Share cancelled:', err);
+                    console.log('Share cancelled or failed:', err);
                 }
             }
 
-            // محاولة 2: نسخ + فتح القروب (للديسكتوب والموبايل القديم)
             try {
                 await navigator.clipboard.writeText(lastCopiedMessage);
+
+                const url = URL.createObjectURL(csvBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
                 document.getElementById('shareOverlay').classList.add('active');
             } catch (err) {
-                showWarning('فشل النسخ. حاول مرة أخرى.');
+                showWarning('فشل تحضير الملف. حاول مرة أخرى.');
             }
         };
 
@@ -738,11 +777,16 @@
         };
 
         window.shareViaWebAPI = async function() {
+            const csvBlob = generateCSVBlob();
+            const fileName = `ديون_صلاح_الدين_${new Date().toISOString().split('T')[0]}.csv`;
+
             if (navigator.share) {
                 try {
+                    const file = new File([csvBlob], fileName, { type: 'text/csv' });
                     await navigator.share({
                         title: 'ملخص ديون صلاح الدين',
-                        text: lastCopiedMessage
+                        text: lastCopiedMessage,
+                        files: [file]
                     });
                     closeShareOverlay();
                 } catch (err) {
@@ -756,7 +800,7 @@
         window.copyAgain = async function() {
             try {
                 await navigator.clipboard.writeText(lastCopiedMessage);
-                showSuccess('📋 تم النسخ مرة أخرى!');
+                showSuccess('📋 تم نسخ النص مرة أخرى!');
             } catch (err) {
                 showWarning('فشل النسخ');
             }
