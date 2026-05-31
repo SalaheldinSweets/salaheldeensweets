@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>إدارة الديون - مدير حسابات صلاح الدين</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
+
     <style>
         * {
             font-family: 'Cairo', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
-        
+
         .app-container {
             max-width: 480px;
             margin: 0 auto;
@@ -26,47 +26,47 @@
             min-height: 100vh;
             box-shadow: 0 0 50px rgba(0,0,0,0.2);
         }
-        
+
         .btn-press:active {
             transform: scale(0.95);
             transition: transform 0.1s;
         }
-        
+
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
-        
+
         .hide-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        
+
         .fade-in {
             animation: fadeIn 0.5s ease;
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .modal {
             display: none;
         }
-        
+
         .modal.active {
             display: flex;
         }
-        
+
         .modal-content {
             transform: translateY(100%);
             transition: transform 0.3s ease;
         }
-        
+
         .modal.active .modal-content {
             transform: translateY(0);
         }
-        
+
         .warning-toast {
             position: fixed;
             top: 20px;
@@ -83,11 +83,11 @@
             text-align: center;
             min-width: 300px;
         }
-        
+
         .warning-toast.show {
             transform: translateX(-50%) translateY(0);
         }
-        
+
         .success-toast {
             position: fixed;
             top: 20px;
@@ -104,54 +104,54 @@
             text-align: center;
             min-width: 300px;
         }
-        
+
         .success-toast.show {
             transform: translateX(-50%) translateY(0);
         }
-        
+
         .debtor-card {
             transition: all 0.3s ease;
         }
-        
+
         .debtor-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        
+
         .status-pending {
             background: #fef3c7;
             color: #d97706;
         }
-        
+
         .status-paid {
             background: #d1fae5;
             color: #059669;
         }
-        
+
         .operation-number {
             font-family: 'Courier New', monospace;
             font-weight: bold;
             letter-spacing: 1px;
         }
-        
+
         .pulse {
             animation: pulse 2s infinite;
         }
-        
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
-        
+
         .debt-item {
             transition: all 0.3s ease;
         }
-        
+
         .debt-item.paid {
             opacity: 0.6;
             background: #d1fae5;
         }
-        
+
         .debt-item.paid::after {
             content: "✅";
             position: absolute;
@@ -160,7 +160,7 @@
             transform: translateY(-50%);
             font-size: 1.5rem;
         }
-        
+
         .search-highlight {
             background: #fef3c7;
             padding: 2px 4px;
@@ -184,17 +184,71 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
             50% { box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
         }
+
+        .share-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .share-overlay.active {
+            display: flex;
+        }
+
+        .share-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 <base target="_blank">
 </head>
 <body>
 
     <!-- رسائل التنبيه -->
-    <div id="warningToast" class="warning-toast">
-        رسالة تحذير
-    </div>
-    <div id="successToast" class="success-toast">
-        ✅ تم بنجاح
+    <div id="warningToast" class="warning-toast">رسالة تحذير</div>
+    <div id="successToast" class="success-toast">✅ تم بنجاح</div>
+
+    <!-- شاشة مشاركة الواتساب -->
+    <div id="shareOverlay" class="share-overlay" onclick="closeShareOverlay()">
+        <div class="share-card" onclick="event.stopPropagation()">
+            <div class="text-5xl mb-3">📱</div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">مشاركة ملخص الديون</h3>
+            <p class="text-sm text-slate-500 mb-4">تم نسخ النص تلقائياً! يمكنك الآن:</p>
+
+            <div class="space-y-3">
+                <button onclick="openGroupDirect()" class="w-full whatsapp-btn text-white rounded-xl p-3 font-bold btn-press flex items-center justify-center gap-2">
+                    <span>📲</span>
+                    <span>فتح القروب مباشرة</span>
+                </button>
+
+                <button onclick="shareViaWebAPI()" class="w-full bg-blue-500 text-white rounded-xl p-3 font-bold btn-press flex items-center justify-center gap-2">
+                    <span>📤</span>
+                    <span>مشاركة عبر التطبيقات</span>
+                </button>
+
+                <button onclick="copyAgain()" class="w-full bg-slate-100 text-slate-700 rounded-xl p-3 font-bold btn-press flex items-center justify-center gap-2">
+                    <span>📋</span>
+                    <span>نسخ النص مرة أخرى</span>
+                </button>
+            </div>
+
+            <button onclick="closeShareOverlay()" class="mt-4 text-slate-400 text-sm hover:text-slate-600">إغلاق</button>
+        </div>
     </div>
 
     <!-- التطبيق الرئيسي -->
@@ -215,7 +269,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <div class="text-center mt-4">
                 <div id="clock" class="text-4xl font-bold font-mono tracking-wider text-yellow-400 drop-shadow-lg pulse">
                     00:00:00
@@ -237,28 +291,22 @@
                 </div>
                 <div class="p-4 space-y-2">
                     <a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 text-slate-700 flex items-center gap-3">
-                        <span>🏠</span>
-                        <span>الرئيسية</span>
+                        <span>🏠</span><span>الرئيسية</span>
                     </a>
                     <a href="debts.html" class="w-full text-right p-3 rounded-xl bg-amber-50 text-amber-700 font-semibold flex items-center gap-3">
-                        <span>📝</span>
-                        <span>الديون</span>
+                        <span>📝</span><span>الديون</span>
                     </a>
                     <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700">
-                        <span>🏦</span>
-                        <span>الصندوق الجانبي</span>
+                        <span>🏦</span><span>الصندوق الجانبي</span>
                     </a>
                     <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700">
-                        <span>📊</span>
-                        <span>التقارير</span>
+                        <span>📊</span><span>التقارير</span>
                     </a>
                     <a href="records.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
-                        <span>🗂️</span>
-                        <span>السجلات</span>
+                        <span>🗂️</span><span>السجلات</span>
                     </a>
                     <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700">
-                        <span>🧮</span>
-                        <span>تصفية الوردية</span>
+                        <span>🧮</span><span>تصفية الوردية</span>
                     </a>
                 </div>
             </div>
@@ -266,7 +314,7 @@
 
         <!-- المحتوى الرئيسي -->
         <main class="p-4 space-y-4 pb-24" id="mainContent">
-            
+
             <!-- ملخص الديون -->
             <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 text-white shadow-lg fade-in">
                 <div class="text-center mb-4">
@@ -275,7 +323,7 @@
                     <div class="text-3xl font-bold mt-1" id="totalDebts">0</div>
                     <div class="text-xs opacity-75 mt-1">جنية</div>
                 </div>
-                
+
                 <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/20">
                     <div class="text-center">
                         <div class="text-xs opacity-75">عدد الزبائن</div>
@@ -306,18 +354,11 @@
                         فلتر
                     </button>
                 </div>
-                
-                <!-- أزرار الفلترة -->
+
                 <div id="filterButtons" class="flex gap-2 hidden">
-                    <button onclick="setFilter('all')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-amber-500 text-white" data-filter="all">
-                        الكل
-                    </button>
-                    <button onclick="setFilter('pending')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="pending">
-                        مستحقة
-                    </button>
-                    <button onclick="setFilter('paid')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="paid">
-                        مسددة
-                    </button>
+                    <button onclick="setFilter('all')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-amber-500 text-white" data-filter="all">الكل</button>
+                    <button onclick="setFilter('pending')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="pending">مستحقة</button>
+                    <button onclick="setFilter('paid')" class="filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600" data-filter="paid">مسددة</button>
                 </div>
             </div>
 
@@ -327,7 +368,7 @@
                     <h3 class="font-bold text-slate-700">👥 الزبائن المدينين</h3>
                     <span class="text-xs text-slate-400" id="showingCount">جاري التحميل...</span>
                 </div>
-                
+
                 <div id="debtorsList" class="space-y-3">
                     <div class="text-center text-slate-400 py-8">
                         <div class="text-4xl mb-2">📭</div>
@@ -350,10 +391,8 @@
                         </button>
                     </div>
                 </div>
-                
-                <div id="debtsHistory" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
-                    <!-- تُملأ ديناميكياً -->
-                </div>
+
+                <div id="debtsHistory" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar"></div>
             </div>
 
         </main>
@@ -362,24 +401,19 @@
         <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
             <div class="flex justify-around items-center">
                 <a href="index.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">🏠</span>
-                    <span class="text-xs mt-1">الرئيسية</span>
+                    <span class="text-xl">🏠</span><span class="text-xs mt-1">الرئيسية</span>
                 </a>
                 <a href="debts.html" class="flex flex-col items-center p-2 text-amber-600">
-                    <span class="text-xl">📝</span>
-                    <span class="text-xs mt-1 font-semibold">الديون</span>
+                    <span class="text-xl">📝</span><span class="text-xs mt-1 font-semibold">الديون</span>
                 </a>
                 <a href="external.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">🏦</span>
-                    <span class="text-xs mt-1">الجانبي</span>
+                    <span class="text-xl">🏦</span><span class="text-xs mt-1">الجانبي</span>
                 </a>
                 <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">📊</span>
-                    <span class="text-xs mt-1">التقارير</span>
+                    <span class="text-xl">📊</span><span class="text-xs mt-1">التقارير</span>
                 </a>
                 <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400">
-                    <span class="text-xl">🧮</span>
-                    <span class="text-xs mt-1">الوردية</span>
+                    <span class="text-xl">🧮</span><span class="text-xs mt-1">الوردية</span>
                 </a>
             </div>
         </nav>
@@ -390,7 +424,7 @@
     <div id="repayModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('repay')">
         <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
             <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
-            
+
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold text-emerald-800">💵 تسديد دين عام</h2>
                 <button onclick="closeModal('repay')" class="text-slate-400 text-2xl">&times;</button>
@@ -407,28 +441,22 @@
             </div>
 
             <form id="repayForm" class="space-y-4" onsubmit="handleRepaySubmit(event)">
-                <!-- معلومات الزبون -->
                 <div class="bg-slate-100 rounded-xl p-3 text-center">
                     <div class="text-xs text-slate-600 mb-1">الزبون</div>
                     <div class="text-lg font-bold text-slate-800" id="repayCustomerName">---</div>
                     <input type="hidden" id="repayCustomerId">
                 </div>
 
-                <!-- المبلغ الإجمالي المستحق -->
                 <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-200">
                     <div class="text-xs text-amber-600 mb-1">إجمالي المبلغ المستحق</div>
                     <div class="text-2xl font-bold text-amber-700" id="repayTotalAmount">0</div>
                 </div>
 
-                <!-- قائمة الديون المفصلة -->
                 <div class="bg-slate-50 rounded-xl p-3 border border-slate-200">
                     <div class="text-xs text-slate-600 mb-2 font-semibold">تفاصيل الديون:</div>
-                    <div id="repayDebtsList" class="space-y-2 max-h-40 overflow-y-auto">
-                        <!-- تُملأ ديناميكياً -->
-                    </div>
+                    <div id="repayDebtsList" class="space-y-2 max-h-40 overflow-y-auto"></div>
                 </div>
 
-                <!-- طريقة التسديد -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">طريقة التسديد</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -444,7 +472,6 @@
                     <input type="hidden" id="repayMethod" value="كاش">
                 </div>
 
-                <!-- المبلغ المسدد -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المبلغ المسدد</label>
                     <input type="text" id="repayAmount" 
@@ -456,7 +483,6 @@
                     <div id="repayValidation" class="text-xs mt-1 text-center"></div>
                 </div>
 
-                <!-- ملاحظة -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">ملاحظة (اختياري)</label>
                     <input type="text" id="repayNote" 
@@ -479,9 +505,7 @@
                 <button onclick="closeCustomerDetails()" class="text-slate-400 text-2xl hover:text-slate-600">&times;</button>
             </div>
 
-            <div id="customerDetailsContent" class="space-y-4">
-                <!-- تُملأ ديناميكياً -->
-            </div>
+            <div id="customerDetailsContent" class="space-y-4"></div>
 
             <div class="mt-6 pt-4 border-t border-slate-200 flex gap-2">
                 <button onclick="printCustomerDetails()" class="flex-1 bg-slate-100 text-slate-700 rounded-xl p-3 font-semibold hover:bg-slate-200 transition">
@@ -498,7 +522,7 @@
     <div id="addDebtModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('addDebt')">
         <div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
             <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
-            
+
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold text-amber-800">➕ إضافة دين يدوي</h2>
                 <button onclick="closeModal('addDebt')" class="text-slate-400 text-2xl">&times;</button>
@@ -515,7 +539,6 @@
             </div>
 
             <form id="addDebtForm" class="space-y-4" onsubmit="handleAddDebtSubmit(event)">
-                <!-- اسم الزبون -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">اسم الزبون *</label>
                     <input type="text" id="newDebtCustomer" 
@@ -524,7 +547,6 @@
                         required>
                 </div>
 
-                <!-- المبلغ -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">المبلغ *</label>
                     <input type="text" id="newDebtAmount" 
@@ -551,7 +573,6 @@
                     <input type="hidden" id="debtFromTreasury" value="true">
                 </div>
 
-                <!-- السبب -->
                 <div>
                     <label class="block text-sm text-slate-600 mb-1">السبب / البيان</label>
                     <input type="text" id="newDebtReason" 
@@ -574,20 +595,8 @@
     <!-- Firebase & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged,
-            signOut 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { 
-            getDatabase, 
-            ref, 
-            set, 
-            push, 
-            onValue, 
-            update, 
-            get
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, push, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
@@ -612,11 +621,12 @@
         let currentFilter = 'all';
         let currentCustomerDebts = [];
         let currentCustomerName = '';
+        let lastCopiedMessage = '';
 
         // ==========================================
         // UTILITY FUNCTIONS
         // ==========================================
-        
+
         window.formatNumber = function(num) {
             if (num === null || num === undefined || isNaN(num)) return '0';
             return parseInt(num).toLocaleString('en-US');
@@ -648,45 +658,40 @@
             const toast = document.getElementById('warningToast');
             toast.textContent = '⚠️ ' + message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
         };
 
         window.showSuccess = function(message) {
             const toast = document.getElementById('successToast');
             toast.textContent = '✅ ' + message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
         };
 
         // ==========================================
-        // WHATSAPP SHARE FUNCTION
+        // WHATSAPP SHARE - نسخ + فتح القروب
         // ==========================================
-        window.shareToWhatsApp = async function() {
-            const groupLink = "https://chat.whatsapp.com/KoJv18tWyqO2MgTeMPX43I";
-            
+
+        function buildWhatsAppMessage() {
             let totalPending = 0;
             let debtorsList = [];
-            
+
             Object.entries(debtorsSummary).forEach(([name, summary]) => {
                 if (summary.pending > 0) {
                     totalPending += summary.pending;
                     debtorsList.push(`👤 ${name}: ${formatNumber(summary.pending)} ج`);
                 }
             });
-            
+
             const now = new Date();
             const dateStr = now.toLocaleDateString('ar-SA');
             const timeStr = now.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
-            
+
             let message = `📊 *ملخص ديون صلاح الدين* 🍰\n\n`;
             message += `📅 ${dateStr} | ⏰ ${timeStr}\n\n`;
             message += `💰 *إجمالي المستحق:* ${formatNumber(totalPending)} ج\n`;
             message += `👥 *عدد المدينين:* ${debtorsList.length}\n\n`;
-            
+
             if (debtorsList.length > 0) {
                 message += `*تفاصيل الديون:*\n`;
                 message += debtorsList.slice(0, 15).join("\n");
@@ -696,20 +701,69 @@
             } else {
                 message += `✅ لا توجد ديون مستحقة اليوم!`;
             }
-            
+
             message += `\n\n🧁 *حلواني صلاح الدين*`;
-            
-            try {
-                await navigator.clipboard.writeText(message);
-                showSuccess('📋 تم نسخ الملخص! جاري فتح القروب...');
-                setTimeout(() => {
-                    window.open(groupLink, '_blank');
-                }, 1500);
-            } catch (err) {
-                console.error('Clipboard failed:', err);
-                const encodedMsg = encodeURIComponent(message);
-                window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
+            return message;
+        }
+
+        window.shareToWhatsApp = async function() {
+            lastCopiedMessage = buildWhatsAppMessage();
+
+            // محاولة 1: Web Share API (للموبايل الحديث - يفتح واتساب مع النص جاهز)
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'ملخص ديون صلاح الدين',
+                        text: lastCopiedMessage
+                    });
+                    showSuccess('📱 تم فتح المشاركة! اختر واتساب والقروب');
+                    return;
+                } catch (err) {
+                    console.log('Share cancelled:', err);
+                }
             }
+
+            // محاولة 2: نسخ + فتح القروب (للديسكتوب والموبايل القديم)
+            try {
+                await navigator.clipboard.writeText(lastCopiedMessage);
+                document.getElementById('shareOverlay').classList.add('active');
+            } catch (err) {
+                showWarning('فشل النسخ. حاول مرة أخرى.');
+            }
+        };
+
+        window.openGroupDirect = function() {
+            window.open("https://chat.whatsapp.com/KoJv18tWyqO2MgTeMPX43I", '_blank');
+            closeShareOverlay();
+        };
+
+        window.shareViaWebAPI = async function() {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'ملخص ديون صلاح الدين',
+                        text: lastCopiedMessage
+                    });
+                    closeShareOverlay();
+                } catch (err) {
+                    showWarning('تم إلغاء المشاركة');
+                }
+            } else {
+                showWarning('المتصفح لا يدعم المشاركة المباشرة');
+            }
+        };
+
+        window.copyAgain = async function() {
+            try {
+                await navigator.clipboard.writeText(lastCopiedMessage);
+                showSuccess('📋 تم النسخ مرة أخرى!');
+            } catch (err) {
+                showWarning('فشل النسخ');
+            }
+        };
+
+        window.closeShareOverlay = function() {
+            document.getElementById('shareOverlay').classList.remove('active');
         };
 
         // ==========================================
@@ -718,16 +772,16 @@
         window.selectDebtSource = function(btn) {
             const value = btn.dataset.value;
             const isTreasury = value === 'true';
-            
+
             document.querySelectorAll('.source-btn').forEach(b => {
                 b.classList.remove('border-amber-500', 'bg-amber-50', 'border-blue-500', 'bg-blue-50');
                 b.classList.add('border-slate-200');
                 const textDiv = b.querySelector('div');
                 if (textDiv) textDiv.className = 'text-sm mt-1 font-semibold text-slate-600';
             });
-            
+
             btn.classList.remove('border-slate-200');
-            
+
             if (isTreasury) {
                 btn.classList.add('border-amber-500', 'bg-amber-50');
                 const textDiv = btn.querySelector('div');
@@ -737,26 +791,24 @@
                 const textDiv = btn.querySelector('div');
                 if (textDiv) textDiv.className = 'text-sm mt-1 font-semibold text-blue-700';
             }
-            
+
             document.getElementById('debtFromTreasury').value = value;
         };
 
         // ==========================================
         // AUTHENTICATION
         // ==========================================
-        
+
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'login.html';
                 return;
             }
-            
             if (!user.emailVerified) {
                 alert('⚠️ يرجى توثيق حسابك أولاً من بريدك الإلكتروني');
                 signOut(auth);
                 return;
             }
-            
             currentUser = user;
             initApp();
         });
@@ -773,45 +825,37 @@
         // ==========================================
         // APP INITIALIZATION
         // ==========================================
-        
+
         function initApp() {
-            // Listen to balances
             onValue(ref(database, 'balances'), (snap) => {
                 balances = snap.val() || { cash: 0, bank: 0 };
             });
-            
-            // Listen to debts
+
             const debtsRef = ref(database, 'debts');
             onValue(debtsRef, (snap) => {
-                console.log('تم استلام بيانات الديون:', snap.val());
-                
                 const debts = [];
                 debtorsSummary = {};
-                
+
                 if (snap.exists()) {
                     snap.forEach((child) => {
                         const debt = { id: child.key, ...child.val() };
                         debts.push(debt);
-                        
+
                         const customer = debt.customer;
                         if (!debtorsSummary[customer]) {
                             debtorsSummary[customer] = {
-                                total: 0,
-                                paid: 0,
-                                pending: 0,
-                                count: 0,
-                                debts: []
+                                total: 0, paid: 0, pending: 0, count: 0, debts: []
                             };
                         }
-                        
+
                         const originalAmount = parseFloat(debt.originalAmount) || parseFloat(debt.amount) || 0;
                         const currentAmount = parseFloat(debt.amount) || 0;
                         const partialPayment = parseFloat(debt.partialPayment) || 0;
-                        
+
                         debtorsSummary[customer].total += originalAmount;
                         debtorsSummary[customer].count++;
                         debtorsSummary[customer].debts.push(debt);
-                        
+
                         if (debt.status === 'paid') {
                             debtorsSummary[customer].paid += originalAmount;
                         } else {
@@ -819,12 +863,8 @@
                         }
                     });
                 }
-                
+
                 allDebts = debts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                
-                console.log('الديون المعالجة:', allDebts);
-                console.log('ملخص الزبائن:', debtorsSummary);
-                
                 updateSummary();
                 filterDebtors();
                 renderDebtsHistory(allDebts.slice(0, 50));
@@ -832,7 +872,7 @@
                 console.error('خطأ في قراءة الديون:', error);
                 showWarning('حدث خطأ في تحميل البيانات');
             });
-            
+
             updateClock();
             setInterval(updateClock, 1000);
         }
@@ -847,7 +887,7 @@
             let totalPending = 0;
             let totalPaid = 0;
             let debtorsCount = 0;
-            
+
             Object.values(debtorsSummary).forEach(summary => {
                 if (summary.pending > 0) {
                     debtorsCount++;
@@ -855,7 +895,7 @@
                 }
                 totalPaid += summary.paid;
             });
-            
+
             document.getElementById('totalDebts').textContent = formatNumber(totalPending);
             document.getElementById('debtorsCount').textContent = debtorsCount;
             document.getElementById('pendingDebts').textContent = formatNumber(totalPending);
@@ -863,17 +903,15 @@
         }
 
         // ==========================================
-        // FILTER & DISPLAY FUNCTIONS
+        // FILTER & DISPLAY
         // ==========================================
-        
+
         window.toggleFilter = function() {
-            const filterDiv = document.getElementById('filterButtons');
-            filterDiv.classList.toggle('hidden');
+            document.getElementById('filterButtons').classList.toggle('hidden');
         };
 
         window.setFilter = function(filter) {
             currentFilter = filter;
-            
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 if (btn.dataset.filter === filter) {
                     btn.className = 'filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-amber-500 text-white';
@@ -881,26 +919,20 @@
                     btn.className = 'filter-btn flex-1 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600';
                 }
             });
-            
             filterDebtors();
         };
 
         window.filterDebtors = function() {
             const searchQuery = document.getElementById('searchDebtor').value.toLowerCase().trim();
-            
+
             const filtered = Object.entries(debtorsSummary).filter(([name, summary]) => {
-                if (searchQuery && !name.toLowerCase().includes(searchQuery)) {
-                    return false;
-                }
-                
+                if (searchQuery && !name.toLowerCase().includes(searchQuery)) return false;
                 if (currentFilter === 'pending' && summary.pending <= 0) return false;
                 if (currentFilter === 'paid' && summary.paid <= 0) return false;
-                
                 return true;
             });
-            
+
             filtered.sort((a, b) => b[1].pending - a[1].pending);
-            
             renderDebtorsList(filtered);
         };
 
@@ -908,27 +940,26 @@
             const container = document.getElementById('debtorsList');
             const searchQuery = document.getElementById('searchDebtor').value.toLowerCase().trim();
             document.getElementById('showingCount').textContent = `عرض ${debtors.length} زبون`;
-            
+
             if (debtors.length === 0) {
                 container.innerHTML = `
                     <div class="text-center text-slate-400 py-8">
                         <div class="text-4xl mb-2">📭</div>
                         <div>لا توجد ديون مطابقة</div>
-                    </div>
-                `;
+                    </div>`;
                 return;
             }
-            
+
             container.innerHTML = debtors.map(([name, summary]) => {
                 const hasPending = summary.pending > 0;
                 const statusClass = hasPending ? 'status-pending' : 'status-paid';
                 const statusText = hasPending ? 'مستحق' : 'مسدد';
                 const amount = hasPending ? summary.pending : summary.paid;
-                
+
                 const displayName = searchQuery 
                     ? name.replace(new RegExp(`(${searchQuery})`, 'gi'), '<span class="search-highlight">$1</span>')
                     : name;
-                
+
                 return `
                     <div class="debtor-card bg-white rounded-xl p-4 border border-slate-200 shadow-sm cursor-pointer" onclick="showCustomerDetails('${name}')">
                         <div class="flex justify-between items-start mb-2">
@@ -939,35 +970,26 @@
                                     <div class="text-xs text-slate-500">${summary.count} عملية</div>
                                 </div>
                             </div>
-                            <span class="period-badge ${statusClass} px-2 py-1 rounded-full text-xs font-bold">
-                                ${statusText}
-                            </span>
+                            <span class="period-badge ${statusClass} px-2 py-1 rounded-full text-xs font-bold">${statusText}</span>
                         </div>
-                        
                         <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
-                            <div class="text-sm text-slate-500">
-                                ${hasPending ? 'المستحق:' : 'تم سداد:'}
-                            </div>
-                            <div class="text-xl font-bold ${hasPending ? 'text-amber-600' : 'text-emerald-600'}">
-                                ${formatNumber(amount)} ج
-                            </div>
+                            <div class="text-sm text-slate-500">${hasPending ? 'المستحق:' : 'تم سداد:'}</div>
+                            <div class="text-xl font-bold ${hasPending ? 'text-amber-600' : 'text-emerald-600'}">${formatNumber(amount)} ج</div>
                         </div>
-                        
                         ${hasPending ? `
                             <button onclick="event.stopPropagation(); openRepayModal('${name}')" 
                                 class="w-full mt-3 bg-emerald-500 text-white rounded-lg py-2 text-sm font-bold btn-press hover:bg-emerald-600 transition">
                                 💵 تسديد من المجموع
                             </button>
                         ` : ''}
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
         // ==========================================
-        // سجل الديون - البحث والفلترة
+        // HISTORY
         // ==========================================
-        
+
         window.filterHistory = function() {
             const searchQuery = document.getElementById('searchHistory').value.toLowerCase().trim();
             renderDebtsHistory(allDebts, searchQuery);
@@ -975,7 +997,6 @@
 
         function renderDebtsHistory(debts, searchQuery = '') {
             const container = document.getElementById('debtsHistory');
-            
             let filteredDebts = debts;
             if (searchQuery) {
                 filteredDebts = debts.filter(d => 
@@ -984,59 +1005,32 @@
                     (d.dept && d.dept.toLowerCase().includes(searchQuery))
                 );
             }
-            
+
             if (filteredDebts.length === 0) {
                 container.innerHTML = '<div class="text-center text-slate-400 py-4">لا توجد عمليات مطابقة</div>';
                 return;
             }
-            
-            if (searchQuery) {
-                const grouped = filteredDebts.reduce((acc, debt) => {
-                    if (!acc[debt.customer]) acc[debt.customer] = [];
-                    acc[debt.customer].push(debt);
-                    return acc;
-                }, {});
-                
-                container.innerHTML = Object.entries(grouped).map(([customer, customerDebts]) => {
-                    const totalPending = customerDebts.filter(d => d.status === 'pending').reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
-                    
-                    return `
-                        <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 mb-3">
-                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-200">
-                                <div class="font-bold text-slate-800">👤 ${customer}</div>
-                                <div class="text-sm ${totalPending > 0 ? 'text-amber-600' : 'text-emerald-600'} font-bold">
-                                    ${totalPending > 0 ? `مستحق: ${formatNumber(totalPending)} ج` : 'مسدد بالكامل ✅'}
-                                </div>
-                            </div>
-                            <div class="space-y-2">
-                                ${customerDebts.map(debt => renderDebtItem(debt)).join('')}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                container.innerHTML = filteredDebts.map(debt => renderDebtItem(debt)).join('');
-            }
+
+            container.innerHTML = filteredDebts.map(debt => renderDebtItem(debt)).join('');
         }
 
         function renderDebtItem(debt) {
             const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
             const time = debt.createdAt ? new Date(debt.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
-            
             const isPaid = debt.status === 'paid';
             const statusClass = isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
             const icon = isPaid ? '✅' : '📝';
             const amountText = isPaid ? formatNumber(parseFloat(debt.originalAmount) || parseFloat(debt.amount) || 0) : formatNumber(parseFloat(debt.amount) || 0);
-            
+
             let sourceIcon = '';
             if (debt.fromTreasury === true) sourceIcon = '💰';
             else if (debt.fromTreasury === false) sourceIcon = '📦';
-            
+
             let partialInfo = '';
             if (!isPaid && debt.partialPayment > 0) {
                 partialInfo = `<div class="text-xs text-emerald-600 mt-1">مدفوع جزئياً: ${formatNumber(debt.partialPayment)} ج</div>`;
             }
-            
+
             return `
                 <div class="flex justify-between items-center p-3 rounded-xl ${statusClass} border border-slate-100 relative ${isPaid ? 'paid' : ''}">
                     <div class="flex items-center gap-2 flex-1">
@@ -1048,21 +1042,17 @@
                             ${partialInfo}
                         </div>
                     </div>
-                    <div class="text-left font-bold">
-                        ${amountText}
-                    </div>
-                </div>
-            `;
+                    <div class="text-left font-bold">${amountText}</div>
+                </div>`;
         }
 
         // ==========================================
         // UI FUNCTIONS
         // ==========================================
-        
+
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('sidebarContent');
-            
             if (sidebar.classList.contains('hidden')) {
                 sidebar.classList.remove('hidden');
                 setTimeout(() => content.classList.remove('translate-x-full'), 10);
@@ -1085,36 +1075,26 @@
             if (modal) {
                 modal.classList.remove('active');
                 document.body.style.overflow = '';
-                
                 const form = document.getElementById(type + 'Form');
                 if (form) form.reset();
-                
-                // Reset debt source to default (treasury)
                 if (type === 'addDebt') {
-                    setTimeout(() => {
-                        selectDebtSource(document.getElementById('btnFromTreasury'));
-                    }, 300);
+                    setTimeout(() => selectDebtSource(document.getElementById('btnFromTreasury')), 300);
                 }
             }
         };
 
-        // ==========================================
-        // إصلاح منطق اختيار طريقة التسديد
-        // ==========================================
         window.selectRepayMethod = function(btn) {
             const value = btn.dataset.value;
             const isCash = value === 'كاش';
-            
+
             document.querySelectorAll('.repay-method-btn').forEach(b => {
                 b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
                 b.classList.add('border-slate-200');
-                
                 const textDiv = b.querySelector('div');
                 textDiv.className = 'text-sm mt-1 font-semibold text-slate-600';
             });
-            
+
             btn.classList.remove('border-slate-200');
-            
             if (isCash) {
                 btn.classList.add('border-emerald-500', 'bg-emerald-50');
                 btn.querySelector('div').className = 'text-sm mt-1 font-semibold text-emerald-700';
@@ -1122,29 +1102,26 @@
                 btn.classList.add('border-blue-500', 'bg-blue-50');
                 btn.querySelector('div').className = 'text-sm mt-1 font-semibold text-blue-700';
             }
-            
             document.getElementById('repayMethod').value = value;
         };
 
         // ==========================================
-        // تفاصيل الزبون
+        // CUSTOMER DETAILS
         // ==========================================
-        
+
         window.showCustomerDetails = function(customerName) {
             currentCustomerName = customerName;
             const summary = debtorsSummary[customerName];
             if (!summary) return;
-            
+
             const debts = allDebts.filter(d => d.customer === customerName).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-            
             document.getElementById('detailsCustomerName').textContent = `👤 ${customerName}`;
-            
+
             const content = document.getElementById('customerDetailsContent');
-            
             const totalPending = summary.pending;
             const totalPaid = summary.paid;
             const totalOriginal = summary.total;
-            
+
             content.innerHTML = `
                 <div class="bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
                     <div class="grid grid-cols-3 gap-2 text-center">
@@ -1162,19 +1139,18 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="mt-4">
                     <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
-                        <span>📋</span>
-                        <span>سجل العمليات (${debts.length})</span>
+                        <span>📋</span><span>سجل العمليات (${debts.length})</span>
                     </h3>
                     <div class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
-                        ${debts.map((debt, index) => {
+                        ${debts.map((debt) => {
                             const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
                             const time = debt.createdAt ? new Date(debt.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '--:--';
                             const isPaid = debt.status === 'paid';
                             const sourceLabel = debt.fromTreasury === true ? '💰 من الخزنة' : (debt.fromTreasury === false ? '📦 مبيعات آجلة' : '');
-                            
+
                             return `
                                 <div class="bg-white rounded-lg p-3 border ${isPaid ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200'} relative">
                                     <div class="flex justify-between items-start">
@@ -1194,13 +1170,11 @@
                                             ${!isPaid && debt.partialPayment > 0 ? `<div class="text-xs text-emerald-600">مدفوع: ${formatNumber(debt.partialPayment)}</div>` : ''}
                                         </div>
                                     </div>
-                                </div>
-                            `;
+                                </div>`;
                         }).join('')}
                     </div>
-                </div>
-            `;
-            
+                </div>`;
+
             openModal('customerDetails');
         };
 
@@ -1215,13 +1189,13 @@
         window.exportCustomerDetails = function() {
             const summary = debtorsSummary[currentCustomerName];
             const debts = allDebts.filter(d => d.customer === currentCustomerName);
-            
+
             let csvContent = `تقرير ديون الزبون: ${currentCustomerName}\n`;
             csvContent += `تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}\n\n`;
             csvContent += `الإجمالي,المستحق,المسدد\n`;
             csvContent += `${summary.total},${summary.pending},${summary.paid}\n\n`;
             csvContent += `التاريخ,البيان,المبلغ,الحالة,المصدر,ملاحظات\n`;
-            
+
             debts.forEach(d => {
                 const date = d.createdAt ? new Date(d.createdAt).toLocaleDateString('ar-SA') : '';
                 const status = d.status === 'paid' ? 'مسدد' : 'مستحق';
@@ -1229,7 +1203,7 @@
                 const source = d.fromTreasury === true ? 'من الخزنة' : (d.fromTreasury === false ? 'مبيعات آجلة' : 'غير محدد');
                 csvContent += `${date},${d.note || d.dept || 'دين'},${amount},${status},${source},${d.paidNote || ''}\n`;
             });
-            
+
             const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -1238,45 +1212,40 @@
         };
 
         // ==========================================
-        // DEBT OPERATIONS
+        // REPAY
         // ==========================================
-        
+
         window.openRepayModal = function(customerName) {
             currentCustomerName = customerName;
             document.getElementById('repayCustomerName').textContent = customerName;
-            
+
             currentCustomerDebts = allDebts
                 .filter(d => d.customer === customerName && d.status === 'pending')
                 .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-            
+
             if (currentCustomerDebts.length === 0) {
                 showWarning('لا توجد ديون مستحقة لهذا الزبون');
                 return;
             }
-            
+
             const totalPending = currentCustomerDebts.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
             document.getElementById('repayTotalAmount').textContent = formatNumber(totalPending);
-            
             renderRepayDebtsList(currentCustomerDebts);
-            
             document.getElementById('repayAmount').value = formatNumber(totalPending);
-            
             selectRepayMethod(document.getElementById('btnCash'));
-            
             validateRepayAmount();
             openModal('repay');
         };
 
         function renderRepayDebtsList(debts) {
             const container = document.getElementById('repayDebtsList');
-            
             container.innerHTML = debts.map((debt, index) => {
                 const date = debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('ar-SA') : '--/--/--';
                 const original = parseFloat(debt.originalAmount) || parseFloat(debt.amount) || 0;
                 const remaining = parseFloat(debt.amount) || 0;
                 const paid = parseFloat(debt.partialPayment) || 0;
                 const sourceIcon = debt.fromTreasury === true ? '💰' : '📦';
-                
+
                 return `
                     <div class="debt-item bg-white rounded-lg p-2 border border-slate-200 text-sm relative" id="repay-debt-item-${debt.id}">
                         <div class="flex justify-between items-center">
@@ -1288,8 +1257,7 @@
                             <div class="text-amber-600 font-bold">${formatNumber(remaining)} ج</div>
                         </div>
                         ${paid > 0 ? `<div class="text-xs text-emerald-600">مدفوع سابقاً: ${formatNumber(paid)} من أصل ${formatNumber(original)}</div>` : ''}
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
@@ -1297,10 +1265,10 @@
             const input = document.getElementById('repayAmount');
             const validation = document.getElementById('repayValidation');
             const submitBtn = document.getElementById('repaySubmitBtn');
-            
+
             const amount = parseFormattedNumber('repayAmount');
             const totalPending = currentCustomerDebts.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
-            
+
             if (amount <= 0) {
                 validation.textContent = 'المبلغ يجب أن يكون أكبر من صفر';
                 validation.className = 'text-xs mt-1 text-center text-red-500';
@@ -1327,48 +1295,47 @@
 
         window.handleRepaySubmit = async function(e) {
             e.preventDefault();
-            
+
             const customer = document.getElementById('repayCustomerName').textContent;
             const amount = parseFormattedNumber('repayAmount');
             const method = document.getElementById('repayMethod').value;
             const note = document.getElementById('repayNote').value;
-            
+
             const totalPending = currentCustomerDebts.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
-            
+
             if (amount <= 0) {
                 showWarning('المبلغ يجب أن يكون أكبر من صفر');
                 return;
             }
-            
             if (amount > totalPending) {
                 showWarning('المبلغ المسدد أكبر من المجموع المستحق!');
                 return;
             }
-            
+
             const timestamp = Date.now();
             const uid = Date.now().toString(36).toUpperCase().slice(-6);
-            
+
             const balanceUpdate = {};
             if (method === 'كاش') {
                 balanceUpdate.cash = (balances.cash || 0) + amount;
             } else {
                 balanceUpdate.bank = (balances.bank || 0) + amount;
             }
-            
+
             let remainingAmount = amount;
             const debtsToUpdate = [];
             const fullyPaidDebts = [];
-            
+
             for (const debt of currentCustomerDebts) {
                 if (remainingAmount <= 0) break;
-                
+
                 const debtRemaining = parseFloat(debt.amount) || 0;
                 const paymentForThisDebt = Math.min(remainingAmount, debtRemaining);
                 const newRemaining = debtRemaining - paymentForThisDebt;
                 const previousPartial = parseFloat(debt.partialPayment) || 0;
                 const totalPaidForDebt = previousPartial + paymentForThisDebt;
                 const originalAmount = parseFloat(debt.originalAmount) || debtRemaining;
-                
+
                 if (newRemaining === 0) {
                     debtsToUpdate.push({
                         id: debt.id,
@@ -1400,7 +1367,7 @@
                         }
                     });
                 }
-                
+
                 await push(ref(database, `debts/${debt.id}/payments`), {
                     amount: paymentForThisDebt,
                     method: method,
@@ -1408,20 +1375,19 @@
                     note: note || (newRemaining === 0 ? 'سداد كامل' : 'سداد جزئي'),
                     remainingAfter: newRemaining
                 });
-                
+
                 remainingAmount -= paymentForThisDebt;
             }
-            
+
             const updates = {};
-            
             updates['balances'] = balanceUpdate;
-            
+
             debtsToUpdate.forEach(({ id, updates: debtUpdates }) => {
                 Object.entries(debtUpdates).forEach(([key, value]) => {
                     updates[`debts/${id}/${key}`] = value;
                 });
             });
-            
+
             const transactionRef = push(ref(database, 'transactions'));
             updates[`transactions/${transactionRef.key}`] = {
                 type: amount === totalPending ? 'debt_full_repayment' : 'debt_partial_repayment',
@@ -1437,16 +1403,14 @@
                 affectedDebts: debtsToUpdate.map(d => d.id),
                 fullyPaidDebts: fullyPaidDebts
             };
-            
+
             try {
                 await update(ref(database), updates);
-                
                 if (amount === totalPending) {
                     showSuccess(`تم تسديد جميع ديون ${customer} بالكامل بمبلغ ${formatNumber(amount)} جنيه ✅`);
                 } else {
                     showSuccess(`تم تسديد ${formatNumber(amount)} ج من ديون ${customer}، المتبقي: ${formatNumber(totalPending - amount)} ج`);
                 }
-                
                 closeModal('repay');
             } catch (error) {
                 console.error('خطأ في التسديد:', error);
@@ -1455,32 +1419,30 @@
         };
 
         // ==========================================
-        // إضافة دين يدوي مع مصدر (من الخزنة أو مبيعات آجلة)
+        // ADD DEBT (من الخزنة أو مبيعات آجلة)
         // ==========================================
         window.handleAddDebtSubmit = async function(e) {
             e.preventDefault();
-            
+
             const customer = document.getElementById('newDebtCustomer').value.trim();
             const amount = parseFormattedNumber('newDebtAmount');
             const reason = document.getElementById('newDebtReason').value;
             const fromTreasury = document.getElementById('debtFromTreasury').value === 'true';
-            
+
             if (!customer) {
                 showWarning('الرجاء إدخال اسم الزبون');
                 return;
             }
-            
             if (amount <= 0) {
                 showWarning('المبلغ يجب أن يكون أكبر من صفر');
                 return;
             }
-            
+
             const timestamp = Date.now();
             const uid = Date.now().toString(36).toUpperCase().slice(-6);
-            
+
             const updates = {};
-            
-            // 1. إضافة الدين في debts
+
             const debtRef = push(ref(database, 'debts'));
             updates[`debts/${debtRef.key}`] = {
                 type: 'manual',
@@ -1495,12 +1457,11 @@
                 payments: {},
                 fromTreasury: fromTreasury
             };
-            
-            // 2. إذا كان من الخزنة: نخصم من cash ونسجل عملية صرف
+
             if (fromTreasury) {
                 const currentCash = balances.cash || 0;
                 updates['balances/cash'] = currentCash - amount;
-                
+
                 const treasuryTransRef = push(ref(database, 'transactions'));
                 updates[`transactions/${treasuryTransRef.key}`] = {
                     type: 'treasury_expense',
@@ -1514,7 +1475,6 @@
                     direction: 'out'
                 };
             } else {
-                // مبيعات آجلة: تسجيل في transactions كـ credit_sale
                 const saleTransRef = push(ref(database, 'transactions'));
                 updates[`transactions/${saleTransRef.key}`] = {
                     type: 'credit_sale',
@@ -1527,8 +1487,7 @@
                     category: 'sales',
                     direction: 'in'
                 };
-                
-                // تسجيل عملية الدين أيضاً
+
                 const debtTransRef = push(ref(database, 'transactions'));
                 updates[`transactions/${debtTransRef.key}`] = {
                     type: 'debt',
@@ -1542,11 +1501,10 @@
                     direction: 'pending'
                 };
             }
-            
+
             try {
                 await update(ref(database), updates);
                 closeModal('addDebt');
-                
                 if (fromTreasury) {
                     showSuccess(`تم إضافة دين ${customer} بمبلغ ${formatNumber(amount)} ج وخصم من الخزنة 💰`);
                 } else {
@@ -1565,7 +1523,7 @@
                 const paid = parseFloat(d.partialPayment) || 0;
                 const remaining = d.status === 'paid' ? 0 : (parseFloat(d.amount) || 0);
                 const source = d.fromTreasury === true ? 'من الخزنة' : (d.fromTreasury === false ? 'مبيعات آجلة' : 'غير محدد');
-                
+
                 return [
                     d.operationNumber || d.uid || d.id.slice(-6),
                     d.createdAt ? new Date(d.createdAt).toLocaleDateString('ar-SA') : '',
@@ -1579,7 +1537,7 @@
                     d.note || ''
                 ];
             });
-            
+
             const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
             const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
