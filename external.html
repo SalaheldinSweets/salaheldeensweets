@@ -16,7 +16,6 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* تنسيقات الصندوق الجانبي */
         .trust-card { 
             background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); 
             border: 2px solid #eab308; 
@@ -122,17 +121,15 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
-    <!-- رسائل التنبيه -->
     <div id="warningToast" class="warning-toast">⚠️ رسالة تحذير</div>
     <div id="successToast" class="success-toast">✅ تم بنجاح</div>
 
-    <!-- التطبيق الرئيسي -->
     <div class="app-container" id="app">
         
-        <!-- الهيدر -->
         <header class="bg-gradient-to-r from-yellow-600 to-amber-600 text-white p-4 shadow-lg">
             <div class="flex justify-between items-center mb-2">
                 <button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-yellow-700 transition">
@@ -149,7 +146,6 @@
             </div>
         </header>
 
-        <!-- القائمة الجانبية -->
         <div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50" onclick="toggleSidebar()">
             <div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
                 <div class="p-4 bg-gradient-to-r from-yellow-600 to-amber-600 text-white">
@@ -181,10 +177,8 @@
             </div>
         </div>
 
-        <!-- المحتوى الرئيسي -->
         <main class="p-4 space-y-4 pb-24">
             
-            <!-- شرح الصندوق الجانبي -->
             <div class="trust-card p-4">
                 <div class="flex items-start gap-3">
                     <span class="text-3xl">💡</span>
@@ -206,7 +200,6 @@
                 </div>
             </div>
 
-            <!-- الأرصدة الحالية -->
             <div class="trust-total-box p-4">
                 <div class="text-center mb-4">
                     <h3 class="font-bold text-amber-800 text-lg">📦 إجمالي الأمانات</h3>
@@ -232,7 +225,6 @@
                 </div>
             </div>
 
-            <!-- ملخص سريع -->
             <div class="summary-card">
                 <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
                     <span>📊</span>
@@ -250,7 +242,6 @@
                 </div>
             </div>
 
-            <!-- إضافة/سحب أمانة -->
             <div class="bg-white rounded-2xl p-4 shadow-md">
                 <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2 text-lg">
                     <span>➕</span>
@@ -259,7 +250,6 @@
                 
                 <form id="trustForm" class="space-y-4" onsubmit="handleTrustOperation(event)">
                     
-                    <!-- نوع العملية -->
                     <div>
                         <label class="block text-sm text-slate-600 mb-2 font-semibold">نوع العملية</label>
                         <div class="grid grid-cols-2 gap-3">
@@ -277,19 +267,15 @@
                         <input type="hidden" id="operationType" value="deposit">
                     </div>
 
-                    <!-- اسم الشخص -->
                     <div>
                         <label class="block text-sm text-slate-600 mb-2 font-semibold">اسم صاحب الأمانة</label>
                         <div class="relative">
                             <input type="text" id="personName" class="w-full border-2 border-slate-200 rounded-xl p-4 text-right focus:border-amber-500 focus:outline-none text-lg" placeholder="مثال: أستاذ صلاح، محمد، أخي..." required list="personsList">
                             <datalist id="personsList"></datalist>
                         </div>
-                        <div class="mt-2 flex flex-wrap gap-2" id="quickPersons">
-                            <!-- يُملأ ديناميكياً -->
-                        </div>
+                        <div class="mt-2 flex flex-wrap gap-2" id="quickPersons"></div>
                     </div>
 
-                    <!-- طريقة التحويل -->
                     <div>
                         <label class="block text-sm text-slate-600 mb-2 font-semibold">طريقة التحويل</label>
                         <div class="grid grid-cols-2 gap-3">
@@ -307,20 +293,17 @@
                         <input type="hidden" id="paymentMethod" value="cash">
                     </div>
 
-                    <!-- المبلغ -->
                     <div>
                         <label class="block text-sm text-slate-600 mb-2 font-semibold">المبلغ</label>
                         <input type="text" id="amount" class="w-full border-2 border-slate-200 rounded-xl p-4 text-center text-2xl font-bold focus:border-amber-500 focus:outline-none" placeholder="0" oninput="formatNumberInput(this)" required>
                         <div class="text-xs text-slate-400 mt-1 text-center">بالجنيه السوداني</div>
                     </div>
 
-                    <!-- البيان/الملاحظات -->
                     <div>
                         <label class="block text-sm text-slate-600 mb-2 font-semibold">البيان (اختياري)</label>
                         <input type="text" id="note" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-amber-500 focus:outline-none" placeholder="مثال: حفظ مبلغ للشراء، سلفة مؤقتة...">
                     </div>
 
-                    <!-- زر التأكيد -->
                     <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:from-emerald-600 hover:to-emerald-700 transition flex items-center justify-center gap-2">
                         <span>✅</span>
                         <span>تأكيد الاستلام</span>
@@ -328,18 +311,14 @@
                 </form>
             </div>
 
-            <!-- الأشخاص والأرصدة -->
             <div class="bg-white rounded-2xl p-4 shadow-md">
                 <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
                     <span>👥</span>
                     <span>أرصدة الأشخاص</span>
                 </h3>
-                <div id="personsBalances" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar">
-                    <!-- يُملأ ديناميكياً -->
-                </div>
+                <div id="personsBalances" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar"></div>
             </div>
 
-            <!-- سجل العمليات -->
             <div class="bg-white rounded-2xl p-4 shadow-md">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-slate-700 flex items-center gap-2">
@@ -348,14 +327,11 @@
                     </h3>
                     <button onclick="clearAllHistory()" class="text-xs text-red-500 hover:text-red-700 font-semibold">مسح الكل</button>
                 </div>
-                <div id="operationsHistory" class="space-y-2 max-h-80 overflow-y-auto hide-scrollbar">
-                    <!-- يُملأ ديناميكياً -->
-                </div>
+                <div id="operationsHistory" class="space-y-2 max-h-80 overflow-y-auto hide-scrollbar"></div>
             </div>
 
         </main>
 
-        <!-- شريط التنقل السفلي -->
         <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0">
             <div class="flex justify-around items-center">
                 <a href="index.html" class="flex flex-col items-center p-2 text-slate-400 hover:text-emerald-600 transition">
@@ -383,7 +359,6 @@
 
     </div>
 
-    <!-- Firebase & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -411,10 +386,8 @@
             history: {},
             persons: {}
         };
-
-        // ==========================================
-        // UTILITY FUNCTIONS
-        // ==========================================
+        // ✅ إضافة متغير للأرصدة الرئيسية
+        let mainBalances = { cash: 0, bank: 0 };
 
         window.formatNumber = function(num) {
             if (num === null || num === undefined || isNaN(num)) return '0';
@@ -472,10 +445,6 @@
             }
         }
 
-        // ==========================================
-        // AUTHENTICATION
-        // ==========================================
-
         onAuthStateChanged(auth, (user) => {
             if (!user) { 
                 window.location.href = 'login.html'; 
@@ -500,10 +469,6 @@
             }
         };
 
-        // ==========================================
-        // APP INITIALIZATION
-        // ==========================================
-
         function initApp() {
             // مراقبة تغييرات الصندوق الجانبي
             onValue(ref(database, 'sideFund'), (snap) => {
@@ -511,10 +476,18 @@
                 updateDisplay();
             });
 
+            // ✅ مراقبة الأرصدة الرئيسية للمحل
+            onValue(ref(database, 'balances'), (snap) => {
+                const val = snap.val() || {};
+                mainBalances = {
+                    cash: val.cash || 0,
+                    bank: val.bank || 0
+                };
+            });
+
             updateClock();
             setInterval(updateClock, 1000);
             
-            // تهيئة النموذج
             selectOperationType('deposit');
             selectPaymentMethod('cash');
         }
@@ -531,7 +504,6 @@
         }
 
         function updateDisplay() {
-            // تحديث الأرصدة
             const cash = trustData.cash || 0;
             const bank = trustData.bank || 0;
             const total = cash + bank;
@@ -544,13 +516,8 @@
             document.getElementById('trustBankBalance').classList.remove('data-loading');
             document.getElementById('trustTotalBalance').classList.remove('data-loading');
 
-            // تحديث سجل الأشخاص
             updatePersonsList();
-            
-            // تحديث سجل العمليات
             updateHistory();
-            
-            // تحديث الإحصائيات
             updateStats();
         }
 
@@ -558,7 +525,6 @@
             const history = trustData.history || {};
             const persons = {};
             
-            // حساب رصيد كل شخص
             Object.values(history).forEach(op => {
                 if (!op.person) return;
                 if (!persons[op.person]) {
@@ -581,10 +547,8 @@
                 }
             });
 
-            // حفظ في المتغير العام
             trustData.persons = persons;
 
-            // عرض الأشخاص
             const container = document.getElementById('personsBalances');
             const sortedPersons = Object.entries(persons)
                 .filter(([_, data]) => data.total !== 0)
@@ -609,10 +573,8 @@
                 `).join('');
             }
 
-            // تحديث قائمة الأشخاص السريعة
             updateQuickPersons(Object.keys(persons));
             
-            // تحديث datalist
             const datalist = document.getElementById('personsList');
             datalist.innerHTML = Object.keys(persons).map(p => `<option value="${p}">`).join('');
         }
@@ -685,16 +647,10 @@
             document.getElementById('totalPersons').textContent = activePersons;
         }
 
-        // ==========================================
-        // UI CONTROLS
-        // ==========================================
-
         window.selectOperationType = function(type) {
-            // إزالة التنشيط السابق
             document.getElementById('btnDeposit').classList.remove('type-btn-active-deposit');
             document.getElementById('btnWithdraw').classList.remove('type-btn-active-withdraw');
             
-            // تنشيط الجديد
             if (type === 'deposit') {
                 document.getElementById('btnDeposit').classList.add('type-btn-active-deposit');
             } else {
@@ -703,7 +659,6 @@
             
             document.getElementById('operationType').value = type;
             
-            // تحديث نص الزر
             const btn = document.getElementById('submitBtn');
             if (type === 'deposit') {
                 btn.innerHTML = '<span>✅</span><span>تأكيد الاستلام</span>';
@@ -715,11 +670,9 @@
         };
 
         window.selectPaymentMethod = function(method) {
-            // إزالة التنشيط السابق
             document.getElementById('btnCash').classList.remove('method-btn-active-cash');
             document.getElementById('btnBank').classList.remove('method-btn-active-bank');
             
-            // تنشيط الجديد
             if (method === 'cash') {
                 document.getElementById('btnCash').classList.add('method-btn-active-cash');
             } else {
@@ -729,10 +682,7 @@
             document.getElementById('paymentMethod').value = method;
         };
 
-        // ==========================================
-        // OPERATIONS
-        // ==========================================
-
+        // ✅ الدالة المعدلة: تربط الصندوق الجانبي بالأرصدة الرئيسية
         window.handleTrustOperation = async function(e) {
             e.preventDefault();
             
@@ -754,16 +704,25 @@
 
             // التحقق من الرصيد في حالة التسليم
             if (type === 'withdraw') {
-                const currentBalance = trustData[method] || 0;
-                if (amount > currentBalance) {
+                // 1. التحقق من رصيد الأمانات
+                const currentTrustBalance = trustData[method] || 0;
+                if (amount > currentTrustBalance) {
                     showWarning(`رصيد الأمانات ${method === 'cash' ? 'الكاش' : 'البنك'} غير كافٍ`);
                     return;
                 }
                 
-                // التحقق من رصيد الشخص
+                // 2. التحقق من رصيد الشخص
                 const personBalance = trustData.persons?.[person]?.[method] || 0;
                 if (amount > personBalance) {
                     showWarning(`هذا الشخص ليس لديه رصيد كافٍ في ${method === 'cash' ? 'الكاش' : 'البنك'}`);
+                    return;
+                }
+                
+                // 3. ✅ التحقق من الرصيد الرئيسي للمحل (الجديد)
+                const mainBalanceKey = method === 'cash' ? 'cash' : 'bank';
+                const currentMainBalance = mainBalances[mainBalanceKey] || 0;
+                if (amount > currentMainBalance) {
+                    showWarning(`رصيد المحل الرئيسي (${method === 'cash' ? 'كاش' : 'بنكك'}) غير كافٍ للتسليم! المتاح: ${formatNumber(currentMainBalance)}`);
                     return;
                 }
             }
@@ -772,55 +731,68 @@
                 const opNumber = await generateOperationNumber('T');
                 const timestamp = Date.now();
                 
-                // حساب الرصيد الجديد
-                const currentBalance = trustData[method] || 0;
-                const newBalance = type === 'deposit' 
-                    ? currentBalance + amount 
-                    : currentBalance - amount;
+                // حساب رصيد الأمانات الجديد
+                const currentTrustBalance = trustData[method] || 0;
+                const newTrustBalance = type === 'deposit' 
+                    ? currentTrustBalance + amount 
+                    : currentTrustBalance - amount;
 
-                // تنفيذ العملية
-                await Promise.all([
-                    // تحديث الرصيد
-                    update(ref(database, 'sideFund'), {
-                        [method]: newBalance,
-                        lastUpdated: timestamp
-                    }),
-                    
-                    // إضافة للسجل
-                    push(ref(database, 'sideFund/history'), {
-                        type,
-                        method,
-                        amount,
-                        person,
-                        note,
-                        timestamp,
-                        operationNumber: opNumber,
-                        user: currentUser.email
-                    }),
-                    
-                    // تسجيل في transactions (للأرشفة فقط)
-                    push(ref(database, 'transactions'), {
-                        type: 'side_fund',
-                        sideFundType: type,
-                        amount: type === 'deposit' ? amount : -amount,
-                        method,
-                        person,
-                        note,
-                        timestamp,
-                        title: `${type === 'deposit' ? '📥 استلام' : '📤 تسليم'} أمانة - ${person}`,
-                        operationNumber: opNumber,
-                        noBalanceEffect: true,
-                        user: currentUser.email
-                    })
-                ]);
+                // ✅ حساب رصيد المحل الرئيسي الجديد
+                const balanceKey = method === 'cash' ? 'cash' : 'bank';
+                const currentMainBalance = mainBalances[balanceKey] || 0;
+                const newMainBalance = type === 'deposit'
+                    ? currentMainBalance + amount
+                    : currentMainBalance - amount;
+
+                const updates = [];
+
+                // تحديث رصيد الأمانات
+                updates.push(update(ref(database, 'sideFund'), {
+                    [method]: newTrustBalance,
+                    lastUpdated: timestamp
+                }));
+                
+                // ✅ تحديث الرصيد الرئيسي للمحل
+                updates.push(update(ref(database, 'balances'), {
+                    [balanceKey]: newMainBalance,
+                    lastUpdated: timestamp
+                }));
+                
+                // إضافة للسجل الجانبي
+                updates.push(push(ref(database, 'sideFund/history'), {
+                    type,
+                    method,
+                    amount,
+                    person,
+                    note,
+                    timestamp,
+                    operationNumber: opNumber,
+                    user: currentUser.email
+                }));
+                
+                // تسجيل في transactions الرئيسية (للأرشفة والتتبع)
+                updates.push(push(ref(database, 'transactions'), {
+                    type: 'side_fund',
+                    sideFundType: type,
+                    amount: type === 'deposit' ? amount : -amount,
+                    method,
+                    person,
+                    note,
+                    timestamp,
+                    title: `${type === 'deposit' ? '📥 استلام' : '📤 تسليم'} أمانة - ${person}`,
+                    operationNumber: opNumber,
+                    user: currentUser.email
+                }));
+
+                await Promise.all(updates);
 
                 // إعادة تعيين النموذج
                 document.getElementById('amount').value = '';
                 document.getElementById('note').value = '';
                 
                 showSuccess(type === 'deposit' 
-                    ? `تم استلام الأمانة من ${person} بنجاح` 
-                    : `تم تسليم الأمانة لـ ${person} بنجاح`
+                    ? `تم استلام الأمانة من ${person} بنجاح (وأضيفت للرصيد الرئيسي)` 
+                    : `تم تسليم الأمانة لـ ${person} بنجاح (وخصمت من الرصيد الرئيسي)`
                 );
 
             } catch (error) {
@@ -839,17 +811,20 @@
             }
 
             try {
+                // ✅ إعادة تعيين الأرصدة الرئيسية أيضاً عند المسح الكامل
+                await update(ref(database, 'balances'), {
+                    cash: 0,
+                    bank: 0,
+                    lastUpdated: Date.now()
+                });
+                
                 await remove(ref(database, 'sideFund/history'));
                 await set(ref(database, 'sideFund'), { cash: 0, bank: 0, lastUpdated: Date.now() });
-                showSuccess('تم مسح جميع السجلات');
+                showSuccess('تم مسح جميع السجلات وإعادة الأرصدة للصفر');
             } catch (error) {
                 showWarning('خطأ في المسح: ' + error.message);
             }
         };
-
-        // ==========================================
-        // SIDEBAR
-        // ==========================================
 
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
