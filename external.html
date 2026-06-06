@@ -120,6 +120,73 @@
             padding: 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
+        
+        /* ✅ تنسيق زر التبديل */
+        .vault-toggle {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .vault-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .vault-slider {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: #cbd5e1;
+            border-radius: 28px;
+            transition: 0.3s;
+        }
+        .vault-slider:before {
+            content: "";
+            position: absolute;
+            height: 22px;
+            width: 22px;
+            right: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .vault-toggle input:checked + .vault-slider {
+            background: #10b981;
+        }
+        .vault-toggle input:checked + .vault-slider:before {
+            transform: translateX(-24px);
+        }
+        .vault-toggle-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-right: 10px;
+            transition: 0.3s;
+        }
+        .vault-toggle input:checked ~ .vault-toggle-label-on {
+            color: #10b981;
+        }
+        .vault-toggle input:not(:checked) ~ .vault-toggle-label-off {
+            color: #64748b;
+        }
+        .vault-box {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #10b981;
+            border-radius: 16px;
+            padding: 12px 16px;
+            transition: all 0.3s;
+        }
+        .vault-box.off {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-color: #cbd5e1;
+        }
+        .vault-box.off .vault-icon {
+            filter: grayscale(1);
+            opacity: 0.5;
+        }
     </style>
 <base target="_blank">
 </head>
@@ -254,6 +321,23 @@
                             </button>
                         </div>
                         <input type="hidden" id="operationType" value="deposit">
+                    </div>
+
+                    <!-- ✅ زر التبديل: الدفع من الخزنة -->
+                    <div id="vaultToggleContainer" class="vault-box">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="vault-icon text-2xl transition">🏦</span>
+                                <div>
+                                    <div class="font-bold text-sm text-slate-700">الدفع من الخزنة</div>
+                                    <div class="text-xs text-slate-500" id="vaultDesc">سيتم خصم المبلغ من رصيد المحل</div>
+                                </div>
+                            </div>
+                            <label class="vault-toggle">
+                                <input type="checkbox" id="fromVault" checked onchange="toggleVaultMode()">
+                                <span class="vault-slider"></span>
+                            </label>
+                        </div>
                     </div>
 
                     <div>
@@ -590,15 +674,19 @@
 
             container.innerHTML = sortedHistory.map(item => {
                 const isDeposit = item.type === 'deposit';
+                const vaultBadge = item.fromVault === false 
+                    ? '<span class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full mr-1">خارج الخزنة</span>' 
+                    : '';
                 return `
                     <div class="history-item-${item.type} rounded-xl p-3 flex justify-between items-center">
                         <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
                                 <span class="operation-number">${item.operationNumber || '--'}</span>
                                 <span class="font-bold text-sm ${isDeposit ? 'text-emerald-700' : 'text-red-700'}">
                                     ${isDeposit ? '📥 استلام' : '📤 تسليم'}
                                 </span>
                                 <span class="person-tag text-xs">${item.person}</span>
+                                ${vaultBadge}
                             </div>
                             <div class="text-xs text-slate-500">
                                 ${formatDate(item.timestamp)} ${formatTime(item.timestamp)}
@@ -659,6 +747,21 @@
             document.getElementById('paymentMethod').value = method;
         };
 
+        // ✅ تبديل وضع الخزنة
+        window.toggleVaultMode = function() {
+            const fromVault = document.getElementById('fromVault').checked;
+            const box = document.getElementById('vaultToggleContainer');
+            const desc = document.getElementById('vaultDesc');
+            
+            if (fromVault) {
+                box.classList.remove('off');
+                desc.textContent = 'سيتم خصم المبلغ من رصيد المحل';
+            } else {
+                box.classList.add('off');
+                desc.textContent = 'لن يتم خصم المبلغ من رصيد المحل - تسجيل فقط';
+            }
+        };
+
         window.handleTrustOperation = async function(e) {
             e.preventDefault();
             
@@ -667,6 +770,7 @@
             const amount = parseFormattedNumber('amount');
             const person = document.getElementById('personName').value.trim();
             const note = document.getElementById('note').value.trim();
+            const fromVault = document.getElementById('fromVault').checked;
             
             if (!person) {
                 showWarning('الرجاء إدخال اسم الشخص');
@@ -685,11 +789,14 @@
                     return;
                 }
                 
-                const mainBalanceKey = method === 'cash' ? 'cash' : 'bank';
-                const currentMainBalance = mainBalances[mainBalanceKey] || 0;
-                if (amount > currentMainBalance) {
-                    showWarning(`رصيد المحل الرئيسي (${method === 'cash' ? 'كاش' : 'بنكك'}) غير كافٍ للتسليم! المتاح: ${formatNumber(currentMainBalance)}`);
-                    return;
+                // ✅ التحقق من رصيد المحل فقط إذا كان الدفع من الخزنة
+                if (fromVault) {
+                    const mainBalanceKey = method === 'cash' ? 'cash' : 'bank';
+                    const currentMainBalance = mainBalances[mainBalanceKey] || 0;
+                    if (amount > currentMainBalance) {
+                        showWarning(`رصيد المحل الرئيسي (${method === 'cash' ? 'كاش' : 'بنكك'}) غير كافٍ للتسليم! المتاح: ${formatNumber(currentMainBalance)}`);
+                        return;
+                    }
                 }
             }
 
@@ -702,34 +809,45 @@
                     ? currentTrustBalance + amount 
                     : currentTrustBalance - amount;
 
-                const balanceKey = method === 'cash' ? 'cash' : 'bank';
-                const currentMainBalance = mainBalances[balanceKey] || 0;
-                const newMainBalance = type === 'deposit'
-                    ? currentMainBalance + amount
-                    : currentMainBalance - amount;
-
                 const updates = [];
 
+                // ✅ تحديث رصيد الأمانات دائماً
                 updates.push(update(ref(database, 'sideFund'), {
                     [method]: newTrustBalance,
                     lastUpdated: timestamp
                 }));
                 
-                updates.push(update(ref(database, 'balances'), {
-                    [balanceKey]: newMainBalance,
-                    lastUpdated: timestamp
-                }));
+                // ✅ تحديث الرصيد الرئيسي للمحل فقط إذا كان من الخزنة
+                if (fromVault) {
+                    const balanceKey = method === 'cash' ? 'cash' : 'bank';
+                    const currentMainBalance = mainBalances[balanceKey] || 0;
+                    const newMainBalance = type === 'deposit'
+                        ? currentMainBalance + amount
+                        : currentMainBalance - amount;
+                    
+                    updates.push(update(ref(database, 'balances'), {
+                        [balanceKey]: newMainBalance,
+                        lastUpdated: timestamp
+                    }));
+                }
                 
+                // إضافة للسجل الجانبي
                 updates.push(push(ref(database, 'sideFund/history'), {
                     type,
                     method,
                     amount,
                     person,
                     note,
+                    fromVault, // ✅ حفظ حالة الخزنة
                     timestamp,
                     operationNumber: opNumber,
                     user: currentUser.email
                 }));
+                
+                // تسجيل في transactions
+                const transactionTitle = fromVault 
+                    ? `${type === 'deposit' ? '📥 استلام' : '📤 تسليم'} أمانة - ${person}`
+                    : `${type === 'deposit' ? '📥 استلام' : '📤 تسليم'} أمانة (خارج الخزنة) - ${person}`;
                 
                 updates.push(push(ref(database, 'transactions'), {
                     type: 'side_fund',
@@ -738,8 +856,9 @@
                     method,
                     person,
                     note,
+                    fromVault, // ✅ حفظ حالة الخزنة
                     timestamp,
-                    title: `${type === 'deposit' ? '📥 استلام' : '📤 تسليم'} أمانة - ${person}`,
+                    title: transactionTitle,
                     operationNumber: opNumber,
                     user: currentUser.email
                 }));
@@ -749,10 +868,17 @@
                 document.getElementById('amount').value = '';
                 document.getElementById('note').value = '';
                 
-                showSuccess(type === 'deposit' 
-                    ? `تم استلام الأمانة من ${person} بنجاح (وأضيفت للرصيد الرئيسي)` 
-                    : `تم تسليم الأمانة لـ ${person} بنجاح (وخصمت من الرصيد الرئيسي)`
-                );
+                if (fromVault) {
+                    showSuccess(type === 'deposit' 
+                        ? `تم استلام الأمانة من ${person} بنجاح (وأضيفت للرصيد الرئيسي)` 
+                        : `تم تسليم الأمانة لـ ${person} بنجاح (وخصمت من الرصيد الرئيسي)`
+                    );
+                } else {
+                    showSuccess(type === 'deposit' 
+                        ? `تم استلام الأمانة من ${person} بنجاح (تسجيل فقط - لم تُضف للرصيد)` 
+                        : `تم تسليم الأمانة لـ ${person} بنجاح (تسجيل فقط - لم تُخصم من الرصيد)`
+                    );
+                }
 
             } catch (error) {
                 showWarning('خطأ في تنفيذ العملية: ' + error.message);
