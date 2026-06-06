@@ -194,7 +194,7 @@
                         </ul>
                         <div class="bg-white rounded-lg p-3 text-xs text-red-600 font-bold border border-red-200 flex items-center gap-2">
                             <span class="text-lg">⚠️</span>
-                            <span>هذه الأمانات لا تُحسب في العجز ولا تُستخدم في تغطية الالتزامات!</span>
+                            <span>هذه الأمانات لا تُستخدم في تغطية الالتزامات ولكنها <strong>تُحسب في العجز</strong>!</span>
                         </div>
                     </div>
                 </div>
@@ -203,25 +203,14 @@
             <div class="trust-total-box p-4">
                 <div class="text-center mb-4">
                     <h3 class="font-bold text-amber-800 text-lg">📦 إجمالي الأمانات</h3>
-                    <div class="trust-badge mt-2">غير محسوب في العجز</div>
+                    <div class="trust-badge mt-2">تُحسب في العجز</div>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-white rounded-xl p-4 text-center shadow-sm border-2 border-yellow-200">
-                        <div class="text-3xl mb-1">💵</div>
-                        <div class="text-xs text-amber-600 mb-1">أمانات كاش</div>
-                        <div id="trustCashBalance" class="text-2xl font-bold text-amber-700 data-loading">---</div>
-                    </div>
-                    <div class="bg-white rounded-xl p-4 text-center shadow-sm border-2 border-blue-200">
-                        <div class="text-3xl mb-1">💳</div>
-                        <div class="text-xs text-blue-600 mb-1">أمانات بنكك</div>
-                        <div id="trustBankBalance" class="text-2xl font-bold text-blue-700 data-loading">---</div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl p-3 text-center border-2 border-amber-300">
-                    <div class="text-xs text-amber-600 mb-1">الإجمالي الكلي للأمانات</div>
-                    <div id="trustTotalBalance" class="text-3xl font-bold text-amber-800 data-loading">---</div>
+                <div class="bg-white rounded-xl p-6 text-center border-2 border-amber-300 shadow-sm">
+                    <div class="text-4xl mb-2">📦</div>
+                    <div class="text-xs text-amber-600 mb-2">مجموع الأمانات</div>
+                    <div id="trustTotalBalance" class="text-4xl font-bold text-amber-800 data-loading">---</div>
+                    <div class="text-xs text-amber-500 mt-1">بالجنيه السوداني</div>
                 </div>
             </div>
 
@@ -505,12 +494,7 @@
             const bank = trustData.bank || 0;
             const total = cash + bank;
 
-            document.getElementById('trustCashBalance').textContent = formatNumber(cash);
-            document.getElementById('trustBankBalance').textContent = formatNumber(bank);
             document.getElementById('trustTotalBalance').textContent = formatNumber(total);
-            
-            document.getElementById('trustCashBalance').classList.remove('data-loading');
-            document.getElementById('trustBankBalance').classList.remove('data-loading');
             document.getElementById('trustTotalBalance').classList.remove('data-loading');
 
             updatePersonsList();
@@ -561,10 +545,6 @@
                         </div>
                         <div class="text-right">
                             <div class="font-bold text-amber-700 text-lg">${formatNumber(data.total)} ج</div>
-                            <div class="text-xs text-slate-500">
-                                ${data.cash > 0 ? `💵 ${formatNumber(data.cash)}` : ''}
-                                ${data.bank > 0 ? `💳 ${formatNumber(data.bank)}` : ''}
-                            </div>
                         </div>
                     </div>
                 `).join('');
@@ -679,7 +659,6 @@
             document.getElementById('paymentMethod').value = method;
         };
 
-        // ✅ الدالة المعدلة: السماح بالتسليم بأي طريقة دفع بغض النظر عن طريقة الاستلام
         window.handleTrustOperation = async function(e) {
             e.preventDefault();
             
@@ -699,16 +678,13 @@
                 return;
             }
 
-            // التحقق من الرصيد في حالة التسليم
             if (type === 'withdraw') {
-                // 1. ✅ التحقق من إجمالي رصيد الشخص (كاش + بنكك) بغض النظر عن طريقة التسليم
                 const personTotalBalance = (trustData.persons?.[person]?.cash || 0) + (trustData.persons?.[person]?.bank || 0);
                 if (amount > personTotalBalance) {
                     showWarning(`إجمالي رصيد ${person} من الأمانات غير كافٍ. المتاح: ${formatNumber(personTotalBalance)} ج`);
                     return;
                 }
                 
-                // 2. ✅ التحقق من رصيد المحل الرئيسي في طريقة التسليم المختارة فقط
                 const mainBalanceKey = method === 'cash' ? 'cash' : 'bank';
                 const currentMainBalance = mainBalances[mainBalanceKey] || 0;
                 if (amount > currentMainBalance) {
@@ -721,13 +697,11 @@
                 const opNumber = await generateOperationNumber('T');
                 const timestamp = Date.now();
                 
-                // حساب رصيد الأمانات الجديد
                 const currentTrustBalance = trustData[method] || 0;
                 const newTrustBalance = type === 'deposit' 
                     ? currentTrustBalance + amount 
                     : currentTrustBalance - amount;
 
-                // ✅ حساب رصيد المحل الرئيسي الجديد
                 const balanceKey = method === 'cash' ? 'cash' : 'bank';
                 const currentMainBalance = mainBalances[balanceKey] || 0;
                 const newMainBalance = type === 'deposit'
@@ -736,19 +710,16 @@
 
                 const updates = [];
 
-                // تحديث رصيد الأمانات
                 updates.push(update(ref(database, 'sideFund'), {
                     [method]: newTrustBalance,
                     lastUpdated: timestamp
                 }));
                 
-                // ✅ تحديث الرصيد الرئيسي للمحل
                 updates.push(update(ref(database, 'balances'), {
                     [balanceKey]: newMainBalance,
                     lastUpdated: timestamp
                 }));
                 
-                // إضافة للسجل الجانبي
                 updates.push(push(ref(database, 'sideFund/history'), {
                     type,
                     method,
@@ -760,7 +731,6 @@
                     user: currentUser.email
                 }));
                 
-                // تسجيل في transactions الرئيسية (للأرشفة والتتبع)
                 updates.push(push(ref(database, 'transactions'), {
                     type: 'side_fund',
                     sideFundType: type,
@@ -776,7 +746,6 @@
 
                 await Promise.all(updates);
 
-                // إعادة تعيين النموذج
                 document.getElementById('amount').value = '';
                 document.getElementById('note').value = '';
                 
