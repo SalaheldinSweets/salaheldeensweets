@@ -160,18 +160,6 @@
         .vault-toggle input:checked + .vault-slider:before {
             transform: translateX(-24px);
         }
-        .vault-toggle-label {
-            font-size: 0.85rem;
-            font-weight: 700;
-            margin-right: 10px;
-            transition: 0.3s;
-        }
-        .vault-toggle input:checked ~ .vault-toggle-label-on {
-            color: #10b981;
-        }
-        .vault-toggle input:not(:checked) ~ .vault-toggle-label-off {
-            color: #64748b;
-        }
         .vault-box {
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             border: 2px solid #10b981;
@@ -186,6 +174,9 @@
         .vault-box.off .vault-icon {
             filter: grayscale(1);
             opacity: 0.5;
+        }
+        .vault-hidden {
+            display: none !important;
         }
     </style>
 <base target="_blank">
@@ -323,8 +314,8 @@
                         <input type="hidden" id="operationType" value="deposit">
                     </div>
 
-                    <!-- ✅ زر التبديل: الدفع من الخزنة -->
-                    <div id="vaultToggleContainer" class="vault-box">
+                    <!-- ✅ زر التبديل: يظهر فقط عند تسليم أمانة -->
+                    <div id="vaultToggleContainer" class="vault-box vault-hidden">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="vault-icon text-2xl transition">🏦</span>
@@ -674,9 +665,12 @@
 
             container.innerHTML = sortedHistory.map(item => {
                 const isDeposit = item.type === 'deposit';
-                const vaultBadge = item.fromVault === false 
-                    ? '<span class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full mr-1">خارج الخزنة</span>' 
-                    : '';
+                let vaultBadge = '';
+                if (!isDeposit) {
+                    vaultBadge = item.fromVault === false 
+                        ? '<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full mr-1 border border-amber-300">📊 عبر المبيعات</span>' 
+                        : '<span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full mr-1 border border-emerald-300">🏦 من الخزنة</span>';
+                }
                 return `
                     <div class="history-item-${item.type} rounded-xl p-3 flex justify-between items-center">
                         <div class="flex-1">
@@ -712,14 +706,21 @@
             document.getElementById('totalPersons').textContent = activePersons;
         }
 
+        // ✅ تعديل: إظهار/إخفاء زر الخزنة حسب نوع العملية
         window.selectOperationType = function(type) {
             document.getElementById('btnDeposit').classList.remove('type-btn-active-deposit');
             document.getElementById('btnWithdraw').classList.remove('type-btn-active-withdraw');
             
+            const vaultContainer = document.getElementById('vaultToggleContainer');
+            
             if (type === 'deposit') {
                 document.getElementById('btnDeposit').classList.add('type-btn-active-deposit');
+                // ✅ إخفاء زر الخزنة عند الاستلام
+                vaultContainer.classList.add('vault-hidden');
             } else {
                 document.getElementById('btnWithdraw').classList.add('type-btn-active-withdraw');
+                // ✅ إظهار زر الخزنة عند التسليم
+                vaultContainer.classList.remove('vault-hidden');
             }
             
             document.getElementById('operationType').value = type;
@@ -755,10 +756,10 @@
             
             if (fromVault) {
                 box.classList.remove('off');
-                desc.textContent = 'سيتم خصم المبلغ من رصيد المحل';
+                desc.textContent = 'سيتم خصم المبلغ مباشرة من رصيد المحل';
             } else {
                 box.classList.add('off');
-                desc.textContent = 'لن يتم خصم المبلغ من رصيد المحل - تسجيل فقط';
+                desc.textContent = 'سيتم تسجيل كمبيعات أولاً ثم خصم من الرصيد';
             }
         };
 
@@ -782,14 +783,16 @@
                 return;
             }
 
+            // ✅ التحقق من الرصيد في حالة التسليم
             if (type === 'withdraw') {
+                // 1. التحقق من رصيد الأمانات للشخص
                 const personTotalBalance = (trustData.persons?.[person]?.cash || 0) + (trustData.persons?.[person]?.bank || 0);
                 if (amount > personTotalBalance) {
                     showWarning(`إجمالي رصيد ${person} من الأمانات غير كافٍ. المتاح: ${formatNumber(personTotalBalance)} ج`);
                     return;
                 }
                 
-                // ✅ التحقق من رصيد المحل فقط إذا كان الدفع من الخزنة
+                // 2. ✅ التحقق من رصيد المحل فقط إذا كان الدفع من الخزنة مباشرة
                 if (fromVault) {
                     const mainBalanceKey = method === 'cash' ? 'cash' : 'bank';
                     const currentMainBalance = mainBalances[mainBalanceKey] || 0;
@@ -809,45 +812,87 @@
                     ? currentTrustBalance + amount 
                     : currentTrustBalance - amount;
 
+                const balanceKey = method === 'cash' ? 'cash' : 'bank';
+                const currentMainBalance = mainBalances[balanceKey] || 0;
+
                 const updates = [];
 
-                // ✅ تحديث رصيد الأمانات دائماً
+                // ✅ دائماً: تحديث رصيد الأمانات
                 updates.push(update(ref(database, 'sideFund'), {
                     [method]: newTrustBalance,
                     lastUpdated: timestamp
                 }));
-                
-                // ✅ تحديث الرصيد الرئيسي للمحل فقط إذا كان من الخزنة
-                if (fromVault) {
-                    const balanceKey = method === 'cash' ? 'cash' : 'bank';
-                    const currentMainBalance = mainBalances[balanceKey] || 0;
-                    const newMainBalance = type === 'deposit'
-                        ? currentMainBalance + amount
-                        : currentMainBalance - amount;
-                    
+
+                // ✅ حالة التسليم
+                if (type === 'withdraw') {
+                    if (fromVault) {
+                        // ✅ من الخزنة: خصم مباشر من الرصيد الرئيسي
+                        const newMainBalance = currentMainBalance - amount;
+                        updates.push(update(ref(database, 'balances'), {
+                            [balanceKey]: newMainBalance,
+                            lastUpdated: timestamp
+                        }));
+                    } else {
+                        // ✅ خارج الخزنة: 3 خطوات
+                        // الخطوة 1: تسجيل كمبيعات (إيراد)
+                        updates.push(push(ref(database, 'sales'), {
+                            amount: amount,
+                            method: method,
+                            type: 'trust_return', // نوع خاص: رد أمانة
+                            person: person,
+                            note: note || 'رد أمانة - ' + person,
+                            timestamp: timestamp,
+                            operationNumber: opNumber,
+                            user: currentUser.email
+                        }));
+
+                        // الخطوة 2: إضافة للرصيد الرئيسي (من المبيعات)
+                        const newMainBalanceAfterSales = currentMainBalance + amount;
+                        updates.push(update(ref(database, 'balances'), {
+                            [balanceKey]: newMainBalanceAfterSales,
+                            lastUpdated: timestamp
+                        }));
+
+                        // الخطوة 3: خصم من الرصيد الرئيسي (تسليم الأمانة)
+                        const finalMainBalance = newMainBalanceAfterSales - amount;
+                        updates.push(update(ref(database, 'balances'), {
+                            [balanceKey]: finalMainBalance,
+                            lastUpdated: timestamp + 1
+                        }));
+                    }
+                }
+
+                // ✅ حالة الاستلام: دائماً يضاف للرصيد الرئيسي
+                if (type === 'deposit') {
+                    const newMainBalance = currentMainBalance + amount;
                     updates.push(update(ref(database, 'balances'), {
                         [balanceKey]: newMainBalance,
                         lastUpdated: timestamp
                     }));
                 }
                 
-                // إضافة للسجل الجانبي
+                // ✅ إضافة للسجل الجانبي
                 updates.push(push(ref(database, 'sideFund/history'), {
                     type,
                     method,
                     amount,
                     person,
                     note,
-                    fromVault, // ✅ حفظ حالة الخزنة
+                    fromVault: type === 'withdraw' ? fromVault : true, // الاستلام دائماً من الخزنة
                     timestamp,
                     operationNumber: opNumber,
                     user: currentUser.email
                 }));
                 
-                // تسجيل في transactions
-                const transactionTitle = fromVault 
-                    ? `${type === 'deposit' ? '📥 استلام' : '📤 تسليم'} أمانة - ${person}`
-                    : `${type === 'deposit' ? '📥 استلام' : '📤 تسليم'} أمانة (خارج الخزنة) - ${person}`;
+                // ✅ تسجيل في transactions
+                let transactionTitle = '';
+                if (type === 'deposit') {
+                    transactionTitle = `📥 استلام أمانة - ${person}`;
+                } else {
+                    transactionTitle = fromVault 
+                        ? `📤 تسليم أمانة (من الخزنة) - ${person}`
+                        : `📤 تسليم أمانة (عبر المبيعات) - ${person}`;
+                }
                 
                 updates.push(push(ref(database, 'transactions'), {
                     type: 'side_fund',
@@ -856,7 +901,7 @@
                     method,
                     person,
                     note,
-                    fromVault, // ✅ حفظ حالة الخزنة
+                    fromVault: type === 'withdraw' ? fromVault : true,
                     timestamp,
                     title: transactionTitle,
                     operationNumber: opNumber,
@@ -868,16 +913,14 @@
                 document.getElementById('amount').value = '';
                 document.getElementById('note').value = '';
                 
-                if (fromVault) {
-                    showSuccess(type === 'deposit' 
-                        ? `تم استلام الأمانة من ${person} بنجاح (وأضيفت للرصيد الرئيسي)` 
-                        : `تم تسليم الأمانة لـ ${person} بنجاح (وخصمت من الرصيد الرئيسي)`
-                    );
+                if (type === 'deposit') {
+                    showSuccess(`تم استلام الأمانة من ${person} بنجاح (وأضيفت للرصيد الرئيسي)`);
                 } else {
-                    showSuccess(type === 'deposit' 
-                        ? `تم استلام الأمانة من ${person} بنجاح (تسجيل فقط - لم تُضف للرصيد)` 
-                        : `تم تسليم الأمانة لـ ${person} بنجاح (تسجيل فقط - لم تُخصم من الرصيد)`
-                    );
+                    if (fromVault) {
+                        showSuccess(`تم تسليم الأمانة لـ ${person} بنجاح (خصم مباشر من الخزنة)`);
+                    } else {
+                        showSuccess(`تم تسليم الأمانة لـ ${person} بنجاح (عبر المبيعات: تسجيل → إضافة → خصم)`);
+                    }
                 }
 
             } catch (error) {
