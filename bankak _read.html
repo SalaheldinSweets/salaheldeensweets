@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💰 محفظة بنكك - Bankak Wallet</title>
+    <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -89,23 +90,71 @@
             align-items: center;
             gap: 10px;
         }
-        .paste-area {
-            border: 2px dashed #ddd;
-            border-radius: 12px;
-            padding: 30px 20px;
+
+        /* Image Upload Area */
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 35px 20px;
             text-align: center;
             background: #fafafa;
             transition: all 0.3s;
             cursor: pointer;
             margin-bottom: 15px;
         }
-        .paste-area:hover, .paste-area.active {
+        .upload-area:hover, .upload-area.dragover {
             border-color: #e31c25;
             background: #fff5f5;
         }
-        .paste-area .icon { font-size: 40px; margin-bottom: 10px; }
-        .paste-area p { color: #888; font-size: 0.9rem; }
-        .paste-area .hint { font-size: 0.8rem; color: #aaa; margin-top: 5px; }
+        .upload-area .icon { font-size: 45px; margin-bottom: 10px; }
+        .upload-area h3 { color: #333; margin-bottom: 8px; font-size: 1.1rem; }
+        .upload-area p { color: #888; font-size: 0.9rem; }
+        .upload-area .hint {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 8px;
+            background: #f0f0f0;
+            padding: 5px 15px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        #fileInput { display: none; }
+
+        .preview-area {
+            display: none;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .preview-area img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        .preview-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* OR Divider */
+        .or-divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        .or-divider::before, .or-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        .or-divider span {
+            padding: 0 15px;
+        }
 
         textarea {
             width: 100%;
@@ -114,7 +163,7 @@
             border-radius: 12px;
             font-size: 14px;
             resize: vertical;
-            min-height: 120px;
+            min-height: 100px;
             font-family: inherit;
             direction: rtl;
         }
@@ -140,13 +189,58 @@
             margin-top: 10px;
         }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(227, 28, 37, 0.4); }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
         .btn-secondary {
             background: #f0f0f0;
             color: #333;
-            padding: 8px 20px;
+            padding: 10px 20px;
             font-size: 13px;
         }
         .btn-secondary:hover { background: #e0e0e0; }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+        .btn-success:hover { box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3); }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        .loading-spinner {
+            width: 50px; height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #e31c25;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e31c25, #ff6b6b);
+            width: 0%;
+            transition: width 0.3s;
+        }
 
         /* Legend */
         .legend {
@@ -155,6 +249,7 @@
             margin-top: 15px;
             font-size: 0.85rem;
             justify-content: center;
+            flex-wrap: wrap;
         }
         .legend-item {
             display: flex;
@@ -169,6 +264,7 @@
         .legend-dot.red { background: #dc3545; }
         .legend-dot.blue { background: #007bff; }
         .legend-dot.green { background: #28a745; }
+        .legend-dot.gray { background: #6c757d; }
 
         /* Transaction Cards */
         .transactions-card {
@@ -224,6 +320,16 @@
             color: white;
         }
 
+        /* Category: General Expense - Gray */
+        .transaction-item.expense {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-right-color: #6c757d;
+        }
+        .transaction-item.expense .category-badge {
+            background: #6c757d;
+            color: white;
+        }
+
         /* Category: Income - Green */
         .transaction-item.income {
             background: linear-gradient(135deg, #f0fff4, #e0ffe0);
@@ -246,6 +352,7 @@
         }
         .transaction-item.store .transaction-amount { color: #dc3545; }
         .transaction-item.home .transaction-amount { color: #007bff; }
+        .transaction-item.expense .transaction-amount { color: #6c757d; }
         .transaction-item.income .transaction-amount { color: #28a745; }
 
         .category-badge {
@@ -333,6 +440,7 @@
         }
         .toast.success { background: #28a745; }
         .toast.error { background: #dc3545; }
+        .toast.info { background: #007bff; }
 
         .footer {
             text-align: center;
@@ -342,9 +450,27 @@
             padding-bottom: 20px;
         }
 
+        .raw-text-preview {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 11px;
+            direction: ltr;
+            text-align: left;
+            margin-top: 15px;
+            max-height: 120px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid #e0e0e0;
+            display: none;
+        }
+
         @media (max-width: 480px) {
             .balance-amount { font-size: 2.2rem; }
             .transaction-details { grid-template-columns: 1fr; }
+            .preview-actions { flex-direction: column; }
+            .preview-actions .btn { width: 100%; justify-content: center; }
         }
     </style>
 <base target="_blank">
@@ -372,14 +498,38 @@
 
         <!-- Input Card -->
         <div class="input-card">
-            <div class="section-title">📋 إضافة عملية جديدة</div>
+            <div class="section-title">📸 إضافة عملية جديدة</div>
 
-            <div class="paste-area" id="pasteArea" onclick="document.getElementById('manualText').focus()">
-                <div class="icon">📋</div>
-                <p>اضغط هنا ثم اضغط <strong>Ctrl+V</strong> للصق النص</p>
-                <p class="hint">أو اكتب/الصق النص في المربع أدناه</p>
+            <!-- Image Upload -->
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="icon">📷</div>
+                <h3>اضغط هنا لاختيار صورة</h3>
+                <p>أو اسحب الصورة هنا</p>
+                <p class="hint">🖼️ JPG, PNG, WEBP | أو اضغط Ctrl+V للصق</p>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+
+            <div class="preview-area" id="previewArea">
+                <img id="previewImage" src="" alt="معاينة">
+                <div class="preview-actions">
+                    <button class="btn btn-success" id="readBtn" onclick="readImage()">🔍 قراءة الصورة</button>
+                    <button class="btn btn-secondary" onclick="cancelImage()">❌ إلغاء</button>
+                </div>
+                <div class="loading" id="ocrLoading">
+                    <div class="loading-spinner"></div>
+                    <p>جاري قراءة النص من الصورة...</p>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="progressBar"></div>
+                    </div>
+                    <p id="progressText" style="color: #888; font-size: 13px; margin-top:5px;">0%</p>
+                </div>
+                <div class="raw-text-preview" id="rawTextPreview"></div>
             </div>
 
+            <!-- OR Divider -->
+            <div class="or-divider"><span>أو</span></div>
+
+            <!-- Manual Text Input -->
             <textarea id="manualText" placeholder="الصق نص الإشعار هنا...
 
 مثال:
@@ -403,18 +553,22 @@
                     <span>منزل (s)</span>
                 </div>
                 <div class="legend-item">
+                    <div class="legend-dot gray"></div>
+                    <span>مصروف عام</span>
+                </div>
+                <div class="legend-item">
                     <div class="legend-dot green"></div>
                     <span>إيراد</span>
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="processTransaction()">
+            <button class="btn btn-primary" id="addBtn" onclick="processTransaction()">
                 ➕ إضافة العملية
             </button>
 
             <div style="text-align: center; margin-top: 15px;">
                 <button class="btn btn-secondary" onclick="clearAll()">🗑️ مسح الكل</button>
-                <button class="btn btn-secondary" onclick="exportData()">📥 تصدير</button>
+                <button class="btn btn-secondary" onclick="exportData()">📥 تصدير CSV</button>
             </div>
         </div>
 
@@ -428,62 +582,192 @@
                 <div class="empty-state">
                     <div class="icon">📭</div>
                     <p>لا توجد عمليات مسجلة</p>
-                    <p style="font-size: 0.8rem; margin-top: 5px;">أضف عملية جديدة لبدء التتبع</p>
+                    <p style="font-size: 0.8rem; margin-top: 5px;">أضف صورة إشعار أو الصق النص</p>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="footer">
-        <p>💰 محفظة بنكك © 2026 | يعمل بدون إنترنت</p>
+        <p>💰 محفظة بنكك © 2026 | يعمل بالمتصفح</p>
     </div>
 
     <div class="toast" id="toast"></div>
 
     <script>
-        // Your account number (change this to your actual number)
+        // ============================================
+        // CONFIGURATION - Change this to your account
+        // ============================================
         const MY_ACCOUNT = "0033045332070001";
 
-        // Load data from localStorage
+        // ============================================
+        // STATE
+        // ============================================
         let transactions = JSON.parse(localStorage.getItem('bankak_transactions') || '[]');
         let balance = parseFloat(localStorage.getItem('bankak_balance') || '0');
+        let selectedImage = null;
+        let extractedText = '';
 
-        // Initialize
+        // ============================================
+        // INITIALIZATION
+        // ============================================
         updateUI();
+        setupDragDrop();
+        setupPaste();
 
-        // Paste handling
-        document.addEventListener('paste', function(e) {
-            const pasteArea = document.getElementById('pasteArea');
-            pasteArea.classList.add('active');
-            setTimeout(() => pasteArea.classList.remove('active'), 300);
-
-            const text = e.clipboardData.getData('text');
-            if (text && text.length > 10) {
-                document.getElementById('manualText').value = text;
-                showToast('✅ تم اللصق! اضغط إضافة العملية', 'success');
+        // ============================================
+        // IMAGE HANDLING
+        // ============================================
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showToast('❌ الرجاء اختيار ملف صورة', 'error');
+                return;
             }
-        });
+            selectedImage = file;
+            showPreview(file);
+        }
 
+        function showPreview(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('previewArea').style.display = 'block';
+                document.getElementById('uploadArea').style.display = 'none';
+                document.getElementById('ocrLoading').style.display = 'none';
+                document.getElementById('rawTextPreview').style.display = 'none';
+                document.getElementById('readBtn').style.display = 'inline-flex';
+                document.getElementById('readBtn').disabled = false;
+                document.getElementById('readBtn').textContent = '🔍 قراءة الصورة';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelImage() {
+            selectedImage = null;
+            extractedText = '';
+            document.getElementById('previewArea').style.display = 'none';
+            document.getElementById('uploadArea').style.display = 'block';
+            document.getElementById('fileInput').value = '';
+        }
+
+        async function readImage() {
+            if (!selectedImage) return;
+
+            document.getElementById('readBtn').style.display = 'none';
+            document.getElementById('ocrLoading').style.display = 'block';
+            document.getElementById('rawTextPreview').style.display = 'none';
+
+            try {
+                const result = await Tesseract.recognize(
+                    selectedImage,
+                    'ara+eng',
+                    {
+                        logger: message => {
+                            if (message.status === 'recognizing text') {
+                                const progress = Math.round(message.progress * 100);
+                                document.getElementById('progressBar').style.width = progress + '%';
+                                document.getElementById('progressText').textContent = progress + '%';
+                            }
+                        }
+                    }
+                );
+
+                extractedText = result.data.text;
+                document.getElementById('rawTextPreview').textContent = extractedText;
+                document.getElementById('rawTextPreview').style.display = 'block';
+                document.getElementById('ocrLoading').style.display = 'none';
+
+                // Auto-fill the text area
+                document.getElementById('manualText').value = extractedText;
+
+                showToast('✅ تم قراءة الصورة! اضغط "إضافة العملية"', 'success');
+
+                // Scroll to the button
+                document.getElementById('addBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            } catch (error) {
+                document.getElementById('ocrLoading').style.display = 'none';
+                document.getElementById('readBtn').style.display = 'inline-flex';
+                showToast('❌ خطأ في القراءة: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // DRAG & DROP
+        // ============================================
+        function setupDragDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                        selectedImage = file;
+                        showPreview(file);
+                    } else {
+                        showToast('❌ الرجاء إسقاط ملف صورة فقط', 'error');
+                    }
+                }
+            });
+        }
+
+        // ============================================
+        // PASTE IMAGE (Ctrl+V)
+        // ============================================
+        function setupPaste() {
+            document.addEventListener('paste', function(e) {
+                const items = e.clipboardData.items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const blob = items[i].getAsFile();
+                        selectedImage = blob;
+                        showPreview(blob);
+                        showToast('📸 تم لصق الصورة!', 'info');
+                        break;
+                    }
+                }
+            });
+        }
+
+        // ============================================
+        // PROCESS TRANSACTION
+        // ============================================
         function processTransaction() {
             const text = document.getElementById('manualText').value.trim();
             if (!text) {
-                showToast('❌ الرجاء إدخال نص الإشعار', 'error');
+                showToast('❌ الرجاء إدخال نص الإشعار أو رفع صورة', 'error');
                 return;
             }
 
             const data = extractData(text);
             if (!data.amount) {
-                showToast('❌ لم يتم العثور على المبلغ', 'error');
+                showToast('❌ لم يتم العثور على المبلغ في النص', 'error');
                 return;
             }
 
             // Determine if income or expense
             const fromAccount = (data.from || '').replace(/\s/g, '');
-            const isIncome = fromAccount !== MY_ACCOUNT.replace(/\s/g, '');
+            const myAccountClean = MY_ACCOUNT.replace(/\s/g, '');
+            const isIncome = fromAccount !== myAccountClean && fromAccount !== '' && fromAccount !== '-';
 
             // Determine category from comment
             let category = 'income';
-            let categoryLabel = 'إيراد';
+            let categoryLabel = 'إيراد 📥';
 
             if (!isIncome) {
                 const comment = (data.comment || '').toLowerCase();
@@ -494,11 +778,9 @@
                     category = 'home';
                     categoryLabel = 'منزل 🏠';
                 } else {
-                    category = 'store'; // default expense
-                    categoryLabel = 'مصروفات 📤';
+                    category = 'expense';
+                    categoryLabel = 'مصروف 📤';
                 }
-            } else {
-                categoryLabel = 'إيراد 📥';
             }
 
             const amount = parseFloat(data.amount.replace(/,/g, ''));
@@ -513,7 +795,7 @@
             const transaction = {
                 id: Date.now(),
                 transactionId: data.transactionId || '-',
-                dateTime: data.dateTime || new Date().toLocaleString('ar-SD'),
+                dateTime: data.dateTime || formatDate(new Date()),
                 type: data.type || '-',
                 amount: amount,
                 from: data.from || '-',
@@ -531,14 +813,25 @@
             saveData();
             updateUI();
 
+            // Reset inputs
             document.getElementById('manualText').value = '';
+            if (selectedImage) {
+                cancelImage();
+            }
+
             showToast(isIncome ? '✅ تم إضافة الإيراد!' : '✅ تم إضافة المصروف!', 'success');
         }
 
+        // ============================================
+        // EXTRACT DATA FROM TEXT
+        // ============================================
         function extractData(text) {
             const data = {};
-            const clean = text.replace(/[ً-ٰٟـ]/g, '')
-                .replace(/أ|إ|آ/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
+            const clean = text
+                .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+                .replace(/أ|إ|آ/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي');
 
             // Amount
             const amountMatch = clean.match(/المبلغ[:\s]*([\d,\.]+)/);
@@ -549,7 +842,7 @@
             if (idMatch) data.transactionId = idMatch[1].replace(/\s/g, '').trim();
 
             // Date
-            const dateMatch = clean.match(/التاريخ(?:\s*والوقت)?[:\s]*([\w\-:\s/]+)/);
+            const dateMatch = clean.match(/التاريخ(?:\s*والوقت)?[:\s]*([\w\-:\s\/]+)/);
             if (dateMatch) data.dateTime = dateMatch[1].trim();
 
             // Type
@@ -579,10 +872,14 @@
             return data;
         }
 
+        // ============================================
+        // UPDATE UI
+        // ============================================
         function updateUI() {
             // Balance
-            document.getElementById('balanceAmount').textContent = balance.toFixed(2);
-            document.getElementById('balanceAmount').style.color = balance >= 0 ? '#fff' : '#ffcccb';
+            const balanceEl = document.getElementById('balanceAmount');
+            balanceEl.textContent = balance.toFixed(2);
+            balanceEl.style.color = balance >= 0 ? '#fff' : '#ffcccb';
 
             // Stats
             let income = 0, expense = 0;
@@ -593,17 +890,17 @@
             document.getElementById('totalIncome').textContent = income.toFixed(2);
             document.getElementById('totalExpense').textContent = expense.toFixed(2);
 
-            // Transactions count
+            // Count
             document.getElementById('transactionsCount').textContent = transactions.length;
 
-            // Transactions list
+            // List
             const list = document.getElementById('transactionsList');
             if (transactions.length === 0) {
                 list.innerHTML = `
                     <div class="empty-state">
                         <div class="icon">📭</div>
                         <p>لا توجد عمليات مسجلة</p>
-                        <p style="font-size: 0.8rem; margin-top: 5px;">أضف عملية جديدة لبدء التتبع</p>
+                        <p style="font-size: 0.8rem; margin-top: 5px;">أضف صورة إشعار أو الصق النص</p>
                     </div>`;
                 return;
             }
@@ -645,6 +942,9 @@
             `).join('');
         }
 
+        // ============================================
+        // UTILITIES
+        // ============================================
         function deleteTransaction(id) {
             const t = transactions.find(x => x.id === id);
             if (t) {
@@ -658,7 +958,7 @@
         }
 
         function clearAll() {
-            if (!confirm('هل أنت متأكد من مسح جميع العمليات؟')) return;
+            if (!confirm('هل أنت متأكد من مسح جميع العمليات والرصيد؟')) return;
             transactions = [];
             balance = 0;
             saveData();
@@ -667,18 +967,25 @@
         }
 
         function exportData() {
-            const csv = [
-                ['التاريخ', 'النوع', 'المبلغ', 'الفئة', 'من', 'إلى', 'التعليق', 'رقم العملية'].join(','),
+            const csvContent = [
+                ['التاريخ', 'النوع', 'المبلغ', 'الفئة', 'من', 'إلى', 'التعليق', 'رقم العملية', 'الحالة'].join(','),
                 ...transactions.map(t => [
-                    t.dateTime, t.type, t.amount, t.categoryLabel, t.from, t.to, t.comment, t.transactionId
+                    `"${t.dateTime}"`,
+                    t.isIncome ? 'إيراد' : 'مصروف',
+                    t.amount,
+                    t.categoryLabel,
+                    `"${t.from}"`,
+                    `"${t.to}"`,
+                    `"${t.comment}"`,
+                    `"${t.transactionId}"`,
+                    `"${t.status}"`
                 ].join(','))
-            ].join('
-');
+            ].join('\n');
 
-            const blob = new Blob([﻿ + csv], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'bankak_transactions.csv';
+            link.download = 'bankak_wallet_' + new Date().toISOString().slice(0,10) + '.csv';
             link.click();
             showToast('📥 تم التصدير!', 'success');
         }
@@ -693,6 +1000,12 @@
             toast.textContent = message;
             toast.className = 'toast show ' + type;
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function formatDate(date) {
+            const d = new Date(date);
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return `${d.getDate()}-${months[d.getMonth()]}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
         }
     </script>
 </body>
