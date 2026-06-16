@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قارئ إشعارات بنكك - Bankak Notification Reader</title>
+    <script src='https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js'></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #e31c25;
+            background: #fff5f5;
+        }
+
+        .upload-area i {
+            font-size: 50px;
+            color: #e31c25;
+            margin-bottom: 15px;
+        }
+
+        .upload-area h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            color: #888;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-area {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .preview-area img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e31c25, #c4121a);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(227, 28, 37, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #e31c25;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-right: 4px solid #e31c25;
+        }
+
+        .result-item .label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .result-item .value {
+            color: #333;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .result-item.amount .value {
+            color: #e31c25;
+            font-size: 1.3rem;
+        }
+
+        .result-item.status-success {
+            border-right-color: #28a745;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .raw-text {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+            margin-top: 15px;
+            white-space: pre-wrap;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e31c25;
+        }
+
+        .manual-input {
+            margin-top: 20px;
+        }
+
+        .manual-input textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 150px;
+            font-family: inherit;
+        }
+
+        .manual-input textarea:focus {
+            outline: none;
+            border-color: #e31c25;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 30px;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e31c25, #ff6b6b);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 قارئ إشعارات بنكك</h1>
+            <p>Bankak Notification Reader - استخراج البيانات من لقطات الشاشة</p>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📤 رفع صورة الإشعار</div>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <div style="font-size: 50px;">📷</div>
+                <h3>اضغط هنا لاختيار صورة</h3>
+                <p>أو اسحب الصورة هنا</p>
+                <p style="font-size: 12px; color: #aaa; margin-top: 10px;
+
+">يدعم: JPG, PNG, WEBP</p>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+
+            <div class="preview-area" id="previewArea">
+                <img id="previewImage" src="" alt="معاينة">
+                <div style="text-align: center; margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="processImage()">🔍 قراءة البيانات</button>
+                    <button class="btn btn-secondary" onclick="resetUpload()">❌ إلغاء</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loadingArea">
+                <div class="loading-spinner"></div>
+                <p>جاري قراءة النص من الصورة...</p>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+                <p id="progressText" style="color: #888; font-size: 14px;">0%</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <div class="card manual-input">
+            <div class="section-title">⌨️ أو أدخل النص يدوياً</div>
+            <textarea id="manualText" placeholder="الصق نص الإشعار هنا...
+
+مثال:
+رقم العملية: 20898171876
+التاريخ والوقت: 30-May-2026 16:35:16
+نوع العملية: تحويل إلى حساب آخر
+المبلغ: 32000.00
+من: 0033 0453 3207 0001
+إلى: 0033 0523 7424 0001
+الحالة: نجاح
+اسم المرسل إليه: امجد صلاح الدين محمد صالح
+التعليق: تحويلة نهائية امجد"></textarea>
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="btn btn-primary" onclick="processManualText()">🔍 تحليل النص</button>
+            </div>
+        </div>
+
+        <div class="card results" id="resultsArea">
+            <div class="section-title">📋 نتائج التحليل</div>
+
+            <div class="result-item">
+                <span class="label">رقم العملية</span>
+                <span class="value" id="resTransactionId">-</span>
+            </div>
+
+            <div class="result-item">
+                <span class="label">التاريخ والوقت</span>
+                <span class="value" id="resDateTime">-</span>
+            </div>
+
+            <div class="result-item">
+                <span class="label">نوع العملية</span>
+                <span class="value" id="resType">-</span>
+            </div>
+
+            <div class="result-item amount">
+                <span class="label">المبلغ</span>
+                <span class="value" id="resAmount">-</span>
+            </div>
+
+            <div class="result-item">
+                <span class="label">من (الرقم)</span>
+                <span class="value" id="resFrom">-</span>
+            </div>
+
+            <div class="result-item">
+                <span class="label">إلى (الرقم)</span>
+                <span class="value" id="resTo">-</span>
+            </div>
+
+            <div class="result-item status-success">
+                <span class="label">الحالة</span>
+                <span class="value">
+                    <span class="status-badge status-success" id="resStatus">-</span>
+                </span>
+            </div>
+
+            <div class="result-item">
+                <span class="label">اسم المرسل إليه</span>
+                <span class="value" id="resRecipient">-</span>
+            </div>
+
+            <div class="result-item">
+                <span class="label">التعليق</span>
+                <span class="value" id="resComment">-</span>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="copy-btn" onclick="copyResults()">📋 نسخ جميع البيانات</button>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 1rem;">📝 النص المستخرج (Raw Text)</div>
+                <div class="raw-text" id="rawText"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>قارئ إشعارات بنكك © 2026 | يعمل بالمتصفح بدون خادم</p>
+    </div>
+
+    <script>
+        let selectedImage = null;
+        let extractedData = {};
+
+        // Handle file selection
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showError('الرجاء اختيار ملف صورة فقط');
+                return;
+            }
+
+            selectedImage = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('previewArea').style.display = 'block';
+                document.getElementById('errorMessage').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Reset upload
+        function resetUpload() {
+            selectedImage = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('previewArea').style.display = 'none';
+            document.getElementById('resultsArea').style.display = 'none';
+        }
+
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Process image with OCR
+        async function processImage() {
+            if (!selectedImage) {
+                showError('الرجاء اختيار صورة أولاً');
+                return;
+            }
+
+            document.getElementById('loadingArea').style.display = 'block';
+            document.getElementById('previewArea').style.display = 'none';
+            document.getElementById('resultsArea').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+
+            try {
+                const result = await Tesseract.recognize(
+                    selectedImage,
+                    'ara+eng',
+                    {
+                        logger: message => {
+                            if (message.status === 'recognizing text') {
+                                const progress = Math.round(message.progress * 100);
+                                document.getElementById('progressBar').style.width = progress + '%';
+                                document.getElementById('progressText').textContent = progress + '%';
+                            }
+                        }
+                    }
+                );
+
+                const text = result.data.text;
+                document.getElementById('rawText').textContent = text;
+
+                parseAndDisplay(text);
+
+            } catch (error) {
+                showError('حدث خطأ أثناء قراءة الصورة: ' + error.message);
+                document.getElementById('loadingArea').style.display = 'none';
+            }
+        }
+
+        // Process manual text
+        function processManualText() {
+            const text = document.getElementById('manualText').value.trim();
+            if (!text) {
+                showError('الرجاء إدخال نص الإشعار');
+                return;
+            }
+
+            document.getElementById('rawText').textContent = text;
+            parseAndDisplay(text);
+        }
+
+        // Parse text and extract data
+        function parseAndDisplay(text) {
+            extractedData = extractBankakData(text);
+
+            document.getElementById('resTransactionId').textContent = extractedData.transactionId || 'غير موجود';
+            document.getElementById('resDateTime').textContent = extractedData.dateTime || 'غير موجود';
+            document.getElementById('resType').textContent = extractedData.type || 'غير موجود';
+            document.getElementById('resAmount').textContent = extractedData.amount ? extractedData.amount + ' ج.س' : 'غير موجود';
+            document.getElementById('resFrom').textContent = extractedData.from || 'غير موجود';
+            document.getElementById('resTo').textContent = extractedData.to || 'غير موجود';
+            document.getElementById('resStatus').textContent = extractedData.status || 'غير موجود';
+            document.getElementById('resRecipient').textContent = extractedData.recipient || 'غير موجود';
+            document.getElementById('resComment').textContent = extractedData.comment || 'غير موجود';
+
+            document.getElementById('loadingArea').style.display = 'none';
+            document.getElementById('resultsArea').style.display = 'block';
+
+            // Scroll to results
+            document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Extract Bankak data using regex patterns
+        function extractBankakData(text) {
+            const data = {};
+
+            // Clean text - normalize Arabic characters
+            let cleanText = text
+                .replace(/[ً-ٰٟـ]/g, '') // Remove tashkeel
+                .replace(/أ|إ|آ|ا/g, 'ا') // Normalize alef
+                .replace(/ة/g, 'ه') // Normalize ta marbuta
+                .replace(/ى/g, 'ي'); // Normalize alef maksura
+
+            // Transaction ID - رقم العملية
+            const transactionPatterns = [
+                /رقم\s*العملية[:\s]*([\d\s]+)/,
+                /العملية[:\s]*([\d\s]+)/,
+                /Transaction\s*ID[:\s]*([\d\s]+)/i,
+                /([\d]{8,12})/  // Fallback: any long number
+            ];
+
+            for (let pattern of transactionPatterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    data.transactionId = match[1].replace(/\s/g, '').trim();
+                    break;
+                }
+            }
+
+            // Date and Time
+            const datePatterns = [
+                /التاريخ\s*(?:والوقت)?[:\s]*([\w\-:\s]+)/,
+                /(\d{1,2}[\-\/]\w+[\-\/]\d{2,4}\s+\d{1,2}:\d{2}:\d{2})/,
+                /(\d{1,2}\-\w+\-\d{4}\s+\d{1,2}:\d{2}:\d{2})/
+            ];
+
+            for (let pattern of datePatterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    data.dateTime = match[1].trim();
+                    break;
+                }
+            }
+
+            // Type - نوع العملية
+            const typePatterns = [
+                /نوع\s*العملية[:\s]*(.+)/,
+                /العملية[:\s]*(.+)/,
+                /Type[:\s]*(.+)/i
+            ];
+
+            for (let pattern of typePatterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    data.type = match[1].trim();
+                    break;
+                }
+            }
+
+            // Amount - المبلغ
+            const amountPatterns = [
+                /المبلغ[:\s]*([\d,\.]+)/,
+                /Amount[:\s]*([\d,\.]+)/i,
+                /([\d,]+\.\d{2})/  // Any number with 2 decimal places
+            ];
+
+            for (let pattern of amountPatterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    data.amount = match[1].trim();
+                    break;
+                }
+            }
+
+            // From - من
+            const fromPatterns = [
+                /من[:\s]*([\d\s]+)/,
+                /From[:\s]*([\d\s]+)/i
+            ];
+
+            for (let pattern of fromPatterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    data.from = match[1].trim();
+                    break;
+                }
+            }
+
+            // To - إلى
+            const toPatterns = [
+                /إلى[:\s]*([\d\s]+)/,
+                /الي[:\s]*([\d\s]+)/,
+                /To[:\s]*([\d\s]+)/i
+            ];
+
+            for (let pattern of toPatterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    data.to = match[1].trim();
+                    break;
+                }
+            }
+
+            // Status - الحالة
+            const statusPatterns = [
+                /الحالة[:\s]*(.+)/,
+                /Status[:\s]*(.+)/i
+            ];
+
+            for (let pattern of statusPatterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    data.status = match[1].trim();
+                    break;
+                }
+            }
+
+            // Recipient Name - اسم المرسل إليه
+            const recipientPatterns = [
+                /اسم\s*المرسل\s*إليه[:\s]*(.+)/,
+                /المرسل\s*إليه[:\s]*(.+)/,
+                /Recipient[:\s]*(.+)/i
+            ];
+
+            for (let pattern of recipientPatterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    data.recipient = match[1].trim();
+                    break;
+                }
+            }
+
+            // Comment - التعليق
+            const commentPatterns = [
+                /التعليق[:\s]*(.+)/,
+                /Comment[:\s]*(.+)/i,
+                /ملاحظات?[:\s]*(.+)/
+            ];
+
+            for (let pattern of commentPatterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    data.comment = match[1].trim();
+                    break;
+                }
+            }
+
+            return data;
+        }
+
+        // Copy results to clipboard
+        function copyResults() {
+            const text = `
+رقم العملية: ${extractedData.transactionId || 'غير موجود'}
+التاريخ والوقت: ${extractedData.dateTime || 'غير موجود'}
+نوع العملية: ${extractedData.type || 'غير موجود'}
+المبلغ: ${extractedData.amount ? extractedData.amount + ' ج.س' : 'غير موجود'}
+من: ${extractedData.from || 'غير موجود'}
+إلى: ${extractedData.to || 'غير موجود'}
+الحالة: ${extractedData.status || 'غير موجود'}
+اسم المرسل إليه: ${extractedData.recipient || 'غير موجود'}
+التعليق: ${extractedData.comment || 'غير موجود'}
+            `.trim();
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ تم النسخ!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        // Drag and drop support
+        document.querySelector('.upload-area').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '#e31c25';
+            e.currentTarget.style.background = '#fff5f5';
+        });
+
+        document.querySelector('.upload-area').addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '#ddd';
+            e.currentTarget.style.background = '#fafafa';
+        });
+
+        document.querySelector('.upload-area').addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '#ddd';
+            e.currentTarget.style.background = '#fafafa';
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const event = { target: { files: files } };
+                handleFileSelect(event);
+            }
+        });
+    </script>
+</body>
+</html>
