@@ -3,328 +3,383 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قارئ إشعارات بنكك - Bankak Notification Reader</title>
-    <script src='https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js'></script>
+    <title>💰 محفظة بنكك - Bankak Wallet</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f7fa;
             min-height: 100vh;
             padding: 20px;
         }
+        .container { max-width: 600px; margin: 0 auto; }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, #e31c25, #c4121a);
+            border-radius: 20px;
+            padding: 30px;
             color: white;
-            margin-bottom: 30px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(227, 28, 37, 0.3);
+            position: relative;
+            overflow: hidden;
         }
-
-        .header h1 {
-            font-size: 2rem;
+        .balance-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+        }
+        .balance-label {
+            font-size: 1rem;
+            opacity: 0.9;
             margin-bottom: 10px;
         }
-
-        .header p {
-            opacity: 0.9;
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .balance-currency {
+            font-size: 1.2rem;
+            opacity: 0.8;
         }
 
-        .card {
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .stat-card.income { border-top: 4px solid #28a745; }
+        .stat-card.expense { border-top: 4px solid #dc3545; }
+        .stat-label { color: #888; font-size: 0.9rem; margin-bottom: 8px; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; }
+        .stat-card.income .stat-value { color: #28a745; }
+        .stat-card.expense .stat-value { color: #dc3545; }
+
+        /* Input Card */
+        .input-card {
             background: white;
             border-radius: 20px;
             padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
         }
-
-        .upload-area {
-            border: 3px dashed #ddd;
-            border-radius: 15px;
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #fafafa;
-        }
-
-        .upload-area:hover {
-            border-color: #e31c25;
-            background: #fff5f5;
-        }
-
-        .upload-area i {
-            font-size: 50px;
-            color: #e31c25;
-            margin-bottom: 15px;
-        }
-
-        .upload-area h3 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .upload-area p {
-            color: #888;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .preview-area {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .preview-area img {
-            max-width: 100%;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-            margin: 5px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #e31c25, #c4121a);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(227, 28, 37, 0.4);
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 30px;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #e31c25;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .results {
-            display: none;
-        }
-
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            margin-bottom: 10px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-right: 4px solid #e31c25;
-        }
-
-        .result-item .label {
-            color: #666;
-            font-weight: 600;
-        }
-
-        .result-item .value {
-            color: #333;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .result-item.amount .value {
-            color: #e31c25;
-            font-size: 1.3rem;
-        }
-
-        .result-item.status-success {
-            border-right-color: #28a745;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .raw-text {
-            background: #f4f4f4;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: monospace;
-            font-size: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-            direction: ltr;
-            text-align: left;
-            margin-top: 15px;
-            white-space: pre-wrap;
-        }
-
         .section-title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #333;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #e31c25;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-
-        .manual-input {
-            margin-top: 20px;
+        .paste-area {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            background: #fafafa;
+            transition: all 0.3s;
+            cursor: pointer;
+            margin-bottom: 15px;
         }
+        .paste-area:hover, .paste-area.active {
+            border-color: #e31c25;
+            background: #fff5f5;
+        }
+        .paste-area .icon { font-size: 40px; margin-bottom: 10px; }
+        .paste-area p { color: #888; font-size: 0.9rem; }
+        .paste-area .hint { font-size: 0.8rem; color: #aaa; margin-top: 5px; }
 
-        .manual-input textarea {
+        textarea {
             width: 100%;
             padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
             font-size: 14px;
             resize: vertical;
-            min-height: 150px;
+            min-height: 120px;
             font-family: inherit;
+            direction: rtl;
         }
+        textarea:focus { outline: none; border-color: #e31c25; }
 
-        .manual-input textarea:focus {
-            outline: none;
-            border-color: #e31c25;
-        }
-
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-            display: none;
-        }
-
-        .copy-btn {
-            background: #28a745;
-            color: white;
-            padding: 8px 20px;
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 25px;
             border: none;
-            border-radius: 20px;
+            border-radius: 25px;
+            font-size: 15px;
             cursor: pointer;
-            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #e31c25, #c4121a);
+            color: white;
+            width: 100%;
+            justify-content: center;
             margin-top: 10px;
         }
-
-        .copy-btn:hover {
-            background: #218838;
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(227, 28, 37, 0.4); }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            padding: 8px 20px;
+            font-size: 13px;
         }
+        .btn-secondary:hover { background: #e0e0e0; }
 
-        .footer {
-            text-align: center;
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .legend-dot.red { background: #dc3545; }
+        .legend-dot.blue { background: #007bff; }
+        .legend-dot.green { background: #28a745; }
+
+        /* Transaction Cards */
+        .transactions-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        .transactions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .transactions-count {
+            background: #e31c25;
             color: white;
-            opacity: 0.8;
-            margin-top: 30px;
+            padding: 5px 15px;
+            border-radius: 20px;
             font-size: 0.9rem;
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 10px 0;
+        .transaction-item {
+            border-radius: 15px;
+            padding: 18px;
+            margin-bottom: 12px;
+            position: relative;
+            transition: all 0.3s;
+            border-right: 5px solid;
+        }
+        .transaction-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #e31c25, #ff6b6b);
-            width: 0%;
-            transition: width 0.3s;
+        /* Category: Store (m) - Red */
+        .transaction-item.store {
+            background: linear-gradient(135deg, #fff5f5, #ffe0e0);
+            border-right-color: #dc3545;
+        }
+        .transaction-item.store .category-badge {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Category: Home (s) - Blue */
+        .transaction-item.home {
+            background: linear-gradient(135deg, #f0f8ff, #e0f0ff);
+            border-right-color: #007bff;
+        }
+        .transaction-item.home .category-badge {
+            background: #007bff;
+            color: white;
+        }
+
+        /* Category: Income - Green */
+        .transaction-item.income {
+            background: linear-gradient(135deg, #f0fff4, #e0ffe0);
+            border-right-color: #28a745;
+        }
+        .transaction-item.income .category-badge {
+            background: #28a745;
+            color: white;
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .transaction-amount {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        .transaction-item.store .transaction-amount { color: #dc3545; }
+        .transaction-item.home .transaction-amount { color: #007bff; }
+        .transaction-item.income .transaction-amount { color: #28a745; }
+
+        .category-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .transaction-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        .transaction-details .detail {
+            display: flex;
+            flex-direction: column;
+        }
+        .transaction-details .detail-label {
+            font-size: 0.75rem;
+            color: #999;
+            margin-bottom: 2px;
+        }
+        .transaction-details .detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+        .transaction-comment {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed rgba(0,0,0,0.1);
+            font-size: 0.85rem;
+            color: #555;
+            font-style: italic;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+        }
+        .empty-state .icon { font-size: 50px; margin-bottom: 15px; }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .transaction-item:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { background: #dc3545; color: white; }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+
+        .footer {
+            text-align: center;
+            color: #aaa;
+            margin-top: 30px;
+            font-size: 0.85rem;
+            padding-bottom: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .balance-amount { font-size: 2.2rem; }
+            .transaction-details { grid-template-columns: 1fr; }
         }
     </style>
 <base target="_blank">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>📱 قارئ إشعارات بنكك</h1>
-            <p>Bankak Notification Reader - استخراج البيانات من لقطات الشاشة</p>
+        <!-- Balance Card -->
+        <div class="balance-card">
+            <div class="balance-label">💳 الرصيد الحالي</div>
+            <div class="balance-amount" id="balanceAmount">0.00</div>
+            <div class="balance-currency">ج.س</div>
         </div>
 
-        <div class="card">
-            <div class="section-title">📤 رفع صورة الإشعار</div>
-            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-                <div style="font-size: 50px;">📷</div>
-                <h3>اضغط هنا لاختيار صورة</h3>
-                <p>أو اسحب الصورة هنا</p>
-                <p style="font-size: 12px; color: #aaa; margin-top: 10px;
-
-">يدعم: JPG, PNG, WEBP</p>
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card income">
+                <div class="stat-label">📥 الإيرادات</div>
+                <div class="stat-value" id="totalIncome">0.00</div>
             </div>
-            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
-
-            <div class="preview-area" id="previewArea">
-                <img id="previewImage" src="" alt="معاينة">
-                <div style="text-align: center; margin-top: 15px;">
-                    <button class="btn btn-primary" onclick="processImage()">🔍 قراءة البيانات</button>
-                    <button class="btn btn-secondary" onclick="resetUpload()">❌ إلغاء</button>
-                </div>
+            <div class="stat-card expense">
+                <div class="stat-label">📤 المصروفات</div>
+                <div class="stat-value" id="totalExpense">0.00</div>
             </div>
-
-            <div class="loading" id="loadingArea">
-                <div class="loading-spinner"></div>
-                <p>جاري قراءة النص من الصورة...</p>
-                <div class="progress-bar">
-                    <div class="progress-bar-fill" id="progressBar"></div>
-                </div>
-                <p id="progressText" style="color: #888; font-size: 14px;">0%</p>
-            </div>
-
-            <div class="error-message" id="errorMessage"></div>
         </div>
 
-        <div class="card manual-input">
-            <div class="section-title">⌨️ أو أدخل النص يدوياً</div>
+        <!-- Input Card -->
+        <div class="input-card">
+            <div class="section-title">📋 إضافة عملية جديدة</div>
+
+            <div class="paste-area" id="pasteArea" onclick="document.getElementById('manualText').focus()">
+                <div class="icon">📋</div>
+                <p>اضغط هنا ثم اضغط <strong>Ctrl+V</strong> للصق النص</p>
+                <p class="hint">أو اكتب/الصق النص في المربع أدناه</p>
+            </div>
+
             <textarea id="manualText" placeholder="الصق نص الإشعار هنا...
 
 مثال:
@@ -336,383 +391,309 @@
 إلى: 0033 0523 7424 0001
 الحالة: نجاح
 اسم المرسل إليه: امجد صلاح الدين محمد صالح
-التعليق: تحويلة نهائية امجد"></textarea>
+التعليق: تحويلة نهائية امجد m"></textarea>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot red"></div>
+                    <span>محل (m)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot blue"></div>
+                    <span>منزل (s)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot green"></div>
+                    <span>إيراد</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="processTransaction()">
+                ➕ إضافة العملية
+            </button>
+
             <div style="text-align: center; margin-top: 15px;">
-                <button class="btn btn-primary" onclick="processManualText()">🔍 تحليل النص</button>
+                <button class="btn btn-secondary" onclick="clearAll()">🗑️ مسح الكل</button>
+                <button class="btn btn-secondary" onclick="exportData()">📥 تصدير</button>
             </div>
         </div>
 
-        <div class="card results" id="resultsArea">
-            <div class="section-title">📋 نتائج التحليل</div>
-
-            <div class="result-item">
-                <span class="label">رقم العملية</span>
-                <span class="value" id="resTransactionId">-</span>
+        <!-- Transactions -->
+        <div class="transactions-card">
+            <div class="transactions-header">
+                <div class="section-title" style="margin:0; border:none;">📜 سجل العمليات</div>
+                <div class="transactions-count" id="transactionsCount">0</div>
             </div>
-
-            <div class="result-item">
-                <span class="label">التاريخ والوقت</span>
-                <span class="value" id="resDateTime">-</span>
-            </div>
-
-            <div class="result-item">
-                <span class="label">نوع العملية</span>
-                <span class="value" id="resType">-</span>
-            </div>
-
-            <div class="result-item amount">
-                <span class="label">المبلغ</span>
-                <span class="value" id="resAmount">-</span>
-            </div>
-
-            <div class="result-item">
-                <span class="label">من (الرقم)</span>
-                <span class="value" id="resFrom">-</span>
-            </div>
-
-            <div class="result-item">
-                <span class="label">إلى (الرقم)</span>
-                <span class="value" id="resTo">-</span>
-            </div>
-
-            <div class="result-item status-success">
-                <span class="label">الحالة</span>
-                <span class="value">
-                    <span class="status-badge status-success" id="resStatus">-</span>
-                </span>
-            </div>
-
-            <div class="result-item">
-                <span class="label">اسم المرسل إليه</span>
-                <span class="value" id="resRecipient">-</span>
-            </div>
-
-            <div class="result-item">
-                <span class="label">التعليق</span>
-                <span class="value" id="resComment">-</span>
-            </div>
-
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="copy-btn" onclick="copyResults()">📋 نسخ جميع البيانات</button>
-            </div>
-
-            <div style="margin-top: 20px;">
-                <div class="section-title" style="font-size: 1rem;">📝 النص المستخرج (Raw Text)</div>
-                <div class="raw-text" id="rawText"></div>
+            <div id="transactionsList">
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <p>لا توجد عمليات مسجلة</p>
+                    <p style="font-size: 0.8rem; margin-top: 5px;">أضف عملية جديدة لبدء التتبع</p>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="footer">
-        <p>قارئ إشعارات بنكك © 2026 | يعمل بالمتصفح بدون خادم</p>
+        <p>💰 محفظة بنكك © 2026 | يعمل بدون إنترنت</p>
     </div>
 
+    <div class="toast" id="toast"></div>
+
     <script>
-        let selectedImage = null;
-        let extractedData = {};
+        // Your account number (change this to your actual number)
+        const MY_ACCOUNT = "0033045332070001";
 
-        // Handle file selection
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        // Load data from localStorage
+        let transactions = JSON.parse(localStorage.getItem('bankak_transactions') || '[]');
+        let balance = parseFloat(localStorage.getItem('bankak_balance') || '0');
 
-            if (!file.type.startsWith('image/')) {
-                showError('الرجاء اختيار ملف صورة فقط');
-                return;
+        // Initialize
+        updateUI();
+
+        // Paste handling
+        document.addEventListener('paste', function(e) {
+            const pasteArea = document.getElementById('pasteArea');
+            pasteArea.classList.add('active');
+            setTimeout(() => pasteArea.classList.remove('active'), 300);
+
+            const text = e.clipboardData.getData('text');
+            if (text && text.length > 10) {
+                document.getElementById('manualText').value = text;
+                showToast('✅ تم اللصق! اضغط إضافة العملية', 'success');
             }
+        });
 
-            selectedImage = file;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('previewImage').src = e.target.result;
-                document.getElementById('previewArea').style.display = 'block';
-                document.getElementById('errorMessage').style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Reset upload
-        function resetUpload() {
-            selectedImage = null;
-            document.getElementById('fileInput').value = '';
-            document.getElementById('previewArea').style.display = 'none';
-            document.getElementById('resultsArea').style.display = 'none';
-        }
-
-        // Show error
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        }
-
-        // Process image with OCR
-        async function processImage() {
-            if (!selectedImage) {
-                showError('الرجاء اختيار صورة أولاً');
-                return;
-            }
-
-            document.getElementById('loadingArea').style.display = 'block';
-            document.getElementById('previewArea').style.display = 'none';
-            document.getElementById('resultsArea').style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'none';
-
-            try {
-                const result = await Tesseract.recognize(
-                    selectedImage,
-                    'ara+eng',
-                    {
-                        logger: message => {
-                            if (message.status === 'recognizing text') {
-                                const progress = Math.round(message.progress * 100);
-                                document.getElementById('progressBar').style.width = progress + '%';
-                                document.getElementById('progressText').textContent = progress + '%';
-                            }
-                        }
-                    }
-                );
-
-                const text = result.data.text;
-                document.getElementById('rawText').textContent = text;
-
-                parseAndDisplay(text);
-
-            } catch (error) {
-                showError('حدث خطأ أثناء قراءة الصورة: ' + error.message);
-                document.getElementById('loadingArea').style.display = 'none';
-            }
-        }
-
-        // Process manual text
-        function processManualText() {
+        function processTransaction() {
             const text = document.getElementById('manualText').value.trim();
             if (!text) {
-                showError('الرجاء إدخال نص الإشعار');
+                showToast('❌ الرجاء إدخال نص الإشعار', 'error');
                 return;
             }
 
-            document.getElementById('rawText').textContent = text;
-            parseAndDisplay(text);
+            const data = extractData(text);
+            if (!data.amount) {
+                showToast('❌ لم يتم العثور على المبلغ', 'error');
+                return;
+            }
+
+            // Determine if income or expense
+            const fromAccount = (data.from || '').replace(/\s/g, '');
+            const isIncome = fromAccount !== MY_ACCOUNT.replace(/\s/g, '');
+
+            // Determine category from comment
+            let category = 'income';
+            let categoryLabel = 'إيراد';
+
+            if (!isIncome) {
+                const comment = (data.comment || '').toLowerCase();
+                if (comment.includes('m')) {
+                    category = 'store';
+                    categoryLabel = 'محل 🏪';
+                } else if (comment.includes('s')) {
+                    category = 'home';
+                    categoryLabel = 'منزل 🏠';
+                } else {
+                    category = 'store'; // default expense
+                    categoryLabel = 'مصروفات 📤';
+                }
+            } else {
+                categoryLabel = 'إيراد 📥';
+            }
+
+            const amount = parseFloat(data.amount.replace(/,/g, ''));
+
+            // Update balance
+            if (isIncome) {
+                balance += amount;
+            } else {
+                balance -= amount;
+            }
+
+            const transaction = {
+                id: Date.now(),
+                transactionId: data.transactionId || '-',
+                dateTime: data.dateTime || new Date().toLocaleString('ar-SD'),
+                type: data.type || '-',
+                amount: amount,
+                from: data.from || '-',
+                to: data.to || '-',
+                status: data.status || '-',
+                recipient: data.recipient || '-',
+                comment: data.comment || '-',
+                category: category,
+                categoryLabel: categoryLabel,
+                isIncome: isIncome,
+                timestamp: Date.now()
+            };
+
+            transactions.unshift(transaction);
+            saveData();
+            updateUI();
+
+            document.getElementById('manualText').value = '';
+            showToast(isIncome ? '✅ تم إضافة الإيراد!' : '✅ تم إضافة المصروف!', 'success');
         }
 
-        // Parse text and extract data
-        function parseAndDisplay(text) {
-            extractedData = extractBankakData(text);
-
-            document.getElementById('resTransactionId').textContent = extractedData.transactionId || 'غير موجود';
-            document.getElementById('resDateTime').textContent = extractedData.dateTime || 'غير موجود';
-            document.getElementById('resType').textContent = extractedData.type || 'غير موجود';
-            document.getElementById('resAmount').textContent = extractedData.amount ? extractedData.amount + ' ج.س' : 'غير موجود';
-            document.getElementById('resFrom').textContent = extractedData.from || 'غير موجود';
-            document.getElementById('resTo').textContent = extractedData.to || 'غير موجود';
-            document.getElementById('resStatus').textContent = extractedData.status || 'غير موجود';
-            document.getElementById('resRecipient').textContent = extractedData.recipient || 'غير موجود';
-            document.getElementById('resComment').textContent = extractedData.comment || 'غير موجود';
-
-            document.getElementById('loadingArea').style.display = 'none';
-            document.getElementById('resultsArea').style.display = 'block';
-
-            // Scroll to results
-            document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Extract Bankak data using regex patterns
-        function extractBankakData(text) {
+        function extractData(text) {
             const data = {};
+            const clean = text.replace(/[ً-ٰٟـ]/g, '')
+                .replace(/أ|إ|آ/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
 
-            // Clean text - normalize Arabic characters
-            let cleanText = text
-                .replace(/[ً-ٰٟـ]/g, '') // Remove tashkeel
-                .replace(/أ|إ|آ|ا/g, 'ا') // Normalize alef
-                .replace(/ة/g, 'ه') // Normalize ta marbuta
-                .replace(/ى/g, 'ي'); // Normalize alef maksura
+            // Amount
+            const amountMatch = clean.match(/المبلغ[:\s]*([\d,\.]+)/);
+            if (amountMatch) data.amount = amountMatch[1];
 
-            // Transaction ID - رقم العملية
-            const transactionPatterns = [
-                /رقم\s*العملية[:\s]*([\d\s]+)/,
-                /العملية[:\s]*([\d\s]+)/,
-                /Transaction\s*ID[:\s]*([\d\s]+)/i,
-                /([\d]{8,12})/  // Fallback: any long number
-            ];
+            // Transaction ID
+            const idMatch = clean.match(/رقم\s*العملية[:\s]*([\d\s]+)/);
+            if (idMatch) data.transactionId = idMatch[1].replace(/\s/g, '').trim();
 
-            for (let pattern of transactionPatterns) {
-                const match = cleanText.match(pattern);
-                if (match) {
-                    data.transactionId = match[1].replace(/\s/g, '').trim();
-                    break;
-                }
-            }
+            // Date
+            const dateMatch = clean.match(/التاريخ(?:\s*والوقت)?[:\s]*([\w\-:\s/]+)/);
+            if (dateMatch) data.dateTime = dateMatch[1].trim();
 
-            // Date and Time
-            const datePatterns = [
-                /التاريخ\s*(?:والوقت)?[:\s]*([\w\-:\s]+)/,
-                /(\d{1,2}[\-\/]\w+[\-\/]\d{2,4}\s+\d{1,2}:\d{2}:\d{2})/,
-                /(\d{1,2}\-\w+\-\d{4}\s+\d{1,2}:\d{2}:\d{2})/
-            ];
+            // Type
+            const typeMatch = clean.match(/نوع\s*العملية[:\s]*(.+)/);
+            if (typeMatch) data.type = typeMatch[1].trim();
 
-            for (let pattern of datePatterns) {
-                const match = cleanText.match(pattern);
-                if (match) {
-                    data.dateTime = match[1].trim();
-                    break;
-                }
-            }
+            // From
+            const fromMatch = clean.match(/من[:\s]*([\d\s]+)/);
+            if (fromMatch) data.from = fromMatch[1].trim();
 
-            // Type - نوع العملية
-            const typePatterns = [
-                /نوع\s*العملية[:\s]*(.+)/,
-                /العملية[:\s]*(.+)/,
-                /Type[:\s]*(.+)/i
-            ];
+            // To
+            const toMatch = clean.match(/إلى[:\s]*([\d\s]+)/);
+            if (toMatch) data.to = toMatch[1].trim();
 
-            for (let pattern of typePatterns) {
-                const match = cleanText.match(pattern);
-                if (match) {
-                    data.type = match[1].trim();
-                    break;
-                }
-            }
+            // Status
+            const statusMatch = clean.match(/الحالة[:\s]*(.+)/);
+            if (statusMatch) data.status = statusMatch[1].trim();
 
-            // Amount - المبلغ
-            const amountPatterns = [
-                /المبلغ[:\s]*([\d,\.]+)/,
-                /Amount[:\s]*([\d,\.]+)/i,
-                /([\d,]+\.\d{2})/  // Any number with 2 decimal places
-            ];
+            // Recipient
+            const recipientMatch = clean.match(/اسم\s*المرسل\s*إليه[:\s]*(.+)/);
+            if (recipientMatch) data.recipient = recipientMatch[1].trim();
 
-            for (let pattern of amountPatterns) {
-                const match = cleanText.match(pattern);
-                if (match) {
-                    data.amount = match[1].trim();
-                    break;
-                }
-            }
-
-            // From - من
-            const fromPatterns = [
-                /من[:\s]*([\d\s]+)/,
-                /From[:\s]*([\d\s]+)/i
-            ];
-
-            for (let pattern of fromPatterns) {
-                const match = cleanText.match(pattern);
-                if (match) {
-                    data.from = match[1].trim();
-                    break;
-                }
-            }
-
-            // To - إلى
-            const toPatterns = [
-                /إلى[:\s]*([\d\s]+)/,
-                /الي[:\s]*([\d\s]+)/,
-                /To[:\s]*([\d\s]+)/i
-            ];
-
-            for (let pattern of toPatterns) {
-                const match = cleanText.match(pattern);
-                if (match) {
-                    data.to = match[1].trim();
-                    break;
-                }
-            }
-
-            // Status - الحالة
-            const statusPatterns = [
-                /الحالة[:\s]*(.+)/,
-                /Status[:\s]*(.+)/i
-            ];
-
-            for (let pattern of statusPatterns) {
-                const match = cleanText.match(pattern);
-                if (match) {
-                    data.status = match[1].trim();
-                    break;
-                }
-            }
-
-            // Recipient Name - اسم المرسل إليه
-            const recipientPatterns = [
-                /اسم\s*المرسل\s*إليه[:\s]*(.+)/,
-                /المرسل\s*إليه[:\s]*(.+)/,
-                /Recipient[:\s]*(.+)/i
-            ];
-
-            for (let pattern of recipientPatterns) {
-                const match = cleanText.match(pattern);
-                if (match) {
-                    data.recipient = match[1].trim();
-                    break;
-                }
-            }
-
-            // Comment - التعليق
-            const commentPatterns = [
-                /التعليق[:\s]*(.+)/,
-                /Comment[:\s]*(.+)/i,
-                /ملاحظات?[:\s]*(.+)/
-            ];
-
-            for (let pattern of commentPatterns) {
-                const match = cleanText.match(pattern);
-                if (match) {
-                    data.comment = match[1].trim();
-                    break;
-                }
-            }
+            // Comment
+            const commentMatch = clean.match(/التعليق[:\s]*(.+)/);
+            if (commentMatch) data.comment = commentMatch[1].trim();
 
             return data;
         }
 
-        // Copy results to clipboard
-        function copyResults() {
-            const text = `
-رقم العملية: ${extractedData.transactionId || 'غير موجود'}
-التاريخ والوقت: ${extractedData.dateTime || 'غير موجود'}
-نوع العملية: ${extractedData.type || 'غير موجود'}
-المبلغ: ${extractedData.amount ? extractedData.amount + ' ج.س' : 'غير موجود'}
-من: ${extractedData.from || 'غير موجود'}
-إلى: ${extractedData.to || 'غير موجود'}
-الحالة: ${extractedData.status || 'غير موجود'}
-اسم المرسل إليه: ${extractedData.recipient || 'غير موجود'}
-التعليق: ${extractedData.comment || 'غير موجود'}
-            `.trim();
+        function updateUI() {
+            // Balance
+            document.getElementById('balanceAmount').textContent = balance.toFixed(2);
+            document.getElementById('balanceAmount').style.color = balance >= 0 ? '#fff' : '#ffcccb';
 
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = document.querySelector('.copy-btn');
-                const originalText = btn.textContent;
-                btn.textContent = '✅ تم النسخ!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
+            // Stats
+            let income = 0, expense = 0;
+            transactions.forEach(t => {
+                if (t.isIncome) income += t.amount;
+                else expense += t.amount;
             });
+            document.getElementById('totalIncome').textContent = income.toFixed(2);
+            document.getElementById('totalExpense').textContent = expense.toFixed(2);
+
+            // Transactions count
+            document.getElementById('transactionsCount').textContent = transactions.length;
+
+            // Transactions list
+            const list = document.getElementById('transactionsList');
+            if (transactions.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>لا توجد عمليات مسجلة</p>
+                        <p style="font-size: 0.8rem; margin-top: 5px;">أضف عملية جديدة لبدء التتبع</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = transactions.map(t => `
+                <div class="transaction-item ${t.category}">
+                    <button class="delete-btn" onclick="deleteTransaction(${t.id})">×</button>
+                    <div class="transaction-header">
+                        <div>
+                            <div class="transaction-amount">
+                                ${t.isIncome ? '+' : '-'} ${t.amount.toFixed(2)} ج.س
+                            </div>
+                            <div style="font-size: 0.8rem; color: #888; margin-top: 4px;">
+                                ${t.type}
+                            </div>
+                        </div>
+                        <span class="category-badge">${t.categoryLabel}</span>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="detail">
+                            <span class="detail-label">📅 التاريخ</span>
+                            <span class="detail-value">${t.dateTime}</span>
+                        </div>
+                        <div class="detail">
+                            <span class="detail-label">🔢 رقم العملية</span>
+                            <span class="detail-value">${t.transactionId}</span>
+                        </div>
+                        <div class="detail">
+                            <span class="detail-label">⬅️ من</span>
+                            <span class="detail-value">${t.from}</span>
+                        </div>
+                        <div class="detail">
+                            <span class="detail-label">➡️ إلى</span>
+                            <span class="detail-value">${t.to}</span>
+                        </div>
+                    </div>
+                    ${t.comment !== '-' ? `<div class="transaction-comment">💬 ${t.comment}</div>` : ''}
+                </div>
+            `).join('');
         }
 
-        // Drag and drop support
-        document.querySelector('.upload-area').addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.currentTarget.style.borderColor = '#e31c25';
-            e.currentTarget.style.background = '#fff5f5';
-        });
-
-        document.querySelector('.upload-area').addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            e.currentTarget.style.borderColor = '#ddd';
-            e.currentTarget.style.background = '#fafafa';
-        });
-
-        document.querySelector('.upload-area').addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.currentTarget.style.borderColor = '#ddd';
-            e.currentTarget.style.background = '#fafafa';
-
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const event = { target: { files: files } };
-                handleFileSelect(event);
+        function deleteTransaction(id) {
+            const t = transactions.find(x => x.id === id);
+            if (t) {
+                if (t.isIncome) balance -= t.amount;
+                else balance += t.amount;
             }
-        });
+            transactions = transactions.filter(x => x.id !== id);
+            saveData();
+            updateUI();
+            showToast('🗑️ تم الحذف', 'success');
+        }
+
+        function clearAll() {
+            if (!confirm('هل أنت متأكد من مسح جميع العمليات؟')) return;
+            transactions = [];
+            balance = 0;
+            saveData();
+            updateUI();
+            showToast('🗑️ تم مسح الكل', 'success');
+        }
+
+        function exportData() {
+            const csv = [
+                ['التاريخ', 'النوع', 'المبلغ', 'الفئة', 'من', 'إلى', 'التعليق', 'رقم العملية'].join(','),
+                ...transactions.map(t => [
+                    t.dateTime, t.type, t.amount, t.categoryLabel, t.from, t.to, t.comment, t.transactionId
+                ].join(','))
+            ].join('
+');
+
+            const blob = new Blob([﻿ + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'bankak_transactions.csv';
+            link.click();
+            showToast('📥 تم التصدير!', 'success');
+        }
+
+        function saveData() {
+            localStorage.setItem('bankak_transactions', JSON.stringify(transactions));
+            localStorage.setItem('bankak_balance', balance.toString());
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
     </script>
 </body>
 </html>
