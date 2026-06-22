@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📄 فواتير المبيعات - مدير حسابات صلاح الدين</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{font-family:'Cairo',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh}
+.app-container{max-width:480px;margin:0 auto;background:#f8fafc;min-height:100vh;box-shadow:0 0 50px rgba(0,0,0,0.2)}
+.btn-press:active{transform:scale(0.95);transition:transform 0.1s}
+.hide-scrollbar::-webkit-scrollbar{display:none}
+.hide-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+.fade-in{animation:fadeIn 0.4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+.modal{display:none}
+.modal.active{display:flex}
+.modal-content{transform:translateY(100%);transition:transform 0.3s ease}
+.modal.active .modal-content{transform:translateY(0)}
+.fab{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:white;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 6px 20px rgba(102,126,234,0.4);cursor:pointer;z-index:40;transition:transform 0.2s}
+.fab:active{transform:translateX(-50%) scale(0.9)}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);padding:14px 24px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.2);z-index:100;transition:transform 0.3s ease;font-weight:600;text-align:center;min-width:280px;font-size:0.9rem}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast-success{background:#10b981;color:white}
+.toast-error{background:#ef4444;color:white}
+.toast-info{background:#3b82f6;color:white}
+.product-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.product-row:last-child{border-bottom:none}
+.weight-input{width:80px;text-align:center;border:2px solid #e2e8f0;border-radius:10px;padding:6px 4px;font-weight:700;font-size:1rem}
+.weight-input:focus{border-color:#667eea;outline:none}
+.invoice-card{background:white;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #e2e8f0;transition:all 0.2s}
+.invoice-card:active{transform:scale(0.99)}
+.invoice-card.paid{border-left:4px solid #10b981}
+.invoice-card.partial{border-left:4px solid #f59e0b}
+.invoice-card.unpaid{border-left:4px solid #ef4444}
+.customer-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s}
+.customer-badge:hover{transform:scale(1.05)}
+.customer-badge.owes{background:#fee2e2;color:#dc2626}
+.customer-badge.clear{background:#d1fae5;color:#059669}
+.tab-btn{padding:8px 16px;border-radius:12px;font-size:0.85rem;font-weight:700;transition:all 0.2s;border:2px solid transparent;white-space:nowrap}
+.tab-btn.active{background:#1e293b;color:white}
+.tab-btn:not(.active){background:#f1f5f9;color:#64748b}
+.total-box{background:linear-gradient(135deg,#1e293b,#334155);color:white;border-radius:16px;padding:16px;text-align:center}
+.price-tag{background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:8px;font-size:0.75rem;font-weight:700}
+.delete-btn{background:#fee2e2;color:#dc2626;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer}
+.delete-btn:active{transform:scale(0.9)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="toast" class="toast toast-success">تمت العملية بنجاح</div>
+<div class="app-container" id="app">
+<header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 shadow-lg sticky top-0 z-30">
+<div class="flex justify-between items-center">
+<button onclick="toggleSidebar()" class="btn-press p-2 rounded-lg hover:bg-slate-700 transition"><span class="text-2xl">☰</span></button>
+<h1 class="text-lg font-bold">📄 فواتير المبيعات</h1>
+<button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-700 transition text-sm">خروج</button>
+</div>
+</header>
+<div id="sidebar" class="fixed inset-0 bg-black/50 hidden z-50" onclick="toggleSidebar()">
+<div class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl transform transition-transform translate-x-full" id="sidebarContent" onclick="event.stopPropagation()">
+<div class="p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+<div class="flex justify-between items-center">
+<h2 class="font-bold text-lg">القائمة</h2>
+<button onclick="toggleSidebar()" class="text-2xl">&times;</button>
+</div>
+</div>
+<div class="p-4 space-y-2">
+<a href="index.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 text-emerald-700 flex items-center gap-3"><span>🏠</span><span>الرئيسية</span></a>
+<a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700"><span>📝</span><span>الديون</span></a>
+<a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700"><span>🏦</span><span>الصندوق الجانبي</span></a>
+<a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700"><span>📊</span><span>التقارير</span></a>
+<a href="inventory.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 flex items-center gap-3 text-emerald-700"><span>📦</span><span>إدارة المواد</span></a>
+<a href="invoices.html" class="w-full text-right p-3 rounded-xl bg-blue-50 text-blue-700 font-semibold flex items-center gap-3"><span>📄</span><span>فواتير المبيعات</span></a>
+<a href="records.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700"><span>📚</span><span>السجلات</span></a>
+<a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700"><span>🧮</span><span>تصفية الوردية</span></a>
+</div>
+</div>
+</div>
+<main class="p-4 space-y-4 pb-28" id="mainContent">
+<div class="bg-white rounded-2xl p-4 shadow-sm">
+<div class="flex justify-between items-center mb-3">
+<h3 class="font-bold text-slate-700">👥 الزبائن والمبالغ المستحقة</h3>
+<span class="text-xs text-slate-400" id="customerCount">0 زبون</span>
+</div>
+<div id="customersList" class="flex flex-wrap gap-2">
+<div class="text-center text-slate-400 py-4 w-full text-sm">جاري التحميل...</div>
+</div>
+</div>
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+<button onclick="setTab('all')" class="tab-btn active" data-tab="all">الكل</button>
+<button onclick="setTab('unpaid')" class="tab-btn" data-tab="unpaid">🔴 غير مدفوعة</button>
+<button onclick="setTab('partial')" class="tab-btn" data-tab="partial">🟡 جزئية</button>
+<button onclick="setTab('paid')" class="tab-btn" data-tab="paid">🟢 مدفوعة</button>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div class="bg-red-50 rounded-xl p-3 text-center border border-red-100">
+<div class="text-xl font-bold text-red-600" id="unpaidTotal">0</div>
+<div class="text-xs text-red-500 font-semibold">غير مدفوع</div>
+</div>
+<div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-100">
+<div class="text-xl font-bold text-amber-600" id="partialTotal">0</div>
+<div class="text-xs text-amber-500 font-semibold">متبقي</div>
+</div>
+<div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+<div class="text-xl font-bold text-emerald-600" id="paidTotal">0</div>
+<div class="text-xs text-emerald-500 font-semibold">تم تحصيله</div>
+</div>
+</div>
+<div id="invoicesList" class="space-y-3">
+<div class="text-center text-slate-400 py-12">
+<div class="text-5xl mb-4">📄</div>
+<div class="text-lg font-semibold">لا توجد فواتير</div>
+<div class="text-sm mt-1">اضغط الزر + لإنشاء فاتورة جديدة</div>
+</div>
+</div>
+</main>
+<div class="fab btn-press" onclick="openInvoiceModal()">+</div>
+<nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0 z-30">
+<div class="flex justify-around items-center">
+<a href="index.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">🏠</span><span class="text-xs mt-1">الرئيسية</span></a>
+<a href="debts.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">📝</span><span class="text-xs mt-1">الديون</span></a>
+<a href="invoices.html" class="flex flex-col items-center p-2 text-blue-600"><span class="text-xl">📄</span><span class="text-xs mt-1 font-semibold">الفواتير</span></a>
+<a href="reports.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">📊</span><span class="text-xs mt-1">التقارير</span></a>
+<a href="shift.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">🧮</span><span class="text-xs mt-1">الوردية</span></a>
+</div>
+</nav>
+</div>
+<div id="invoiceModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('invoice')">
+<div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+<div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold text-slate-800">📄 فاتورة مبيعات جديدة</h2>
+<button onclick="closeModal('invoice')" class="text-slate-400 text-2xl">&times;</button>
+</div>
+<form id="invoiceForm" class="space-y-4" onsubmit="handleInvoiceSubmit(event)">
+<div class="bg-slate-100 rounded-xl p-3 text-center">
+<div class="text-xs text-slate-500">رقم الفاتورة</div>
+<div class="text-2xl font-bold font-mono text-slate-800" id="invoiceNumberDisplay">G-000001</div>
+</div>
+<div>
+<label class="block text-sm text-slate-600 mb-1 font-semibold">اسم الزبون *</label>
+<select id="invoiceCustomer" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-blue-500 focus:outline-none text-lg font-semibold bg-white" required onchange="updateCustomerPrice()">
+<option value="">اختر الزبون...</option>
+<option value="محمد سلمان">محمد سلمان</option>
+<option value="اسماعيل العبادي">اسماعيل العبادي</option>
+<option value="دكان السوق">دكان السوق</option>
+<option value="دكان كلي">دكان كلي</option>
+</select>
+</div>
+<div>
+<label class="block text-sm text-slate-600 mb-1 font-semibold">التاريخ</label>
+<input type="datetime-local" id="invoiceDate" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-blue-500 focus:outline-none" required>
+</div>
+<div>
+<label class="block text-sm text-slate-600 mb-2 font-semibold">المنتجات والكميات (بالكيلو)</label>
+<div class="bg-slate-50 rounded-xl p-3 space-y-2" id="productsContainer">
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">بسبوسة</span><span class="price-tag" id="price-بسبوسة">0 ج</span><input type="number" class="weight-input" id="qty-بسبوسة" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><div class="delete-btn" onclick="clearProduct('بسبوسة')">🗑️</div></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">كونكا كاكاو</span><span class="price-tag" id="price-كونكا كاكاو">0 ج</span><input type="number" class="weight-input" id="qty-كونكا كاكاو" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><div class="delete-btn" onclick="clearProduct('كونكا كاكاو')">🗑️</div></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">صباعات</span><span class="price-tag" id="price-صباعات">0 ج</span><input type="number" class="weight-input" id="qty-صباعات" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><div class="delete-btn" onclick="clearProduct('صباعات')">🗑️</div></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">كنافة</span><span class="price-tag" id="price-كنافة">0 ج</span><input type="number" class="weight-input" id="qty-كنافة" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><div class="delete-btn" onclick="clearProduct('كنافة')">🗑️</div></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">كونكا قوية</span><span class="price-tag" id="price-كونكا قوية">0 ج</span><input type="number" class="weight-input" id="qty-كونكا قوية" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><div class="delete-btn" onclick="clearProduct('كونكا قوية')">🗑️</div></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">تستيف</span><span class="price-tag" id="price-تستيف">0 ج</span><input type="number" class="weight-input" id="qty-تستيف" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><div class="delete-btn" onclick="clearProduct('تستيف')">🗑️</div></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">معجنات</span><span class="price-tag" id="price-معجنات">0 ج</span><input type="number" class="weight-input" id="qty-معجنات" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><div class="delete-btn" onclick="clearProduct('معجنات')">🗑️</div></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">سمسمية</span><span class="price-tag" id="price-سمسمية">0 ج</span><input type="number" class="weight-input" id="qty-سمسمية" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><div class="delete-btn" onclick="clearProduct('سمسمية')">🗑️</div></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">بلح شام</span><span class="price-tag" id="price-بلح شام">0 ج</span><input type="number" class="weight-input" id="qty-بلح شام" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><div class="delete-btn" onclick="clearProduct('بلح شام')">🗑️</div></div>
+</div>
+</div>
+<div class="total-box">
+<div class="text-sm text-slate-300">المجموع الكلي</div>
+<div class="text-3xl font-bold" id="invoiceTotal">0 ج</div>
+</div>
+<div>
+<label class="block text-sm text-slate-600 mb-2 font-semibold">حالة الدفع</label>
+<div class="grid grid-cols-3 gap-2">
+<button type="button" class="pay-btn border-2 border-red-500 bg-red-50 rounded-xl p-3 text-center transition" data-value="unpaid" onclick="selectPaymentStatus(this)"><div class="text-lg">🔴</div><div class="text-xs font-bold text-red-700">آجل</div></button>
+<button type="button" class="pay-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="partial" onclick="selectPaymentStatus(this)"><div class="text-lg">🟡</div><div class="text-xs font-semibold">جزئي</div></button>
+<button type="button" class="pay-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="paid" onclick="selectPaymentStatus(this)"><div class="text-lg">🟢</div><div class="text-xs font-semibold">كامل</div></button>
+</div>
+<input type="hidden" id="paymentStatus" value="unpaid">
+</div>
+<div id="paymentSection" class="hidden space-y-3">
+<div>
+<label class="block text-sm text-slate-600 mb-1 font-semibold">طريقة الدفع</label>
+<div class="grid grid-cols-2 gap-2">
+<button type="button" class="pay-method-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="كاش" onclick="selectPayMethod(this)"><span class="text-2xl">💵</span><div class="text-sm mt-1 font-bold text-emerald-700">كاش</div></button>
+<button type="button" class="pay-method-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك" onclick="selectPayMethod(this)"><span class="text-2xl">💳</span><div class="text-sm mt-1">بنكك</div></button>
+</div>
+<input type="hidden" id="payMethod" value="كاش">
+</div>
+<div id="bankFeeWarning" class="hidden bg-red-50 border border-red-200 rounded-xl p-3 text-red-800 text-sm"><div class="flex items-center gap-2"><span>⚠️</span><span class="font-bold">سيتم خصم 60 جنيه دمغة بنكك</span></div></div>
+<div>
+<label class="block text-sm text-slate-600 mb-1 font-semibold">المبلغ المدفوع</label>
+<input type="text" id="paidAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center font-bold focus:border-blue-500 focus:outline-none" placeholder="0" oninput="formatNumberInput(this); calculateRemaining()" onkeypress="return isNumberKey(event)">
+</div>
+<div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-200">
+<div class="text-sm text-amber-700">المتبقي على الزبون</div>
+<div class="text-2xl font-bold text-amber-800" id="remainingAmount">0 ج</div>
+</div>
+</div>
+<button type="submit" id="invoiceSubmitBtn" class="w-full bg-blue-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-blue-600 transition">💾 حفظ الفاتورة</button>
+</form>
+</div>
+</div>
+<div id="detailModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('detail')">
+<div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6 max-h-[85vh] overflow-y-auto" onclick="event.stopPropagation()">
+<div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+<div id="detailContent"></div>
+</div>
+</div>
+<div id="payDebtModal" class="modal fixed inset-0 bg-black/50 items-end z-50" onclick="closeModal('payDebt')">
+<div class="modal-content bg-white rounded-t-3xl w-full max-w-md mx-auto p-6" onclick="event.stopPropagation()">
+<div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold text-emerald-800">💵 تسديد مبلغ</h2>
+<button onclick="closeModal('payDebt')" class="text-slate-400 text-2xl">&times;</button>
+</div>
+<div class="bg-emerald-50 rounded-xl p-4 mb-4 text-center">
+<div class="text-sm text-emerald-600">المبلغ المستحق</div>
+<div class="text-3xl font-bold text-emerald-800" id="debtAmountDisplay">0 ج</div>
+<div class="text-sm text-emerald-500 mt-1" id="debtCustomerName">--</div>
+</div>
+<form id="payDebtForm" class="space-y-4" onsubmit="handlePayDebt(event)">
+<input type="hidden" id="payDebtInvoiceId">
+<div>
+<label class="block text-sm text-slate-600 mb-1 font-semibold">طريقة الدفع</label>
+<div class="grid grid-cols-2 gap-2">
+<button type="button" class="debt-pay-btn border-2 border-emerald-500 bg-emerald-50 rounded-xl p-3 text-center transition" data-value="كاش" onclick="selectDebtPayMethod(this)"><span class="text-2xl">💵</span><div class="text-sm mt-1 font-bold text-emerald-700">كاش</div></button>
+<button type="button" class="debt-pay-btn border-2 border-slate-200 rounded-xl p-3 text-center transition" data-value="بنكك" onclick="selectDebtPayMethod(this)"><span class="text-2xl">💳</span><div class="text-sm mt-1">بنكك</div></button>
+</div>
+<input type="hidden" id="debtPayMethod" value="كاش">
+</div>
+<div id="debtBankFeeWarning" class="hidden bg-red-50 border border-red-200 rounded-xl p-3 text-red-800 text-sm"><div class="flex items-center gap-2"><span>⚠️</span><span class="font-bold">سيتم خصم 60 جنيه دمغة بنكك</span></div></div>
+<div>
+<label class="block text-sm text-slate-600 mb-1 font-semibold">المبلغ المسدد</label>
+<input type="text" id="debtPayAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center font-bold focus:border-emerald-500 focus:outline-none" placeholder="0" oninput="formatNumberInput(this)" onkeypress="return isNumberKey(event)" required>
+</div>
+<button type="submit" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition">✅ تأكيد التسديد</button>
+</form>
+</div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, set, push, onValue, update, get, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+    authDomain: "salahsweetmanage.firebaseapp.com",
+    databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+    projectId: "salahsweetmanage",
+    storageBucket: "salahsweetmanage.firebasestorage.app",
+    messagingSenderId: "126049780562",
+    appId: "1:126049780562:web:147daa036e56273263308b",
+    measurementId: "G-E7FLGBQ397"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const database = getDatabase(app);
+
+let currentUser = null;
+let invoices = [];
+let balances = { cash: 0, bank: 0 };
+let currentTab = 'all';
+let nextInvoiceNum = 1;
+const BANK_FEE = 60;
+
+const customerPrices = {
+    'محمد سلمان': {
+        'بسبوسة': 2800, 'كونكا كاكاو': 3200, 'صباعات': 2600,
+        'كنافة': 3500, 'كونكا قوية': 3400, 'تستيف': 2400,
+        'معجنات': 2200, 'سمسمية': 3000, 'بلح شام': 2500
+    },
+    'اسماعيل العبادي': {
+        'بسبوسة': 2750, 'كونكا كاكاو': 3150, 'صباعات': 2550,
+        'كنافة': 3450, 'كونكا قوية': 3350, 'تستيف': 2350,
+        'معجنات': 2150, 'سمسمية': 2950, 'بلح شام': 2450
+    },
+    'دكان السوق': {
+        'بسبوسة': 2900, 'كونكا كاكاو': 3300, 'صباعات': 2700,
+        'كنافة': 3600, 'كونكا قوية': 3500, 'تستيف': 2500,
+        'معجنات': 2300, 'سمسمية': 3100, 'بلح شام': 2600
+    },
+    'دكان كلي': {
+        'بسبوسة': 2850, 'كونكا كاكاو': 3250, 'صباعات': 2650,
+        'كنافة': 3550, 'كونكا قوية': 3450, 'تستيف': 2450,
+        'معجنات': 2250, 'سمسمية': 3050, 'بلح شام': 2550
+    }
+};
+
+const products = ['بسبوسة', 'كونكا كاكاو', 'صباعات', 'كنافة', 'كونكا قوية', 'تستيف', 'معجنات', 'سمسمية', 'بلح شام'];
+
+onAuthStateChanged(auth, (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    initApp();
+});
+
+window.logout = async function() {
+    try { await signOut(auth); window.location.href = 'login.html'; }
+    catch (error) { console.error('Logout error:', error); }
+};
+
+function initApp() {
+    onValue(ref(database, 'balances'), (snap) => {
+        const raw = snap.val() || {};
+        balances = { cash: raw.cash || 0, bank: raw.bank || 0 };
+    });
+    onValue(ref(database, 'invoices'), (snap) => {
+        const data = snap.val() || {};
+        invoices = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+        invoices.sort((a, b) => (b.invoiceNumber || '').localeCompare(a.invoiceNumber || ''));
+        renderInvoices();
+        renderCustomers();
+        updateStats();
+    });
+    onValue(ref(database, 'system/invoiceCounter'), (snap) => {
+        nextInvoiceNum = (snap.val() || 0) + 1;
+        document.getElementById('invoiceNumberDisplay').textContent = 'G-' + String(nextInvoiceNum).padStart(6, '0');
+    });
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('invoiceDate').value = now.toISOString().slice(0, 16);
+}
+
+window.formatNumber = function(num) {
+    if (num === null || num === undefined || isNaN(num)) return '0';
+    return parseInt(num).toLocaleString('en-US');
+};
+
+window.formatNumberInput = function(input) {
+    let value = input.value.replace(/[^\d]/g, '');
+    if (value) { input.value = parseInt(value).toLocaleString('en-US'); }
+    else { input.value = ''; }
+};
+
+window.parseFormattedNumber = function(inputId) {
+    const value = document.getElementById(inputId).value.replace(/,/g, '');
+    return parseFloat(value) || 0;
+};
+
+window.isNumberKey = function(evt) {
+    const charCode = (evt.which) ? evt.which : evt.keyCode;
+    if (charCode > 31 && (charCode < 48 || charCode > 57)) return false;
+    return true;
+};
+
+window.showToast = function(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast toast-' + type;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+};
+
+window.updateCustomerPrice = function() {
+    const customer = document.getElementById('invoiceCustomer').value;
+    const prices = customerPrices[customer] || {};
+    products.forEach(prod => {
+        const price = prices[prod] || 0;
+        document.getElementById('price-' + prod).textContent = formatNumber(price) + ' ج/كجم';
+    });
+    calculateTotal();
+};
+
+window.calculateTotal = function() {
+    const customer = document.getElementById('invoiceCustomer').value;
+    const prices = customerPrices[customer] || {};
+    let total = 0;
+    products.forEach(prod => {
+        const qty = parseFloat(document.getElementById('qty-' + prod).value) || 0;
+        const pricePerKg = prices[prod] || 0;
+        total += qty * pricePerKg;
+    });
+    document.getElementById('invoiceTotal').textContent = formatNumber(total) + ' ج';
+    calculateRemaining();
+    return total;
+};
+
+window.clearProduct = function(prod) {
+    document.getElementById('qty-' + prod).value = '';
+    calculateTotal();
+};
+
+window.selectPaymentStatus = function(btn) {
+    document.querySelectorAll('.pay-btn').forEach(b => {
+        b.classList.remove('border-red-500', 'bg-red-50', 'border-amber-500', 'bg-amber-50', 'border-emerald-500', 'bg-emerald-50');
+        b.classList.add('border-slate-200');
+        b.querySelector('div:last-child').classList.remove('font-bold', 'text-red-700', 'text-amber-700', 'text-emerald-700');
+    });
+    const val = btn.dataset.value;
+    const colors = {
+        unpaid: ['border-red-500', 'bg-red-50', 'text-red-700'],
+        partial: ['border-amber-500', 'bg-amber-50', 'text-amber-700'],
+        paid: ['border-emerald-500', 'bg-emerald-50', 'text-emerald-700']
+    };
+    const [border, bg, text] = colors[val];
+    btn.classList.remove('border-slate-200');
+    btn.classList.add(border, bg);
+    btn.querySelector('div:last-child').classList.add('font-bold', text);
+    document.getElementById('paymentStatus').value = val;
+    const section = document.getElementById('paymentSection');
+    if (val === 'unpaid') { section.classList.add('hidden'); }
+    else {
+        section.classList.remove('hidden');
+        if (val === 'paid') { document.getElementById('paidAmount').value = formatNumber(calculateTotal()); calculateRemaining(); }
+    }
+};
+
+window.selectPayMethod = function(btn) {
+    document.querySelectorAll('.pay-method-btn').forEach(b => {
+        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+        b.classList.add('border-slate-200');
+        b.querySelector('div').classList.remove('font-bold', 'text-emerald-700', 'text-blue-700');
+    });
+    const isCash = btn.dataset.value === 'كاش';
+    btn.classList.remove('border-slate-200');
+    btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+    btn.querySelector('div').classList.add('font-bold', isCash ? 'text-emerald-700' : 'text-blue-700');
+    document.getElementById('payMethod').value = btn.dataset.value;
+    document.getElementById('bankFeeWarning').classList.toggle('hidden', isCash);
+};
+
+window.calculateRemaining = function() {
+    const total = calculateTotal();
+    const paid = parseFormattedNumber('paidAmount');
+    const remaining = Math.max(0, total - paid);
+    document.getElementById('remainingAmount').textContent = formatNumber(remaining) + ' ج';
+};
+
+async function generateInvoiceNumber() {
+    const counterRef = ref(database, 'system/invoiceCounter');
+    try {
+        const result = await runTransaction(counterRef, (current) => (current || 0) + 1);
+        return 'G-' + String(result.snapshot.val()).padStart(6, '0');
+    } catch (error) { return 'G-' + String(Date.now()).slice(-6); }
+}
+
+window.handleInvoiceSubmit = async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('invoiceSubmitBtn');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try {
+        const customer = document.getElementById('invoiceCustomer').value;
+        if (!customer) { showToast('الرجاء اختيار الزبون', 'error'); return; }
+        const prices = customerPrices[customer] || {};
+        const items = [];
+        let total = 0;
+        products.forEach(prod => {
+            const qty = parseFloat(document.getElementById('qty-' + prod).value) || 0;
+            if (qty > 0) {
+                const price = prices[prod] || 0;
+                const subtotal = qty * price;
+                items.push({ product: prod, quantity: qty, pricePerKg: price, subtotal });
+                total += subtotal;
+            }
+        });
+        if (items.length === 0) { showToast('الرجاء إدخال كمية لمنتج واحد على الأقل', 'error'); return; }
+        const paymentStatus = document.getElementById('paymentStatus').value;
+        const payMethod = document.getElementById('payMethod').value;
+        const paidAmount = paymentStatus === 'unpaid' ? 0 : parseFormattedNumber('paidAmount');
+        const remaining = total - paidAmount;
+        const timestamp = new Date(document.getElementById('invoiceDate').value).getTime();
+        const invoiceNumber = await generateInvoiceNumber();
+        const updates = [];
+        if (paidAmount > 0) {
+            const balanceUpdate = {};
+            if (payMethod === 'كاش') { balanceUpdate.cash = (balances.cash || 0) + paidAmount; }
+            else { balanceUpdate.bank = (balances.bank || 0) + paidAmount - BANK_FEE; }
+            updates.push(update(ref(database, 'balances'), balanceUpdate));
+            if (payMethod === 'بنكك') {
+                updates.push(push(ref(database, 'transactions'), {
+                    type: 'bankFee', title: '💳 دمغة بنكك - فاتورة ' + invoiceNumber,
+                    amount: -BANK_FEE, timestamp: Date.now(), payment: 'بنكك',
+                    expenseType: 'bankFee', linkedInvoice: invoiceNumber
+                }));
+            }
+            updates.push(push(ref(database, 'transactions'), {
+                type: 'sales', title: 'مبيعات فاتورة ' + invoiceNumber + ' (' + customer + ')',
+                amount: paidAmount, timestamp: Date.now(), payment: payMethod,
+                customer, invoiceNumber, saleType: 'invoice'
+            }));
+        }
+        const invoiceData = {
+            invoiceNumber, customer, items, total, paidAmount, remaining,
+            paymentStatus, payMethod: paidAmount > 0 ? payMethod : null,
+            timestamp, createdAt: Date.now(),
+            hasBankFee: payMethod === 'بنكك' && paidAmount > 0
+        };
+        updates.push(push(ref(database, 'invoices'), invoiceData));
+        if (remaining > 0) {
+            updates.push(push(ref(database, 'debts'), {
+                type: 'invoice', customer, amount: remaining, invoiceNumber,
+                status: 'pending', createdAt: Date.now(),
+                originalTotal: total, paidSoFar: paidAmount
+            }));
+        }
+        await Promise.all(updates);
+        closeModal('invoice');
+        showToast('✅ تم حفظ الفاتورة ' + invoiceNumber);
+        document.getElementById('invoiceForm').reset();
+        products.forEach(p => document.getElementById('qty-' + p).value = '');
+        calculateTotal();
+        document.querySelector('.pay-btn[data-value="unpaid"]').click();
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('invoiceDate').value = now.toISOString().slice(0, 16);
+    } finally { btn.disabled = false; }
+};
+
+function renderInvoices() {
+    const container = document.getElementById('invoicesList');
+    let filtered = invoices;
+    if (currentTab === 'unpaid') filtered = invoices.filter(i => i.paymentStatus === 'unpaid');
+    else if (currentTab === 'partial') filtered = invoices.filter(i => i.paymentStatus === 'partial');
+    else if (currentTab === 'paid') filtered = invoices.filter(i => i.paymentStatus === 'paid');
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-400 py-12 fade-in"><div class="text-5xl mb-4">📄</div><div class="text-lg font-semibold">لا توجد فواتير ' + (currentTab !== 'all' ? 'بهذا التصنيف' : '') + '</div></div>';
+        return;
+    }
+    container.innerHTML = filtered.map(inv => {
+        const statusClass = inv.paymentStatus === 'paid' ? 'paid' : inv.paymentStatus === 'partial' ? 'partial' : 'unpaid';
+        const statusEmoji = inv.paymentStatus === 'paid' ? '🟢' : inv.paymentStatus === 'partial' ? '🟡' : '🔴';
+        const statusText = inv.paymentStatus === 'paid' ? 'مدفوعة' : inv.paymentStatus === 'partial' ? 'جزئية' : 'آجلة';
+        const dateStr = inv.timestamp ? new Date(inv.timestamp).toLocaleDateString('ar-SA') : '--/--/----';
+        const timeStr = inv.timestamp ? new Date(inv.timestamp).toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}) : '';
+        return '<div class="invoice-card ' + statusClass + ' fade-in" onclick="showInvoiceDetail('' + inv.id + '')">' +
+            '<div class="flex justify-between items-start mb-2">' +
+            '<div><div class="font-bold text-lg text-slate-800">' + inv.invoiceNumber + '</div><div class="text-sm text-slate-500">👤 ' + inv.customer + '</div></div>' +
+            '<div class="text-right"><div class="font-bold text-xl text-slate-800">' + formatNumber(inv.total) + ' ج</div><div class="text-xs text-slate-400">' + dateStr + ' ' + timeStr + '</div></div></div>' +
+            '<div class="flex items-center gap-2 flex-wrap mb-2">' + inv.items.map(item => '<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg text-xs">' + item.product + ' ' + item.quantity + 'كجم</span>').join('') + '</div>' +
+            '<div class="flex justify-between items-center pt-2 border-t border-slate-100">' +
+            '<span class="text-sm font-bold ' + (inv.paymentStatus === 'paid' ? 'text-emerald-600' : inv.paymentStatus === 'partial' ? 'text-amber-600' : 'text-red-600') + '">' + statusEmoji + ' ' + statusText + '</span>' +
+            (inv.remaining > 0 ? '<span class="text-sm text-red-600 font-bold">متبقي: ' + formatNumber(inv.remaining) + ' ج</span>' : '') + '</div></div>';
+    }).join('');
+}
+
+function renderCustomers() {
+    const container = document.getElementById('customersList');
+    const customerNames = ['محمد سلمان', 'اسماعيل العبادي', 'دكان السوق', 'دكان كلي'];
+    const customerDebts = {};
+    customerNames.forEach(c => customerDebts[c] = 0);
+    invoices.forEach(inv => {
+        if (inv.remaining > 0 && customerDebts[inv.customer] !== undefined) { customerDebts[inv.customer] += inv.remaining; }
+    });
+    const activeCustomers = customerNames.filter(c => customerDebts[c] > 0);
+    document.getElementById('customerCount').textContent = activeCustomers.length + ' زبون مدين';
+    if (activeCustomers.length === 0) { container.innerHTML = '<div class="text-center text-slate-400 py-4 w-full text-sm">✅ لا توجد ديون مستحقة</div>'; return; }
+    container.innerHTML = activeCustomers.map(c => '<div class="customer-badge owes" onclick="filterByCustomer('' + c + '')">' +
+        '<span>👤</span><span>' + c + '</span>' +
+        '<span class="bg-white/50 px-2 py-0.5 rounded-full text-xs">' + formatNumber(customerDebts[c]) + ' ج</span></div>').join('');
+}
+
+window.filterByCustomer = function(customer) {
+    showToast('ديون ' + customer + ': ' + formatNumber(invoices.filter(i => i.customer === customer && i.remaining > 0).reduce((s, i) => s + i.remaining, 0)) + ' ج', 'info');
+};
+
+function updateStats() {
+    const unpaid = invoices.filter(i => i.paymentStatus === 'unpaid').reduce((s, i) => s + i.total, 0);
+    const partialRemaining = invoices.filter(i => i.paymentStatus === 'partial').reduce((s, i) => s + i.remaining, 0);
+    const paid = invoices.filter(i => i.paymentStatus === 'paid').reduce((s, i) => s + i.total, 0);
+    const partialPaid = invoices.filter(i => i.paymentStatus === 'partial').reduce((s, i) => s + i.paidAmount, 0);
+    document.getElementById('unpaidTotal').textContent = formatNumber(unpaid);
+    document.getElementById('partialTotal').textContent = formatNumber(partialRemaining);
+    document.getElementById('paidTotal').textContent = formatNumber(paid + partialPaid);
+}
+
+window.showInvoiceDetail = function(id) {
+    const inv = invoices.find(i => i.id === id);
+    if (!inv) return;
+    const statusEmoji = inv.paymentStatus === 'paid' ? '🟢' : inv.paymentStatus === 'partial' ? '🟡' : '🔴';
+    const statusText = inv.paymentStatus === 'paid' ? 'مدفوعة بالكامل' : inv.paymentStatus === 'partial' ? 'مدفوعة جزئياً' : 'آجلة بالكامل';
+    const dateStr = inv.timestamp ? new Date(inv.timestamp).toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) : '--';
+    const timeStr = inv.timestamp ? new Date(inv.timestamp).toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}) : '';
+    let html = '<div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-slate-800">📄 ' + inv.invoiceNumber + '</h2><button onclick="closeModal('detail')" class="text-slate-400 text-2xl">&times;</button></div>' +
+        '<div class="bg-slate-50 rounded-xl p-4 mb-4"><div class="flex justify-between items-center mb-2"><span class="text-slate-500">الزبون</span><span class="font-bold">👤 ' + inv.customer + '</span></div>' +
+        '<div class="flex justify-between items-center mb-2"><span class="text-slate-500">التاريخ</span><span class="font-semibold">' + dateStr + '</span></div>' +
+        '<div class="flex justify-between items-center"><span class="text-slate-500">الوقت</span><span class="font-semibold">' + timeStr + '</span></div></div>' +
+        '<div class="space-y-2 mb-4"><div class="font-bold text-slate-700 mb-2">🛒 المنتجات:</div>' +
+        inv.items.map(item => '<div class="flex justify-between items-center bg-white border border-slate-100 rounded-xl p-3"><div><div class="font-semibold">' + item.product + '</div><div class="text-xs text-slate-400">' + item.quantity + ' كجم × ' + formatNumber(item.pricePerKg) + ' ج</div></div><div class="font-bold text-slate-800">' + formatNumber(item.subtotal) + ' ج</div></div>').join('') + '</div>' +
+        '<div class="total-box mb-4"><div class="text-sm text-slate-300">المجموع الكلي</div><div class="text-3xl font-bold">' + formatNumber(inv.total) + ' ج</div></div>' +
+        '<div class="grid grid-cols-3 gap-2 mb-4 text-center">' +
+        '<div class="bg-emerald-50 rounded-xl p-3"><div class="text-xs text-emerald-600">مدفوع</div><div class="font-bold text-emerald-700">' + formatNumber(inv.paidAmount) + '</div></div>' +
+        '<div class="bg-red-50 rounded-xl p-3"><div class="text-xs text-red-600">متبقي</div><div class="font-bold text-red-700">' + formatNumber(inv.remaining) + '</div></div>' +
+        '<div class="bg-blue-50 rounded-xl p-3"><div class="text-xs text-blue-600">الحالة</div><div class="font-bold text-blue-700 text-sm">' + statusEmoji + '</div></div></div>';
+    if (inv.remaining > 0) {
+        html += '<button onclick="openPayDebt('' + inv.id + '')" class="w-full bg-emerald-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-emerald-600 transition mb-3">💵 تسديد مبلغ</button>';
+    }
+    html += '<button onclick="deleteInvoice('' + inv.id + '')" class="w-full bg-red-100 text-red-600 rounded-xl p-3 font-bold btn-press hover:bg-red-200 transition">🗑️ حذف الفاتورة</button>';
+    document.getElementById('detailContent').innerHTML = html;
+    openModal('detail');
+};
+
+window.openPayDebt = function(invoiceId) {
+    const inv = invoices.find(i => i.id === invoiceId);
+    if (!inv || inv.remaining <= 0) return;
+    document.getElementById('payDebtInvoiceId').value = invoiceId;
+    document.getElementById('debtAmountDisplay').textContent = formatNumber(inv.remaining) + ' ج';
+    document.getElementById('debtCustomerName').textContent = '👤 ' + inv.customer;
+    document.getElementById('debtPayAmount').value = '';
+    document.querySelector('.debt-pay-btn[data-value="كاش"]').click();
+    closeModal('detail');
+    openModal('payDebt');
+};
+
+window.selectDebtPayMethod = function(btn) {
+    document.querySelectorAll('.debt-pay-btn').forEach(b => {
+        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-blue-500', 'bg-blue-50');
+        b.classList.add('border-slate-200');
+        b.querySelector('div').classList.remove('font-bold', 'text-emerald-700', 'text-blue-700');
+    });
+    const isCash = btn.dataset.value === 'كاش';
+    btn.classList.remove('border-slate-200');
+    btn.classList.add(isCash ? 'border-emerald-500' : 'border-blue-500', isCash ? 'bg-emerald-50' : 'bg-blue-50');
+    btn.querySelector('div').classList.add('font-bold', isCash ? 'text-emerald-700' : 'text-blue-700');
+    document.getElementById('debtPayMethod').value = btn.dataset.value;
+    document.getElementById('debtBankFeeWarning').classList.toggle('hidden', isCash);
+};
+
+window.handlePayDebt = async function(e) {
+    e.preventDefault();
+    const invoiceId = document.getElementById('payDebtInvoiceId').value;
+    const inv = invoices.find(i => i.id === invoiceId);
+    if (!inv) return;
+    const amount = parseFormattedNumber('debtPayAmount');
+    const method = document.getElementById('debtPayMethod').value;
+    if (amount <= 0) { showToast('الرجاء إدخال مبلغ صحيح', 'error'); return; }
+    if (amount > inv.remaining) { showToast('المبلغ أكبر من المتبقي!', 'error'); return; }
+    const newPaid = inv.paidAmount + amount;
+    const newRemaining = inv.total - newPaid;
+    const newStatus = newRemaining <= 0 ? 'paid' : 'partial';
+    const updates = [];
+    const balanceUpdate = {};
+    if (method === 'كاش') { balanceUpdate.cash = (balances.cash || 0) + amount; }
+    else { balanceUpdate.bank = (balances.bank || 0) + amount - BANK_FEE; }
+    updates.push(update(ref(database, 'balances'), balanceUpdate));
+    updates.push(push(ref(database, 'transactions'), {
+        type: 'sales', title: 'تسديد فاتورة ' + inv.invoiceNumber + ' (' + inv.customer + ')',
+        amount: amount, timestamp: Date.now(), payment: method,
+        customer: inv.customer, invoiceNumber: inv.invoiceNumber, saleType: 'invoice_payment'
+    }));
+    if (method === 'بنكك') {
+        updates.push(push(ref(database, 'transactions'), {
+            type: 'bankFee', title: '💳 دمغة بنكك - تسديد ' + inv.invoiceNumber,
+            amount: -BANK_FEE, timestamp: Date.now(), payment: 'بنكك',
+            expenseType: 'bankFee', linkedInvoice: inv.invoiceNumber
+        }));
+    }
+    updates.push(update(ref(database, 'invoices/' + invoiceId), {
+        paidAmount: newPaid, remaining: newRemaining, paymentStatus: newStatus,
+        payMethod: method, lastPaymentAt: Date.now()
+    }));
+    await Promise.all(updates);
+    closeModal('payDebt');
+    showToast('✅ تم تسديد ' + formatNumber(amount) + ' ج');
+};
+
+window.deleteInvoice = async function(id) {
+    const inv = invoices.find(i => i.id === id);
+    if (!inv) return;
+    if (!confirm('هل تريد حذف الفاتورة ' + inv.invoiceNumber + '؟')) return;
+    await remove(ref(database, 'invoices/' + id));
+    showToast('🗑️ تم حذف الفاتورة');
+    closeModal('detail');
+};
+
+window.toggleSidebar = function() {
+    const sidebar = document.getElementById('sidebar');
+    const content = document.getElementById('sidebarContent');
+    if (sidebar.classList.contains('hidden')) {
+        sidebar.classList.remove('hidden');
+        setTimeout(() => content.classList.remove('translate-x-full'), 10);
+    } else {
+        content.classList.add('translate-x-full');
+        setTimeout(() => sidebar.classList.add('hidden'), 300);
+    }
+};
+
+window.setTab = function(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    renderInvoices();
+};
+
+window.openInvoiceModal = async function() {
+    const invoiceNum = await generateInvoiceNumber();
+    document.getElementById('invoiceNumberDisplay').textContent = invoiceNum;
+    document.getElementById('invoiceForm').reset();
+    document.getElementById('invoiceCustomer').value = '';
+    products.forEach(prod => {
+        document.getElementById('qty-' + prod).value = '';
+        document.getElementById('price-' + prod).textContent = '0 ج';
+    });
+    document.querySelector('.pay-btn[data-value="unpaid"]').click();
+    document.getElementById('paymentSection').classList.add('hidden');
+    calculateTotal();
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('invoiceDate').value = now.toISOString().slice(0, 16);
+    openModal('invoice');
+};
+
+window.openModal = function(type) {
+    document.getElementById(type + 'Modal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeModal = function(type) {
+    document.getElementById(type + 'Modal').classList.remove('active');
+    document.body.style.overflow = '';
+};
+
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) { closeModal(this.id.replace('Modal', '')); }
+    });
+});
+</script>
+</body>
+</html>
