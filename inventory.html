@@ -347,7 +347,7 @@
 
         function getTodayKey() {
             const now = new Date();
-            return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            return now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
         }
 
         function getCategoryEmoji(cat) {
@@ -420,7 +420,7 @@
         function updateDatalist() {
             const datalist = document.getElementById('existingItemsList');
             const names = [...new Set(inventoryItems.map(i => i.name))];
-            datalist.innerHTML = names.map(n => `<option value="${n}">`).join('');
+            datalist.innerHTML = names.map(n => '<option value="' + n + '">').join('');
         }
 
         window.switchTab = function(tab) {
@@ -444,7 +444,7 @@
             }
             if (currentFilter !== 'all') filtered = filtered.filter(item => item.category === currentFilter);
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-400 py-8"><div class="text-4xl mb-2">📦</div><div class="text-sm">لا توجد مواد مطابقة</div><button onclick="openModal('addItem')" class="mt-3 text-purple-600 font-bold text-sm btn-press">➕ أضف مادة جديدة</button></div>`;
+                container.innerHTML = '<div class="text-center text-slate-400 py-8"><div class="text-4xl mb-2">📦</div><div class="text-sm">لا توجد مواد مطابقة</div><button onclick="openModal(\'addItem\')" class="mt-3 text-purple-600 font-bold text-sm btn-press">➕ أضف مادة جديدة</button></div>';
                 return;
             }
             container.innerHTML = filtered.map(item => {
@@ -456,25 +456,18 @@
                 const statusEmoji = isLow ? '🔴' : '🟢';
                 const statusText = isLow ? 'ناقص!' : 'متوفر';
                 const progressColor = isLow ? '#ef4444' : (percentage < 50 ? '#f59e0b' : '#10b981');
-                return `
-                    <div class="item-card ${cardClass} bg-white rounded-2xl p-4 shadow-md cursor-pointer" onclick="openItemDetails('${item.id}')">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="flex items-center gap-2">
-                                <span class="text-2xl">${getCategoryEmoji(item.category)}</span>
-                                <div><div class="font-bold text-slate-800">${item.name}</div><div class="text-xs text-slate-500">${getCategoryName(item.category)} | ${item.unit || 'كجم'}</div></div>
-                            </div>
-                            <div class="text-left">
-                                <div class="quantity-badge text-2xl font-bold ${isLow ? 'text-red-600' : 'text-emerald-600'}">${formatNumber(qty)}</div>
-                                <div class="text-xs text-slate-400">${item.unit || 'كجم'}</div>
-                            </div>
-                        </div>
-                        <div class="progress-bar mb-2"><div class="progress-fill" style="width: ${percentage}%; background-color: ${progressColor};"></div></div>
-                        <div class="flex justify-between items-center text-xs">
-                            <div class="flex items-center gap-1"><span>${statusEmoji}</span><span class="${isLow ? 'text-red-600 font-bold' : 'text-slate-500'}">${statusText}</span>${isLow ? `<span class="text-red-500">(الحد: ${formatNumber(min)})</span>` : ''}</div>
-                            ${item.price ? `<span class="text-slate-400">${formatNumber(item.price)} ج.س/وحدة</span>` : ''}
-                        </div>
-                        ${isLow ? `<div class="mt-2 pt-2 border-t border-red-100"><button onclick="event.stopPropagation(); addToShopping('${item.id}')" class="w-full bg-amber-100 text-amber-700 rounded-lg py-2 text-sm font-bold btn-press">🛒 أضف لقائمة الشراء</button></div>` : ''}
-                    </div>`;
+                return '<div class="item-card ' + cardClass + ' bg-white rounded-2xl p-4 shadow-md cursor-pointer" onclick="openItemDetails(\'' + item.id + '\')">' +
+                    '<div class="flex justify-between items-start mb-2">' +
+                    '<div class="flex items-center gap-2"><span class="text-2xl">' + getCategoryEmoji(item.category) + '</span><div><div class="font-bold text-slate-800">' + item.name + '</div><div class="text-xs text-slate-500">' + getCategoryName(item.category) + ' | ' + (item.unit || 'كجم') + '</div></div></div>' +
+                    '<div class="text-left"><div class="quantity-badge text-2xl font-bold ' + (isLow ? 'text-red-600' : 'text-emerald-600') + '">' + formatNumber(qty) + '</div><div class="text-xs text-slate-400">' + (item.unit || 'كجم') + '</div></div>' +
+                    '</div>' +
+                    '<div class="progress-bar mb-2"><div class="progress-fill" style="width: ' + percentage + '%; background-color: ' + progressColor + ';"></div></div>' +
+                    '<div class="flex justify-between items-center text-xs">' +
+                    '<div class="flex items-center gap-1"><span>' + statusEmoji + '</span><span class="' + (isLow ? 'text-red-600 font-bold' : 'text-slate-500') + '">' + statusText + '</span>' + (isLow ? '<span class="text-red-500">(الحد: ' + formatNumber(min) + ')</span>' : '') + '</div>' +
+                    (item.price ? '<span class="text-slate-400">' + formatNumber(item.price) + ' ج.س/وحدة</span>' : '') +
+                    '</div>' +
+                    (isLow ? '<div class="mt-2 pt-2 border-t border-red-100"><button onclick="event.stopPropagation(); addToShopping(\'' + item.id + '\')" class="w-full bg-amber-100 text-amber-700 rounded-lg py-2 text-sm font-bold btn-press">🛒 أضف لقائمة الشراء</button></div>' : '') +
+                    '</div>';
             }).join('');
         }
 
@@ -490,7 +483,7 @@
         function updateShoppingList() {
             const container = document.getElementById('shoppingList');
             if (shoppingList.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-400 py-8"><div class="text-4xl mb-2">🛒</div><div class="text-sm">قائمة الشراء فارغة</div><div class="text-xs mt-1">المواد الناقصة تظهر تلقائياً هنا</div></div>`;
+                container.innerHTML = '<div class="text-center text-slate-400 py-8"><div class="text-4xl mb-2">🛒</div><div class="text-sm">قائمة الشراء فارغة</div><div class="text-xs mt-1">المواد الناقصة تظهر تلقائياً هنا</div></div>';
                 return;
             }
             container.innerHTML = shoppingList.map(item => {
@@ -500,17 +493,15 @@
                 const min = inventoryItem ? (inventoryItem.minLevel || 0) : 0;
                 const qty = inventoryItem ? (inventoryItem.quantity || 0) : 0;
                 const needed = Math.max(0, (min * 2) - qty);
-                return `
-                    <div class="shopping-item bg-white rounded-2xl p-4 shadow-md ${item.purchased ? 'opacity-60' : ''}">
-                        <div class="flex items-center gap-3">
-                            <div onclick="togglePurchased('${item.id}', ${!item.purchased})" class="checkbox-custom ${item.purchased ? 'checked' : ''} flex-shrink-0"></div>
-                            <div class="flex-1 ${item.purchased ? 'strikethrough' : ''}">
-                                <div class="font-bold text-slate-800">${name}</div>
-                                <div class="text-xs text-slate-500">الحالي: ${formatNumber(qty)} ${unit} | مطلوب: ${formatNumber(needed)} ${unit}</div>
-                            </div>
-                            <button onclick="removeFromShopping('${item.id}')" class="text-red-400 p-2 btn-press">🗑️</button>
-                        </div>
-                    </div>`;
+                return '<div class="shopping-item bg-white rounded-2xl p-4 shadow-md ' + (item.purchased ? 'opacity-60' : '') + '">' +
+                    '<div class="flex items-center gap-3">' +
+                    '<div onclick="togglePurchased(\'' + item.id + '\', ' + (!item.purchased) + ')" class="checkbox-custom ' + (item.purchased ? 'checked' : '') + ' flex-shrink-0"></div>' +
+                    '<div class="flex-1 ' + (item.purchased ? 'strikethrough' : '') + '">' +
+                    '<div class="font-bold text-slate-800">' + name + '</div>' +
+                    '<div class="text-xs text-slate-500">الحالي: ' + formatNumber(qty) + ' ' + unit + ' | مطلوب: ' + formatNumber(needed) + ' ' + unit + '</div>' +
+                    '</div>' +
+                    '<button onclick="removeFromShopping(\'' + item.id + '\')" class="text-red-400 p-2 btn-press">🗑️</button>' +
+                    '</div></div>';
             }).join('');
         }
 
@@ -530,17 +521,17 @@
         };
 
         window.togglePurchased = async function(shoppingId, purchased) {
-            await update(ref(database, `shoppingList/${shoppingId}`), { purchased });
+            await update(ref(database, 'shoppingList/' + shoppingId), { purchased: purchased });
         };
 
         window.removeFromShopping = async function(shoppingId) {
-            await remove(ref(database, `shoppingList/${shoppingId}`));
+            await remove(ref(database, 'shoppingList/' + shoppingId));
         };
 
         window.clearShoppingList = async function() {
             if (!confirm('هل أنت متأكد من مسح قائمة الشراء؟')) return;
             const updates = {};
-            shoppingList.forEach(item => { updates[`shoppingList/${item.id}`] = null; });
+            shoppingList.forEach(item => { updates['shoppingList/' + item.id] = null; });
             await update(ref(database), updates);
             showWarning('✅ تم مسح القائمة', true);
         };
@@ -557,9 +548,9 @@
                 const min = invItem ? (invItem.minLevel || 0) : 0;
                 const qty = invItem ? (invItem.quantity || 0) : 0;
                 const needed = Math.max(0, (min * 2) - qty);
-                text += `${index + 1}. ${name} - ${formatNumber(needed)} ${unit}\n`;
+                text += (index + 1) + '. ' + name + ' - ' + formatNumber(needed) + ' ' + unit + '\n';
             });
-            text += `\n═══════════════════\n📅 ${new Date().toLocaleDateString('ar-SA')}\nإجمالي: ${items.length} مادة`;
+            text += '\n═══════════════════\n📅 ' + new Date().toLocaleDateString('ar-SA') + '\nإجمالي: ' + items.length + ' مادة';
             navigator.clipboard.writeText(text).then(() => {
                 showWarning('✅ تم نسخ القائمة! الصقها في واتساب', true);
             }).catch(() => {
@@ -577,7 +568,7 @@
             const container = document.getElementById('historyList');
             const recent = stockHistory.slice(0, 20);
             if (recent.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-400 py-8"><div class="text-4xl mb-2">📜</div><div class="text-sm">لا توجد حركات مسجلة</div></div>`;
+                container.innerHTML = '<div class="text-center text-slate-400 py-8"><div class="text-4xl mb-2">📜</div><div class="text-sm">لا توجد حركات مسجلة</div></div>';
                 return;
             }
             container.innerHTML = recent.map(h => {
@@ -588,19 +579,11 @@
                 const bg = isIn ? 'bg-emerald-50' : 'bg-red-50';
                 const emoji = isIn ? '📥' : '📤';
                 const sign = isIn ? '+' : '-';
-                return `
-                    <div class="history-row ${bg} rounded-xl p-3 fade-in">
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <span class="text-lg">${emoji}</span>
-                                <div><div class="font-bold text-sm text-slate-800">${h.itemName}</div><div class="text-xs text-slate-500">${h.note || 'بدون بيان'} | ${dateStr} ${time}</div></div>
-                            </div>
-                            <div class="text-left">
-                                <div class="font-bold ${color}">${sign}${formatNumber(h.quantity)} ${h.unit}</div>
-                                ${h.price ? `<div class="text-xs text-slate-400">${formatNumber(h.price)} ج.س</div>` : ''}
-                            </div>
-                        </div>
-                    </div>`;
+                return '<div class="history-row ' + bg + ' rounded-xl p-3 fade-in">' +
+                    '<div class="flex justify-between items-center">' +
+                    '<div class="flex items-center gap-2"><span class="text-lg">' + emoji + '</span><div><div class="font-bold text-sm text-slate-800">' + h.itemName + '</div><div class="text-xs text-slate-500">' + (h.note || 'بدون بيان') + ' | ' + dateStr + ' ' + time + '</div></div></div>' +
+                    '<div class="text-left"><div class="font-bold ' + color + '">' + sign + formatNumber(h.quantity) + ' ' + h.unit + '</div>' + (h.price ? '<div class="text-xs text-slate-400">' + formatNumber(h.price) + ' ج.س</div>' : '') + '</div>' +
+                    '</div></div>';
             }).join('');
         }
 
@@ -615,21 +598,21 @@
             const itemHistory = stockHistory.filter(h => h.itemId === itemId).slice(0, 5);
             let historyHtml = '';
             if (itemHistory.length > 0) {
-                historyHtml = `<div class="mt-4"><div class="font-bold text-sm text-slate-700 mb-2">📜 آخر الحركات</div>` + itemHistory.map(h => {
+                historyHtml = '<div class="mt-4"><div class="font-bold text-sm text-slate-700 mb-2">📜 آخر الحركات</div>' + itemHistory.map(h => {
                     const time = h.timestamp ? new Date(h.timestamp).toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}) : '--:--';
                     const isIn = h.type === 'in';
-                    return `<div class="flex justify-between text-sm py-1 border-b border-slate-100"><span class="${isIn ? 'text-emerald-600' : 'text-red-600'}">${isIn ? '📥' : '📤'} ${isIn ? '+' : '-'}${formatNumber(h.quantity)} ${h.unit}</span><span class="text-slate-400 text-xs">${time}</span></div>`;
-                }).join('') + `</div>`;
+                    return '<div class="flex justify-between text-sm py-1 border-b border-slate-100"><span class="' + (isIn ? 'text-emerald-600' : 'text-red-600') + '">' + (isIn ? '📥' : '📤') + ' ' + (isIn ? '+' : '-') + formatNumber(h.quantity) + ' ' + h.unit + '</span><span class="text-slate-400 text-xs">' + time + '</span></div>';
+                }).join('') + '</div>';
             }
-            document.getElementById('itemDetailsContent').innerHTML = `
-                <div class="bg-slate-50 rounded-xl p-4 space-y-2">
-                    <div class="flex justify-between"><span class="text-slate-500">الفئة:</span><span class="font-bold">${getCategoryEmoji(item.category)} ${getCategoryName(item.category)}</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500">الكمية الحالية:</span><span class="font-bold ${isLow ? 'text-red-600' : 'text-emerald-600'}">${formatNumber(qty)} ${item.unit || 'كجم'}</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500">الحد الأدنى:</span><span class="font-bold">${formatNumber(min)} ${item.unit || 'كجم'}</span></div>
-                    ${item.price ? `<div class="flex justify-between"><span class="text-slate-500">سعر الوحدة:</span><span class="font-bold">${formatNumber(item.price)} ج.س</span></div>` : ''}
-                    ${item.supplier ? `<div class="flex justify-between"><span class="text-slate-500">المورد:</span><span class="font-bold">${item.supplier}</span></div>` : ''}
-                    ${item.notes ? `<div class="pt-2 border-t border-slate-200"><span class="text-slate-500 text-sm">ملاحظات:</span><div class="text-sm text-slate-700 mt-1">${item.notes}</div></div>` : ''}
-                </div>${historyHtml}`;
+            document.getElementById('itemDetailsContent').innerHTML =
+                '<div class="bg-slate-50 rounded-xl p-4 space-y-2">' +
+                '<div class="flex justify-between"><span class="text-slate-500">الفئة:</span><span class="font-bold">' + getCategoryEmoji(item.category) + ' ' + getCategoryName(item.category) + '</span></div>' +
+                '<div class="flex justify-between"><span class="text-slate-500">الكمية الحالية:</span><span class="font-bold ' + (isLow ? 'text-red-600' : 'text-emerald-600') + '">' + formatNumber(qty) + ' ' + (item.unit || 'كجم') + '</span></div>' +
+                '<div class="flex justify-between"><span class="text-slate-500">الحد الأدنى:</span><span class="font-bold">' + formatNumber(min) + ' ' + (item.unit || 'كجم') + '</span></div>' +
+                (item.price ? '<div class="flex justify-between"><span class="text-slate-500">سعر الوحدة:</span><span class="font-bold">' + formatNumber(item.price) + ' ج.س</span></div>' : '') +
+                (item.supplier ? '<div class="flex justify-between"><span class="text-slate-500">المورد:</span><span class="font-bold">' + item.supplier + '</span></div>' : '') +
+                (item.notes ? '<div class="pt-2 border-t border-slate-200"><span class="text-slate-500 text-sm">ملاحظات:</span><div class="text-sm text-slate-700 mt-1">' + item.notes + '</div></div>' : '') +
+                '</div>' + historyHtml;
             openModal('itemDetails');
         };
 
@@ -642,10 +625,10 @@
             if (!selectedItemId) return;
             const item = inventoryItems.find(i => i.id === selectedItemId);
             if (!item) return;
-            if (!confirm(`هل أنت متأكد من حذف "${item.name}"؟`)) return;
-            await remove(ref(database, `inventory/${selectedItemId}`));
+            if (!confirm('هل أنت متأكد من حذف "' + item.name + '"؟')) return;
+            await remove(ref(database, 'inventory/' + selectedItemId));
             const shoppingItem = shoppingList.find(s => s.itemId === selectedItemId);
-            if (shoppingItem) await remove(ref(database, `shoppingList/${shoppingItem.id}`));
+            if (shoppingItem) await remove(ref(database, 'shoppingList/' + shoppingItem.id));
             closeModal('itemDetails');
             showWarning('✅ تم الحذف', true);
         };
@@ -708,8 +691,8 @@
                 else { newQty = Math.max(0, currentQty - quantity); if (quantity > currentQty) showWarning('⚠️ الكمية المخرجة أكبر من المخزن!'); }
                 const timestamp = Date.now();
                 await Promise.all([
-                    update(ref(database, `inventory/${itemId}`), { quantity: newQty, updatedAt: timestamp, lastPrice: price > 0 ? price : (item.lastPrice || item.price || 0) }),
-                    push(ref(database, 'stockHistory'), { itemId, itemName: item.name, type, quantity, unit: item.unit || 'كجم', price: price > 0 ? price : null, note: note || (type === 'in' ? 'شراء/دخول' : 'استهلاك/خروج'), timestamp, date: getTodayKey() })
+                    update(ref(database, 'inventory/' + itemId), { quantity: newQty, updatedAt: timestamp, lastPrice: price > 0 ? price : (item.lastPrice || item.price || 0) }),
+                    push(ref(database, 'stockHistory'), { itemId: itemId, itemName: item.name, type: type, quantity: quantity, unit: item.unit || 'كجم', price: price > 0 ? price : null, note: note || (type === 'in' ? 'شراء/دخول' : 'استهلاك/خروج'), timestamp: timestamp, date: getTodayKey() })
                 ]);
                 closeModal('updateStock');
                 showWarning(type === 'in' ? '✅ تمت الإضافة للمخزن' : '✅ تم الخصم من المخزن', true);
@@ -746,7 +729,7 @@
                 const notes = document.getElementById('itemNotes').value.trim();
                 if (!name) { showWarning('الرجاء إدخال اسم المادة'); return; }
                 const timestamp = Date.now();
-                await push(ref(database, 'inventory'), { name, category, unit, quantity, minLevel, price: price > 0 ? price : null, supplier: supplier || null, notes: notes || null, createdAt: timestamp, updatedAt: timestamp });
+                await push(ref(database, 'inventory'), { name: name, category: category, unit: unit, quantity: quantity, minLevel: minLevel, price: price > 0 ? price : null, supplier: supplier || null, notes: notes || null, createdAt: timestamp, updatedAt: timestamp });
                 closeModal('addItem');
                 showWarning('✅ تمت إضافة المادة بنجاح', true);
             } finally { btn.disabled = false; }
