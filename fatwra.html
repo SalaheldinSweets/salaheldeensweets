@@ -76,6 +76,7 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <a href="inventory.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 flex items-center gap-3 text-emerald-700"><span>📦</span><span>إدارة المواد</span></a>
 <a href="invoices.html" class="w-full text-right p-3 rounded-xl bg-blue-50 text-blue-700 font-semibold flex items-center gap-3"><span>📄</span><span>فواتير المبيعات</span></a>
 <a href="records.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700"><span>📚</span><span>السجلات</span></a>
+<a href="control.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700"><span>⚙️</span><span>التحكم</span></a>
 <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700"><span>🧮</span><span>تصفية الوردية</span></a>
 </div>
 </div>
@@ -125,6 +126,7 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">📝</span><span class="text-xs mt-1">الديون</span></a>
 <a href="invoices.html" class="flex flex-col items-center p-2 text-blue-600"><span class="text-xl">📄</span><span class="text-xs mt-1 font-semibold">الفواتير</span></a>
 <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">📊</span><span class="text-xs mt-1">التقارير</span></a>
+<a href="control.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">⚙️</span><span class="text-xs mt-1">التحكم</span></a>
 <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">🧮</span><span class="text-xs mt-1">الوردية</span></a>
 </div>
 </nav>
@@ -167,6 +169,10 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <div class="product-row"><span class="flex-1 font-semibold text-slate-700">معجنات</span><span class="price-tag" id="price-معجنات">0 ج</span><input type="number" class="weight-input" id="qty-معجنات" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('معجنات')">🗑️</button></div>
 <div class="product-row"><span class="flex-1 font-semibold text-slate-700">سمسمية</span><span class="price-tag" id="price-سمسمية">0 ج</span><input type="number" class="weight-input" id="qty-سمسمية" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('سمسمية')">🗑️</button></div>
 <div class="product-row"><span class="flex-1 font-semibold text-slate-700">بلح شام</span><span class="price-tag" id="price-بلح شام">0 ج</span><input type="number" class="weight-input" id="qty-بلح شام" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('بلح شام')">🗑️</button></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">بسكويت يانسون</span><span class="price-tag" id="price-بسكويت يانسون">0 ج</span><input type="number" class="weight-input" id="qty-بسكويت يانسون" placeholder="صحن" min="0" step="1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('بسكويت يانسون')">🗑️</button></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">حصانة باسطة</span><span class="price-tag" id="price-حصانة باسطة">0 ج</span><input type="number" class="weight-input" id="qty-حصانة باسطة" placeholder="صحن" min="0" step="1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('حصانة باسطة')">🗑️</button></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">بسبوسة خاصة</span><span class="price-tag" id="price-بسبوسة خاصة">0 ج</span><input type="number" class="weight-input" id="qty-بسبوسة خاصة" placeholder="صحن" min="0" step="1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('بسبوسة خاصة')">🗑️</button></div>
+<div class="product-row"><span class="flex-1 font-semibold text-slate-700">كنافة ناعمة</span><span class="price-tag" id="price-كنافة ناعمة">0 ج</span><input type="number" class="weight-input" id="qty-كنافة ناعمة" placeholder="صحن" min="0" step="1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('كنافة ناعمة')">🗑️</button></div>
 </div>
 </div>
 <div class="total-box">
@@ -259,11 +265,43 @@ const DEFAULT_PRICES = {
     'تستيف': 140,
     'معجنات': 100,
     'سمسمية': 130,
-    'بلح شام': 110
+    'بلح شام': 110,
+    'بسكويت يانسون': 350,
+    'حصانة باسطة': 450,
+    'بسبوسة خاصة': 400,
+    'كنافة ناعمة': 500
 };
+
+const PRODUCT_UNITS = {
+    'بسبوسة': 'كجم',
+    'كونكا كاكاو': 'كجم',
+    'صباعات': 'كجم',
+    'كنافة': 'كجم',
+    'كونكا قوية': 'كجم',
+    'تستيف': 'كجم',
+    'معجنات': 'كجم',
+    'سمسمية': 'كجم',
+    'بلح شام': 'كجم',
+    'بسكويت يانسون': 'صحن',
+    'حصانة باسطة': 'صحن',
+    'بسبوسة خاصة': 'صحن',
+    'كنافة ناعمة': 'صحن'
+};
+
+function loadPricesFromControl() {
+    const saved = localStorage.getItem('product_prices');
+    if (saved) {
+        const prices = JSON.parse(saved);
+        Object.keys(prices).forEach(name => {
+            if (prices[name].price) DEFAULT_PRICES[name] = prices[name].price;
+            if (prices[name].unit) PRODUCT_UNITS[name] = prices[name].unit;
+        });
+    }
+}
 
 // ========== التهيئة ==========
 document.addEventListener('DOMContentLoaded', function() {
+    loadPricesFromControl();
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('invoiceDate').value = now.toISOString().slice(0, 16);
@@ -411,13 +449,17 @@ function selectPayMethod(btn) {
 }
 
 function updateCustomerPrice() {
+    loadPricesFromControl(); // تحديث الأسعار من صفحة التحكم
     const customer = document.getElementById('invoiceCustomer').value;
     const prices = (customers[customer] && customers[customer].prices) || {};
 
     document.querySelectorAll('.product-row').forEach(row => {
         const name = row.querySelector('span').textContent;
         const price = prices[name] || DEFAULT_PRICES[name] || 0;
+        const unit = PRODUCT_UNITS[name] || 'كجم';
         row.querySelector('.price-tag').textContent = price + ' ج';
+        const input = row.querySelector('.weight-input');
+        if (input) input.placeholder = unit;
     });
     calculateTotal();
 }
@@ -485,7 +527,7 @@ function handleInvoiceSubmit(e) {
         const qty = parseFloat(document.getElementById('qty-' + name).value) || 0;
         if (qty > 0) {
             const price = parseFloat(row.querySelector('.price-tag').textContent) || 0;
-            invoice.items.push({ name: name, qty: qty, price: price, total: qty * price });
+            invoice.items.push({ name: name, qty: qty, price: price, total: qty * price, unit: PRODUCT_UNITS[name] || 'كجم' });
         }
     });
 
@@ -524,7 +566,7 @@ function showInvoiceDetail(id) {
             ${inv.items.map(item => `
                 <div class="flex justify-between p-2 bg-slate-50 rounded-lg">
                     <span>${item.name}</span>
-                    <span class="font-bold">${item.qty} كجم × ${item.price} = ${formatNumber(item.total)} ج</span>
+                    <span class="font-bold">${item.qty} ${item.unit || 'كجم'} × ${item.price} = ${formatNumber(item.total)} ج</span>
                 </div>
             `).join('')}
         </div>
