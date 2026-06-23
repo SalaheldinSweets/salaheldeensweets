@@ -787,11 +787,72 @@ window.shareInvoice = function(id) {
     const dateStr = date.toLocaleDateString('ar-SA');
     const timeStr = date.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
 
-    let itemsText = inv.items.map(i => `- ${i.name}: ${i.qty} ${i.unit || 'كجم'} × ${i.price} = ${formatNumber(i.total)} ج`).join('\n');
+    // حساب إجماليات الوحدات
+    let kgTotal = 0, dishTotal = 0;
+    inv.items.forEach(i => {
+        if (i.unit === 'كجم') kgTotal += parseFloat(i.qty) || 0;
+        else if (i.unit === 'صحن') dishTotal += parseFloat(i.qty) || 0;
+    });
 
-    let statusText = inv.status === 'paid' ? 'مدفوعة كاملة' : inv.status === 'partial' ? `جزئية (مدفوع: ${formatNumber(inv.paid)} ج - متبقي: ${formatNumber(inv.remaining)} ج)` : 'آجلة بالكامل';
+    // بناء نص المنتجات مع سطر فارغ بين كل منتج
+    let itemsText = inv.items.map(i => 
+        `- ${i.name}: ${i.qty} ${i.unit || 'كجم'} × ${formatNumber(i.price)} = ${formatNumber(i.total)} ج
+`
+    ).join('');
 
-    const message = `فاتورة مبيعات\n================\nرقم: ${inv.number}\nالزبون: ${inv.customer}\nالتاريخ: ${dayName} ${dateStr}\nالوقت: ${timeStr}\n================\nالمنتجات:\n${itemsText}\n================\nالمجموع: ${formatNumber(inv.total)} ج\nالحالة: ${statusText}\n================\nمدير حسابات صلاح الدين`;
+    // حالة الفاتورة
+    let statusText = '';
+    if (inv.status === 'paid') {
+        statusText = `مدفوعة كاملة (${inv.method})`;
+    } else if (inv.status === 'partial') {
+        statusText = `جزئية
+مدفوع: ${formatNumber(inv.paid)} ج
+متبقي: ${formatNumber(inv.remaining)} ج`;
+    } else {
+        statusText = 'آجلة بالكامل';
+    }
+
+    // بناء ملخص الوحدات
+    let unitSummary = '';
+    if (kgTotal > 0) unitSummary += `
+إجمالي الكيلو: ${kgTotal.toFixed(1)} كجم`;
+    if (dishTotal > 0) unitSummary += `
+إجمالي الصحون: ${dishTotal} صحن`;
+
+    // الرسالة النهائية بتنسيق جميل ومريح
+    const message = `فاتورة مبيعات
+` +
+        `================
+` +
+        `رقم: ${inv.number}
+
+` +
+        `الزبون: ${inv.customer}
+
+` +
+        `التاريخ: ${dayName} ${dateStr}
+` +
+        `الوقت: ${timeStr}
+` +
+        `================
+` +
+        `المنتجات:
+` +
+        `${itemsText}` +
+        `================` +
+        `${unitSummary}
+
+` +
+        `المجموع: ${formatNumber(inv.total)} ج
+
+` +
+        `الحالة: ${statusText}
+` +
+        `================
+` +
+        `مع تحيات
+` +
+        `حلويات صلاح الدين`;
 
     const waUrl = `https://wa.me/${customerData.phone}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, '_blank');
