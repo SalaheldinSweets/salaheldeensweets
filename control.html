@@ -15,10 +15,6 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 .hide-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
 .fade-in{animation:fadeIn 0.4s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:flex-end;z-index:50}
-.modal.active{display:flex}
-.modal-content{background:white;border-radius:1.5rem 1.5rem 0 0;width:100%;max-width:480px;margin:0 auto;padding:1.5rem;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s ease}
-.modal.active .modal-content{transform:translateY(0)}
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-150px);padding:14px 24px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.2);z-index:100;transition:transform 0.3s ease;font-weight:600;text-align:center;min-width:280px;font-size:0.9rem}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast-success{background:#10b981;color:white}
@@ -37,6 +33,10 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 .save-btn:active{transform:scale(0.97)}
 .reset-btn{background:#f1f5f9;color:#64748b;border-radius:10px;padding:8px 16px;font-weight:600;font-size:0.85rem;transition:all 0.2s;border:none;cursor:pointer}
 .reset-btn:hover{background:#e2e8f0}
+.customer-card{background:white;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #e2e8f0}
+.delete-customer{background:#fee2e2;color:#dc2626;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;border:none}
+.delete-customer:active{transform:scale(0.9)}
+.section-title{background:linear-gradient(135deg,#667eea,#764ba2);color:white;border-radius:12px;padding:12px 16px;font-weight:800;font-size:1rem;margin:20px 0 12px 0}
 </style>
 <base target="_blank">
 <base target="_blank">
@@ -64,7 +64,6 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700"><span>📝</span><span>الديون</span></a>
 <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700"><span>🏦</span><span>الصندوق الجانبي</span></a>
 <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700"><span>📊</span><span>التقارير</span></a>
-<a href="inventory.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 flex items-center gap-3 text-emerald-700"><span>📦</span><span>إدارة المواد</span></a>
 <a href="invoices.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700"><span>📄</span><span>فواتير المبيعات</span></a>
 <a href="records.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700"><span>📚</span><span>السجلات</span></a>
 <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700"><span>🧮</span><span>تصفية الوردية</span></a>
@@ -78,22 +77,50 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <!-- إحصائيات سريعة -->
 <div class="bg-white rounded-2xl p-4 shadow-sm">
 <div class="flex justify-between items-center mb-3">
-<h3 class="font-bold text-slate-700">📊 إحصائيات الأسعار</h3>
+<h3 class="font-bold text-slate-700">📊 إحصائيات</h3>
 <button onclick="resetAllPrices()" class="reset-btn">🔄 إعادة ضبط</button>
 </div>
-<div class="grid grid-cols-2 gap-3">
+<div class="grid grid-cols-3 gap-3">
 <div class="bg-purple-50 rounded-xl p-3 text-center border border-purple-100">
-<div class="text-2xl font-bold text-purple-600" id="totalProducts">0</div>
-<div class="text-xs text-purple-500 font-semibold">عدد المنتجات</div>
+<div class="text-xl font-bold text-purple-600" id="totalProducts">0</div>
+<div class="text-xs text-purple-500 font-semibold">المنتجات</div>
 </div>
 <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
-<div class="text-2xl font-bold text-blue-600" id="avgPrice">0</div>
+<div class="text-xl font-bold text-blue-600" id="avgPrice">0</div>
 <div class="text-xs text-blue-500 font-semibold">متوسط السعر</div>
+</div>
+<div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+<div class="text-xl font-bold text-emerald-600" id="totalCustomers">0</div>
+<div class="text-xs text-emerald-500 font-semibold">الزبائن</div>
 </div>
 </div>
 </div>
 
-<!-- فلترة المنتجات -->
+<!-- قسم الزبائن -->
+<div class="section-title">👥 إدارة الزبائن</div>
+
+<div class="bg-white rounded-2xl p-4 shadow-sm mb-4">
+<div class="space-y-3">
+<div>
+<label class="block text-sm text-slate-600 mb-1 font-semibold">اسم الزبون</label>
+<input type="text" id="newCustomerName" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-purple-500 focus:outline-none" placeholder="مثال: محمد سلمان">
+</div>
+<div>
+<label class="block text-sm text-slate-600 mb-1 font-semibold">رقم الواتساب (مع رمز الدولة)</label>
+<input type="tel" id="newCustomerPhone" class="w-full border-2 border-slate-200 rounded-xl p-3 text-left focus:border-purple-500 focus:outline-none font-mono" placeholder="مثال: 249912345678" dir="ltr">
+<div class="text-xs text-slate-400 mt-1">📱 سيتم استخدام هذا الرقم لمشاركة الفواتير عبر واتساب</div>
+</div>
+<button onclick="addCustomer()" class="w-full bg-purple-500 text-white rounded-xl p-3 font-bold btn-press shadow-lg hover:bg-purple-600 transition">➕ إضافة زبون</button>
+</div>
+</div>
+
+<div id="customersContainer">
+<!-- يتم تعبئتها ديناميكياً -->
+</div>
+
+<!-- قسم الأسعار -->
+<div class="section-title">💰 إدارة أسعار المنتجات</div>
+
 <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
 <button onclick="filterCategory('all')" class="tab-btn active" data-cat="all">الكل</button>
 <button onclick="filterCategory('bakery')" class="tab-btn" data-cat="bakery">🥐 خبيز</button>
@@ -101,13 +128,12 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <button onclick="filterCategory('dessert')" class="tab-btn" data-cat="dessert">🍰 حلويات</button>
 </div>
 
-<!-- المنتجات -->
 <div id="productsContainer">
 <!-- يتم تعبئتها ديناميكياً -->
 </div>
 
 <!-- زر الحفظ -->
-<div class="sticky bottom-4 z-40">
+<div class="sticky bottom-4 z-40 mt-4">
 <button onclick="saveAllPrices()" class="save-btn btn-press">
 💾 حفظ جميع الأسعار
 </button>
@@ -126,61 +152,95 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 </nav>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, set, push, onValue, update, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+    authDomain: "salahsweetmanage.firebaseapp.com",
+    databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+    projectId: "salahsweetmanage",
+    storageBucket: "salahsweetmanage.firebasestorage.app",
+    messagingSenderId: "126049780562",
+    appId: "1:126049780562:web:147daa036e56273263308b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const database = getDatabase(app);
+
 // ========== البيانات ==========
 const DEFAULT_PRODUCTS = [
-    // خبيز
     { id: 'khbiz_1', name: 'بسبوسة', category: 'bakery', unit: 'كجم', defaultPrice: 150, icon: '🥮' },
     { id: 'khbiz_2', name: 'كنافة', category: 'bakery', unit: 'كجم', defaultPrice: 200, icon: '🥐' },
     { id: 'khbiz_3', name: 'صباعات', category: 'bakery', unit: 'كجم', defaultPrice: 120, icon: '🥖' },
     { id: 'khbiz_4', name: 'معجنات', category: 'bakery', unit: 'كجم', defaultPrice: 100, icon: '🥨' },
     { id: 'khbiz_5', name: 'بلح شام', category: 'bakery', unit: 'كجم', defaultPrice: 110, icon: '🍩' },
-
-    // بسكويت
     { id: 'biscuit_1', name: 'بسكويت يانسون', category: 'biscuit', unit: 'صحن', defaultPrice: 350, icon: '🍪' },
     { id: 'biscuit_2', name: 'كونكا كاكاو', category: 'biscuit', unit: 'كجم', defaultPrice: 180, icon: '🍫' },
     { id: 'biscuit_3', name: 'كونكا قوية', category: 'biscuit', unit: 'كجم', defaultPrice: 160, icon: '🍪' },
     { id: 'biscuit_4', name: 'تستيف', category: 'biscuit', unit: 'كجم', defaultPrice: 140, icon: '🥠' },
     { id: 'biscuit_5', name: 'سمسمية', category: 'biscuit', unit: 'كجم', defaultPrice: 130, icon: '🥜' },
-
-    // حلويات
     { id: 'dessert_1', name: 'حصانة باسطة', category: 'dessert', unit: 'صحن', defaultPrice: 450, icon: '🍰' },
     { id: 'dessert_2', name: 'بسبوسة خاصة', category: 'dessert', unit: 'صحن', defaultPrice: 400, icon: '🧁' },
     { id: 'dessert_3', name: 'كنافة ناعمة', category: 'dessert', unit: 'صحن', defaultPrice: 500, icon: '🍮' },
 ];
 
 let products = [];
+let customers = {};
 let currentFilter = 'all';
+let currentUser = null;
 
-// ========== التهيئة ==========
-document.addEventListener('DOMContentLoaded', function() {
-    loadProducts();
-    renderProducts();
-    updateStats();
+// ========== المصادقة ==========
+onAuthStateChanged(auth, (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    initApp();
 });
 
-function loadProducts() {
-    const saved = localStorage.getItem('control_products');
-    if (saved) {
-        products = JSON.parse(saved);
-        // التحقق من وجود منتجات جديدة في DEFAULT_PRODUCTS
-        DEFAULT_PRODUCTS.forEach(def => {
-            if (!products.find(p => p.id === def.id)) {
-                products.push({ ...def });
-            }
+window.logout = async function() {
+    try { await signOut(auth); window.location.href = 'login.html'; } catch (e) { console.error(e); }
+};
+
+function initApp() {
+    loadProducts();
+
+    // مراقبة الزبائن في Firebase
+    onValue(ref(database, 'invoiceCustomers'), (snap) => {
+        customers = snap.val() || {};
+        renderCustomers();
+        updateStats();
+    });
+
+    // مراقبة المنتجات في Firebase
+    onValue(ref(database, 'control_products'), (snap) => {
+        const saved = snap.val();
+        if (saved) {
+            // دمج المنتجات المحفوظة مع الافتراضية
+            products = DEFAULT_PRODUCTS.map(def => {
+                const savedProd = saved.find(s => s.id === def.id);
+                return savedProd ? { ...def, ...savedProd } : { ...def };
+            });
+        } else {
+            products = DEFAULT_PRODUCTS.map(p => ({ ...p }));
+        }
+        products.sort((a, b) => {
+            if (a.category !== b.category) return a.category.localeCompare(b.category);
+            return a.name.localeCompare(b.name);
         });
-    } else {
-        products = DEFAULT_PRODUCTS.map(p => ({ ...p }));
-    }
-    // فرز المنتجات حسب الفئة ثم الاسم
-    products.sort((a, b) => {
-        if (a.category !== b.category) return a.category.localeCompare(b.category);
-        return a.name.localeCompare(b.name);
+        renderProducts();
+        updateStats();
     });
 }
 
+function loadProducts() {
+    products = DEFAULT_PRODUCTS.map(p => ({ ...p }));
+}
+
 // ========== القائمة الجانبية ==========
-function toggleSidebar() {
+window.toggleSidebar = function() {
     const sidebar = document.getElementById('sidebar');
     const content = document.getElementById('sidebarContent');
     if (sidebar.classList.contains('hidden')) {
@@ -190,23 +250,68 @@ function toggleSidebar() {
         content.classList.add('translate-x-full');
         setTimeout(() => sidebar.classList.add('hidden'), 300);
     }
-}
+};
 
-function logout() {
-    if (confirm('هل تريد الخروج من النظام؟')) {
-        showToast('تم الخروج بنجاح', 'info');
-        setTimeout(() => location.href = 'login.html', 1000);
+// ========== إدارة الزبائن ==========
+window.addCustomer = async function() {
+    const name = document.getElementById('newCustomerName').value.trim();
+    const phone = document.getElementById('newCustomerPhone').value.trim();
+
+    if (!name) { showToast('أدخل اسم الزبون', 'error'); return; }
+    if (!phone) { showToast('أدخل رقم الواتساب', 'error'); return; }
+    if (!/^249[0-9]{9}$/.test(phone) && !/^0[0-9]{9}$/.test(phone)) {
+        showToast('رقم الهاتف غير صحيح. استخدم 249XXXXXXXXX', 'error'); return;
     }
+
+    const cleanPhone = phone.startsWith('0') ? '249' + phone.substring(1) : phone;
+
+    const newCustomer = { name, phone: cleanPhone, createdAt: Date.now() };
+    await push(ref(database, 'invoiceCustomers'), newCustomer);
+
+    document.getElementById('newCustomerName').value = '';
+    document.getElementById('newCustomerPhone').value = '';
+    showToast('تم إضافة الزبون بنجاح', 'success');
+};
+
+window.deleteCustomer = async function(key) {
+    if (!confirm('هل تريد حذف هذا الزبون؟')) return;
+    await set(ref(database, 'invoiceCustomers/' + key), null);
+    showToast('تم حذف الزبون', 'info');
+};
+
+function renderCustomers() {
+    const container = document.getElementById('customersContainer');
+    const entries = Object.entries(customers);
+
+    if (entries.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">لا يوجد زبائن مسجلين</div>';
+        return;
+    }
+
+    container.innerHTML = entries.map(([key, c]) => `
+        <div class="customer-card fade-in">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-lg">${c.name.charAt(0)}</div>
+                    <div>
+                        <div class="font-bold text-slate-800">${c.name}</div>
+                        <div class="text-xs text-slate-500 font-mono" dir="ltr">+${c.phone}</div>
+                    </div>
+                </div>
+                <button onclick="deleteCustomer('${key}')" class="delete-customer">🗑️</button>
+            </div>
+        </div>
+    `).join('');
 }
 
 // ========== فلترة الفئات ==========
-function filterCategory(cat) {
+window.filterCategory = function(cat) {
     currentFilter = cat;
     document.querySelectorAll('[data-cat]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.cat === cat);
     });
     renderProducts();
-}
+};
 
 // ========== عرض المنتجات ==========
 function renderProducts() {
@@ -214,7 +319,7 @@ function renderProducts() {
     let filtered = currentFilter === 'all' ? products : products.filter(p => p.category === currentFilter);
 
     if (filtered.length === 0) {
-        container.innerHTML = '<div class="text-center text-slate-400 py-8">لا توجد منتجات في هذه الفئة</div>';
+        container.innerHTML = '<div class="text-center text-slate-400 py-8">لا توجد منتجات</div>';
         return;
     }
 
@@ -228,11 +333,7 @@ function renderProducts() {
             html += `<div class="category-header">${catNames[currentCat] || currentCat}</div>`;
         }
 
-        const unitColors = {
-            'كجم': 'bg-emerald-100 text-emerald-700',
-            'صحن': 'bg-amber-100 text-amber-700',
-            'حبة': 'bg-blue-100 text-blue-700'
-        };
+        const unitColors = { 'كجم': 'bg-emerald-100 text-emerald-700', 'صحن': 'bg-amber-100 text-amber-700', 'حبة': 'bg-blue-100 text-blue-700' };
 
         html += `
             <div class="price-card fade-in">
@@ -241,9 +342,7 @@ function renderProducts() {
                         <span class="text-2xl">${p.icon}</span>
                         <div>
                             <div class="font-bold text-slate-800">${p.name}</div>
-                            <span class="unit-badge ${unitColors[p.unit] || 'bg-slate-100 text-slate-600'}">
-                                ${p.unit === 'صحن' ? '🍽️' : '⚖️'} ${p.unit}
-                            </span>
+                            <span class="unit-badge ${unitColors[p.unit] || 'bg-slate-100 text-slate-600'}">${p.unit === 'صحن' ? '🍽️' : '⚖️'} ${p.unit}</span>
                         </div>
                     </div>
                     <div class="text-left">
@@ -254,18 +353,11 @@ function renderProducts() {
                 <div class="flex items-center gap-3">
                     <div class="flex-1">
                         <label class="text-xs text-slate-500 mb-1 block">السعر الجديد</label>
-                        <input type="number" 
-                               id="price-${p.id}" 
-                               class="price-input" 
-                               placeholder="0" 
-                               value="${p.price || p.defaultPrice}"
-                               min="0" 
-                               step="1"
-                               oninput="updatePriceDisplay('${p.id}')">
+                        <input type="number" id="price-${p.id}" class="price-input" placeholder="0" value="${p.price || p.defaultPrice}" min="0" step="1" oninput="updatePriceDisplay('${p.id}')">
                     </div>
                     <div class="flex-1">
                         <label class="text-xs text-slate-500 mb-1 block">وحدة القياس</label>
-                        <select id="unit-${p.id}" class="price-input text-sm" onchange="updateUnit('${p.id}')">
+                        <select id="unit-${p.id}" class="price-input text-sm">
                             <option value="كجم" ${p.unit === 'كجم' ? 'selected' : ''}>⚖️ كجم</option>
                             <option value="صحن" ${p.unit === 'صحن' ? 'selected' : ''}>🍽️ صحن</option>
                             <option value="حبة" ${p.unit === 'حبة' ? 'selected' : ''}>📦 حبة</option>
@@ -279,102 +371,65 @@ function renderProducts() {
     container.innerHTML = html;
 }
 
-function updatePriceDisplay(id) {
+window.updatePriceDisplay = function(id) {
     const input = document.getElementById('price-' + id);
     const display = document.getElementById('display-' + id);
     const val = parseFloat(input.value) || 0;
     display.textContent = formatNumber(val) + ' ج';
-    display.style.color = val !== (products.find(p => p.id === id).price || products.find(p => p.id === id).defaultPrice) ? '#667eea' : '#1e293b';
-}
-
-function updateUnit(id) {
-    const select = document.getElementById('unit-' + id);
-    const product = products.find(p => p.id === id);
-    if (product) {
-        product.unit = select.value;
-    }
-}
+};
 
 // ========== حفظ الأسعار ==========
-function saveAllPrices() {
-    let changed = 0;
+window.saveAllPrices = async function() {
     products.forEach(p => {
         const input = document.getElementById('price-' + p.id);
         const unitSelect = document.getElementById('unit-' + p.id);
-        if (input) {
-            const newPrice = parseFloat(input.value) || p.defaultPrice;
-            if (newPrice !== (p.price || p.defaultPrice)) {
-                p.price = newPrice;
-                changed++;
-            }
-        }
-        if (unitSelect) {
-            p.unit = unitSelect.value;
-        }
+        if (input) p.price = parseFloat(input.value) || p.defaultPrice;
+        if (unitSelect) p.unit = unitSelect.value;
     });
 
-    localStorage.setItem('control_products', JSON.stringify(products));
+    await set(ref(database, 'control_products'), products);
 
-    // تحديث الأسعار في صفحة الفواتير (تخزين في مفتاح مشترك)
+    // تحديث الأسعار في صفحة الفواتير
     const invoicePrices = {};
     products.forEach(p => {
-        invoicePrices[p.name] = {
-            price: p.price || p.defaultPrice,
-            unit: p.unit
-        };
+        invoicePrices[p.name] = { price: p.price || p.defaultPrice, unit: p.unit };
     });
-    localStorage.setItem('product_prices', JSON.stringify(invoicePrices));
+    await set(ref(database, 'product_prices'), invoicePrices);
 
     updateStats();
     renderProducts();
+    showToast('تم حفظ جميع الأسعار بنجاح', 'success');
+};
 
-    if (changed > 0) {
-        showToast(`تم تحديث ${changed} سعر بنجاح`, 'success');
-    } else {
-        showToast('تم حفظ الإعدادات', 'success');
-    }
-}
-
-function resetAllPrices() {
+window.resetAllPrices = async function() {
     if (!confirm('هل تريد إعادة جميع الأسعار للقيم الافتراضية؟')) return;
-
-    products.forEach(p => {
-        p.price = p.defaultPrice;
-        p.unit = DEFAULT_PRODUCTS.find(d => d.id === p.id)?.unit || 'كجم';
-    });
-
-    localStorage.setItem('control_products', JSON.stringify(products));
+    products.forEach(p => { p.price = p.defaultPrice; p.unit = DEFAULT_PRODUCTS.find(d => d.id === p.id)?.unit || 'كجم'; });
+    await set(ref(database, 'control_products'), products);
 
     const invoicePrices = {};
-    products.forEach(p => {
-        invoicePrices[p.name] = {
-            price: p.defaultPrice,
-            unit: p.unit
-        };
-    });
-    localStorage.setItem('product_prices', JSON.stringify(invoicePrices));
+    products.forEach(p => { invoicePrices[p.name] = { price: p.defaultPrice, unit: p.unit }; });
+    await set(ref(database, 'product_prices'), invoicePrices);
 
     renderProducts();
     updateStats();
     showToast('تم إعادة ضبط الأسعار', 'info');
-}
+};
 
-// ========== إحصائيات ==========
 function updateStats() {
     document.getElementById('totalProducts').textContent = products.length;
+    document.getElementById('totalCustomers').textContent = Object.keys(customers).length;
     const total = products.reduce((sum, p) => sum + (p.price || p.defaultPrice), 0);
-    const avg = products.length > 0 ? Math.round(total / products.length) : 0;
-    document.getElementById('avgPrice').textContent = formatNumber(avg) + ' ج';
+    document.getElementById('avgPrice').textContent = formatNumber(products.length > 0 ? Math.round(total / products.length) : 0) + ' ج';
 }
 
 // ========== إشعارات ==========
-function showToast(msg, type) {
+window.showToast = function(msg, type) {
     const toast = document.getElementById('toast');
     toast.className = 'toast toast-' + type;
     toast.textContent = msg;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3000);
-}
+};
 
 function formatNumber(num) {
     return num.toLocaleString('en-US');
