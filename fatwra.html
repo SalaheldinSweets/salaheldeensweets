@@ -46,6 +46,15 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 .delete-btn{background:#fee2e2;color:#dc2626;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;border:none}
 .delete-btn:active{transform:scale(0.9)}
 .pay-btn,.pay-method-btn,.debt-pay-btn{cursor:pointer;border:2px solid #e2e8f0;border-radius:0.75rem;padding:0.75rem;text-align:center;transition:all 0.2s;background:white}
+.search-input{width:100%;border:2px solid #e2e8f0;border-radius:12px;padding:10px 14px;font-size:0.95rem;transition:all 0.2s}
+.search-input:focus{border-color:#667eea;outline:none}
+.share-btn{background:#25d366;color:white;border-radius:10px;padding:8px 16px;font-weight:700;font-size:0.85rem;border:none;cursor:pointer;transition:all 0.2s}
+.share-btn:active{transform:scale(0.95)}
+.unit-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.unit-chip{background:#f1f5f9;color:#475569;padding:4px 10px;border-radius:20px;font-size:0.75rem;font-weight:600}
+.customer-select-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:8px;cursor:pointer;transition:all 0.2s}
+.customer-select-row:hover{background:#f1f5f9}
+.customer-select-row.selected{background:#ecfdf5;border-color:#10b981}
 </style>
 <base target="_blank">
 <base target="_blank">
@@ -73,30 +82,44 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <a href="debts.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700"><span>📝</span><span>الديون</span></a>
 <a href="external.html" class="w-full text-right p-3 rounded-xl hover:bg-orange-50 flex items-center gap-3 text-orange-700"><span>🏦</span><span>الصندوق الجانبي</span></a>
 <a href="reports.html" class="w-full text-right p-3 rounded-xl hover:bg-blue-50 flex items-center gap-3 text-blue-700"><span>📊</span><span>التقارير</span></a>
-<a href="inventory.html" class="w-full text-right p-3 rounded-xl hover:bg-emerald-50 flex items-center gap-3 text-emerald-700"><span>📦</span><span>إدارة المواد</span></a>
 <a href="invoices.html" class="w-full text-right p-3 rounded-xl bg-blue-50 text-blue-700 font-semibold flex items-center gap-3"><span>📄</span><span>فواتير المبيعات</span></a>
 <a href="records.html" class="w-full text-right p-3 rounded-xl hover:bg-amber-50 flex items-center gap-3 text-amber-700"><span>📚</span><span>السجلات</span></a>
-<a href="control.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700"><span>⚙️</span><span>التحكم</span></a>
 <a href="shift.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700"><span>🧮</span><span>تصفية الوردية</span></a>
+<a href="control.html" class="w-full text-right p-3 rounded-xl hover:bg-purple-50 flex items-center gap-3 text-purple-700"><span>⚙️</span><span>التحكم</span></a>
 </div>
 </div>
 </div>
+
 <main class="p-4 space-y-4 pb-28" id="mainContent">
+
+<!-- البحث -->
+<div class="bg-white rounded-2xl p-3 shadow-sm">
+<div class="flex items-center gap-2">
+<span class="text-slate-400">🔍</span>
+<input type="text" id="searchInput" class="search-input flex-1" placeholder="بحث بالزبون، رقم الفاتورة، أو المنتج..." oninput="handleSearch()">
+</div>
+</div>
+
+<!-- الزبائن والديون -->
 <div class="bg-white rounded-2xl p-4 shadow-sm">
 <div class="flex justify-between items-center mb-3">
 <h3 class="font-bold text-slate-700">👥 الزبائن والمبالغ المستحقة</h3>
 <span class="text-xs text-slate-400" id="customerCount">0 زبون</span>
 </div>
 <div id="customersList" class="flex flex-wrap gap-2">
-<div class="text-center text-slate-400 py-4 w-full text-sm">لا توجد ديون</div>
+<div class="text-center text-slate-400 py-4 w-full text-sm">جاري التحميل...</div>
 </div>
 </div>
+
+<!-- فلترة -->
 <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
 <button onclick="setTab('all')" class="tab-btn active" data-tab="all">الكل</button>
 <button onclick="setTab('unpaid')" class="tab-btn" data-tab="unpaid">🔴 غير مدفوعة</button>
 <button onclick="setTab('partial')" class="tab-btn" data-tab="partial">🟡 جزئية</button>
 <button onclick="setTab('paid')" class="tab-btn" data-tab="paid">🟢 مدفوعة</button>
 </div>
+
+<!-- الإجماليات -->
 <div class="grid grid-cols-3 gap-2">
 <div class="bg-red-50 rounded-xl p-3 text-center border border-red-100">
 <div class="text-xl font-bold text-red-600" id="unpaidTotal">0</div>
@@ -111,26 +134,30 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <div class="text-xs text-emerald-500 font-semibold">تم تحصيله</div>
 </div>
 </div>
+
+<!-- قائمة الفواتير -->
 <div id="invoicesList" class="space-y-3">
 <div class="text-center text-slate-400 py-12">
 <div class="text-5xl mb-4">📄</div>
-<div class="text-lg font-semibold">لا توجد فواتير</div>
-<div class="text-sm mt-1">اضغط الزر + لإنشاء فاتورة جديدة</div>
+<div class="text-lg font-semibold">جاري التحميل...</div>
 </div>
 </div>
 </main>
+
 <button class="fab btn-press" onclick="openInvoiceModal()">+</button>
+
 <nav class="bg-white border-t border-slate-200 p-2 sticky bottom-0 z-30">
 <div class="flex justify-around items-center">
 <a href="index.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">🏠</span><span class="text-xs mt-1">الرئيسية</span></a>
 <a href="debts.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">📝</span><span class="text-xs mt-1">الديون</span></a>
 <a href="invoices.html" class="flex flex-col items-center p-2 text-blue-600"><span class="text-xl">📄</span><span class="text-xs mt-1 font-semibold">الفواتير</span></a>
 <a href="reports.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">📊</span><span class="text-xs mt-1">التقارير</span></a>
-<a href="control.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">⚙️</span><span class="text-xs mt-1">التحكم</span></a>
 <a href="shift.html" class="flex flex-col items-center p-2 text-slate-400"><span class="text-xl">🧮</span><span class="text-xs mt-1">الوردية</span></a>
 </div>
 </nav>
 </div>
+
+<!-- مودال إنشاء فاتورة -->
 <div id="invoiceModal" class="modal" onclick="closeModal('invoice')">
 <div class="modal-content" onclick="event.stopPropagation()">
 <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
@@ -143,42 +170,43 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <div class="text-xs text-slate-500">رقم الفاتورة</div>
 <div class="text-2xl font-bold font-mono text-slate-800" id="invoiceNumberDisplay">G-000001</div>
 </div>
+
+<!-- اختيار الزبون -->
 <div>
 <label class="block text-sm text-slate-600 mb-1 font-semibold">اسم الزبون *</label>
-<select id="invoiceCustomer" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-blue-500 focus:outline-none text-lg font-semibold bg-white" required onchange="updateCustomerPrice()">
-<option value="">اختر الزبون...</option>
-<option value="محمد سلمان">محمد سلمان</option>
-<option value="اسماعيل العبادي">اسماعيل العبادي</option>
-<option value="دكان السوق">دكان السوق</option>
-<option value="دكان كلي">دكان كلي</option>
-</select>
+<div id="customerSelectContainer" class="max-h-48 overflow-y-auto hide-scrollbar space-y-1">
+<!-- يتم تعبئتها ديناميكياً -->
 </div>
+<input type="hidden" id="invoiceCustomer" required>
+</div>
+
 <div>
 <label class="block text-sm text-slate-600 mb-1 font-semibold">التاريخ</label>
 <input type="datetime-local" id="invoiceDate" class="w-full border-2 border-slate-200 rounded-xl p-3 text-right focus:border-blue-500 focus:outline-none" required>
 </div>
+
 <div>
-<label class="block text-sm text-slate-600 mb-2 font-semibold">المنتجات والكميات (بالكيلو)</label>
+<label class="block text-sm text-slate-600 mb-2 font-semibold">المنتجات والكميات</label>
 <div class="bg-slate-50 rounded-xl p-3 space-y-2" id="productsContainer">
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">بسبوسة</span><span class="price-tag" id="price-بسبوسة">0 ج</span><input type="number" class="weight-input" id="qty-بسبوسة" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('بسبوسة')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">كونكا كاكاو</span><span class="price-tag" id="price-كونكا كاكاو">0 ج</span><input type="number" class="weight-input" id="qty-كونكا كاكاو" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('كونكا كاكاو')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">صباعات</span><span class="price-tag" id="price-صباعات">0 ج</span><input type="number" class="weight-input" id="qty-صباعات" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('صباعات')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">كنافة</span><span class="price-tag" id="price-كنافة">0 ج</span><input type="number" class="weight-input" id="qty-كنافة" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('كنافة')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">كونكا قوية</span><span class="price-tag" id="price-كونكا قوية">0 ج</span><input type="number" class="weight-input" id="qty-كونكا قوية" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('كونكا قوية')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">تستيف</span><span class="price-tag" id="price-تستيف">0 ج</span><input type="number" class="weight-input" id="qty-تستيف" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('تستيف')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">معجنات</span><span class="price-tag" id="price-معجنات">0 ج</span><input type="number" class="weight-input" id="qty-معجنات" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('معجنات')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">سمسمية</span><span class="price-tag" id="price-سمسمية">0 ج</span><input type="number" class="weight-input" id="qty-سمسمية" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('سمسمية')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">بلح شام</span><span class="price-tag" id="price-بلح شام">0 ج</span><input type="number" class="weight-input" id="qty-بلح شام" placeholder="كجم" min="0" step="0.1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('بلح شام')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">بسكويت يانسون</span><span class="price-tag" id="price-بسكويت يانسون">0 ج</span><input type="number" class="weight-input" id="qty-بسكويت يانسون" placeholder="صحن" min="0" step="1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('بسكويت يانسون')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">حصانة باسطة</span><span class="price-tag" id="price-حصانة باسطة">0 ج</span><input type="number" class="weight-input" id="qty-حصانة باسطة" placeholder="صحن" min="0" step="1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('حصانة باسطة')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">بسبوسة خاصة</span><span class="price-tag" id="price-بسبوسة خاصة">0 ج</span><input type="number" class="weight-input" id="qty-بسبوسة خاصة" placeholder="صحن" min="0" step="1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('بسبوسة خاصة')">🗑️</button></div>
-<div class="product-row"><span class="flex-1 font-semibold text-slate-700">كنافة ناعمة</span><span class="price-tag" id="price-كنافة ناعمة">0 ج</span><input type="number" class="weight-input" id="qty-كنافة ناعمة" placeholder="صحن" min="0" step="1" oninput="calculateTotal()"><button type="button" class="delete-btn" onclick="clearProduct('كنافة ناعمة')">🗑️</button></div>
+<!-- يتم تعبئتها ديناميكياً -->
 </div>
 </div>
+
+<!-- إجمالي الكميات -->
+<div class="bg-blue-50 rounded-xl p-3 border border-blue-100">
+<div class="text-xs text-blue-600 font-semibold mb-1">ملخص الكميات</div>
+<div class="unit-summary" id="unitSummary">
+<span class="unit-chip">⚖️ الكيلو: 0</span>
+<span class="unit-chip">🍽️ الصحون: 0</span>
+<span class="unit-chip">📦 الحبات: 0</span>
+</div>
+</div>
+
 <div class="total-box">
 <div class="text-sm text-slate-300">المجموع الكلي</div>
 <div class="text-3xl font-bold" id="invoiceTotal">0 ج</div>
 </div>
+
 <div>
 <label class="block text-sm text-slate-600 mb-2 font-semibold">حالة الدفع</label>
 <div class="grid grid-cols-3 gap-2">
@@ -188,6 +216,7 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 </div>
 <input type="hidden" id="paymentStatus" value="unpaid">
 </div>
+
 <div id="paymentSection" class="hidden space-y-3">
 <div>
 <label class="block text-sm text-slate-600 mb-1 font-semibold">طريقة الدفع</label>
@@ -197,7 +226,6 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 </div>
 <input type="hidden" id="payMethod" value="كاش">
 </div>
-<div id="bankFeeWarning" class="hidden bg-red-50 border border-red-200 rounded-xl p-3 text-red-800 text-sm"><div class="flex items-center gap-2"><span>⚠️</span><span class="font-bold">سيتم خصم 60 جنيه دمغة بنكك</span></div></div>
 <div>
 <label class="block text-sm text-slate-600 mb-1 font-semibold">المبلغ المدفوع</label>
 <input type="text" id="paidAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center font-bold focus:border-blue-500 focus:outline-none" placeholder="0" oninput="formatNumberInput(this); calculateRemaining()">
@@ -207,16 +235,21 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 <div class="text-2xl font-bold text-amber-800" id="remainingAmount">0 ج</div>
 </div>
 </div>
+
 <button type="submit" id="invoiceSubmitBtn" class="w-full bg-blue-500 text-white rounded-xl p-4 font-bold text-lg btn-press shadow-lg hover:bg-blue-600 transition">💾 حفظ الفاتورة</button>
 </form>
 </div>
 </div>
+
+<!-- مودال تفاصيل الفاتورة -->
 <div id="detailModal" class="modal" onclick="closeModal('detail')">
 <div class="modal-content" onclick="event.stopPropagation()">
 <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
 <div id="detailContent"></div>
 </div>
 </div>
+
+<!-- مودال تسديد الدين -->
 <div id="payDebtModal" class="modal" onclick="closeModal('payDebt')">
 <div class="modal-content" onclick="event.stopPropagation()">
 <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-6"></div>
@@ -239,7 +272,6 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 </div>
 <input type="hidden" id="debtPayMethod" value="كاش">
 </div>
-<div id="debtBankFeeWarning" class="hidden bg-red-50 border border-red-200 rounded-xl p-3 text-red-800 text-sm"><div class="flex items-center gap-2"><span>⚠️</span><span class="font-bold">سيتم خصم 60 جنيه دمغة بنكك</span></div></div>
 <div>
 <label class="block text-sm text-slate-600 mb-1 font-semibold">المبلغ المسدد</label>
 <input type="text" id="debtPayAmount" class="w-full border-2 border-slate-200 rounded-xl p-3 text-lg text-center font-bold focus:border-emerald-500 focus:outline-none" placeholder="0" oninput="formatNumberInput(this)" required>
@@ -249,70 +281,99 @@ body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh
 </div>
 </div>
 
-<script>
-// ========== البيانات ==========
-let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
-let customers = JSON.parse(localStorage.getItem('customers')) || {};
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, set, push, onValue, update, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDXnCq-6YYU8QwVdOzN9d1EfyOTWzqWBvs",
+    authDomain: "salahsweetmanage.firebaseapp.com",
+    databaseURL: "https://salahsweetmanage-default-rtdb.firebaseio.com",
+    projectId: "salahsweetmanage",
+    storageBucket: "salahsweetmanage.firebasestorage.app",
+    messagingSenderId: "126049780562",
+    appId: "1:126049780562:web:147daa036e56273263308b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const database = getDatabase(app);
+
+// ========== المتغيرات العامة ==========
+let invoices = [];
+let customers = {};
+let productPrices = {};
 let currentTab = 'all';
 let currentInvoiceId = null;
+let currentUser = null;
+let balances = { cash: 0, bank: 0 };
 
-const DEFAULT_PRICES = {
-    'بسبوسة': 150,
-    'كونكا كاكاو': 180,
-    'صباعات': 120,
-    'كنافة': 200,
-    'كونكا قوية': 160,
-    'تستيف': 140,
-    'معجنات': 100,
-    'سمسمية': 130,
-    'بلح شام': 110,
-    'بسكويت يانسون': 350,
-    'حصانة باسطة': 450,
-    'بسبوسة خاصة': 400,
-    'كنافة ناعمة': 500
+const DEFAULT_PRODUCTS = [
+    { name: 'بسبوسة', category: 'bakery', unit: 'كجم', defaultPrice: 150 },
+    { name: 'كنافة', category: 'bakery', unit: 'كجم', defaultPrice: 200 },
+    { name: 'صباعات', category: 'bakery', unit: 'كجم', defaultPrice: 120 },
+    { name: 'معجنات', category: 'bakery', unit: 'كجم', defaultPrice: 100 },
+    { name: 'بلح شام', category: 'bakery', unit: 'كجم', defaultPrice: 110 },
+    { name: 'بسكويت يانسون', category: 'biscuit', unit: 'صحن', defaultPrice: 350 },
+    { name: 'كونكا كاكاو', category: 'biscuit', unit: 'كجم', defaultPrice: 180 },
+    { name: 'كونكا قوية', category: 'biscuit', unit: 'كجم', defaultPrice: 160 },
+    { name: 'تستيف', category: 'biscuit', unit: 'كجم', defaultPrice: 140 },
+    { name: 'سمسمية', category: 'biscuit', unit: 'كجم', defaultPrice: 130 },
+    { name: 'حصانة باسطة', category: 'dessert', unit: 'صحن', defaultPrice: 450 },
+    { name: 'بسبوسة خاصة', category: 'dessert', unit: 'صحن', defaultPrice: 400 },
+    { name: 'كنافة ناعمة', category: 'dessert', unit: 'صحن', defaultPrice: 500 },
+];
+
+// ========== المصادقة ==========
+onAuthStateChanged(auth, (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    initApp();
+});
+
+window.logout = async function() {
+    try { await signOut(auth); window.location.href = 'login.html'; } catch (e) { console.error(e); }
 };
 
-const PRODUCT_UNITS = {
-    'بسبوسة': 'كجم',
-    'كونكا كاكاو': 'كجم',
-    'صباعات': 'كجم',
-    'كنافة': 'كجم',
-    'كونكا قوية': 'كجم',
-    'تستيف': 'كجم',
-    'معجنات': 'كجم',
-    'سمسمية': 'كجم',
-    'بلح شام': 'كجم',
-    'بسكويت يانسون': 'صحن',
-    'حصانة باسطة': 'صحن',
-    'بسبوسة خاصة': 'صحن',
-    'كنافة ناعمة': 'صحن'
-};
+function initApp() {
+    // مراقبة الأرصدة
+    onValue(ref(database, 'balances'), (snap) => {
+        const raw = snap.val() || {};
+        balances = { cash: raw.cash || 0, bank: raw.bank || 0 };
+    });
 
-function loadPricesFromControl() {
-    const saved = localStorage.getItem('product_prices');
-    if (saved) {
-        const prices = JSON.parse(saved);
-        Object.keys(prices).forEach(name => {
-            if (prices[name].price) DEFAULT_PRICES[name] = prices[name].price;
-            if (prices[name].unit) PRODUCT_UNITS[name] = prices[name].unit;
-        });
-    }
-}
+    // مراقبة الفواتير
+    onValue(ref(database, 'invoices'), (snap) => {
+        invoices = [];
+        snap.forEach((child) => { invoices.push({ id: child.key, ...child.val() }); });
+        invoices.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        renderInvoices();
+        updateCustomersList();
+    });
 
-// ========== التهيئة ==========
-document.addEventListener('DOMContentLoaded', function() {
-    loadPricesFromControl();
+    // مراقبة الزبائن
+    onValue(ref(database, 'invoiceCustomers'), (snap) => {
+        customers = snap.val() || {};
+        renderCustomersSelect();
+        updateCustomersList();
+    });
+
+    // مراقبة الأسعار
+    onValue(ref(database, 'product_prices'), (snap) => {
+        productPrices = snap.val() || {};
+        renderProductsInputs();
+    });
+
+    // تهيئة التاريخ
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('invoiceDate').value = now.toISOString().slice(0, 16);
     generateInvoiceNumber();
-    updateCustomerPrice();
-    renderInvoices();
-    updateCustomersList();
-});
+}
 
 // ========== القائمة الجانبية ==========
-function toggleSidebar() {
+window.toggleSidebar = function() {
     const sidebar = document.getElementById('sidebar');
     const content = document.getElementById('sidebarContent');
     if (sidebar.classList.contains('hidden')) {
@@ -322,36 +383,92 @@ function toggleSidebar() {
         content.classList.add('translate-x-full');
         setTimeout(() => sidebar.classList.add('hidden'), 300);
     }
-}
+};
 
-function logout() {
-    if (confirm('هل تريد الخروج من النظام؟')) {
-        showToast('تم الخروج بنجاح', 'info');
-        setTimeout(() => location.href = 'login.html', 1000);
+// ========== توليد رقم العملية ==========
+async function generateOperationNumber() {
+    const counterRef = ref(database, 'system/operationCounter');
+    try {
+        const result = await runTransaction(counterRef, (current) => (current || 0) + 1);
+        return 'G-' + String(result.snapshot.val()).padStart(6, '0');
+    } catch (e) {
+        return 'G-' + String(Date.now()).slice(-6);
     }
 }
 
-// ========== الفواتير ==========
 function generateInvoiceNumber() {
     const count = invoices.length + 1;
     document.getElementById('invoiceNumberDisplay').textContent = 'G-' + String(count).padStart(6, '0');
 }
 
-function setTab(tab) {
-    currentTab = tab;
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tab);
-    });
-    renderInvoices();
+// ========== عرض الزبائن ==========
+function renderCustomersSelect() {
+    const container = document.getElementById('customerSelectContainer');
+    const entries = Object.entries(customers);
+
+    if (entries.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">لا يوجد زبائن. أضف زبائن من صفحة التحكم.</div>';
+        return;
+    }
+
+    container.innerHTML = entries.map(([key, c]) => `
+        <div class="customer-select-row" onclick="selectCustomer('${key}', '${c.name}', this)" data-key="${key}">
+            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">${c.name.charAt(0)}</div>
+            <div class="flex-1">
+                <div class="font-bold text-slate-800 text-sm">${c.name}</div>
+                <div class="text-xs text-slate-500 font-mono" dir="ltr">+${c.phone}</div>
+            </div>
+        </div>
+    `).join('');
 }
+
+window.selectCustomer = function(key, name, el) {
+    document.querySelectorAll('.customer-select-row').forEach(r => r.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('invoiceCustomer').value = name;
+};
+
+// ========== عرض المنتجات ==========
+function renderProductsInputs() {
+    const container = document.getElementById('productsContainer');
+    const products = DEFAULT_PRODUCTS.map(p => {
+        const saved = productPrices[p.name];
+        return { ...p, price: saved ? saved.price : p.defaultPrice, unit: saved ? saved.unit : p.unit };
+    });
+
+    container.innerHTML = products.map(p => `
+        <div class="product-row">
+            <span class="flex-1 font-semibold text-slate-700">${p.name}</span>
+            <span class="price-tag" id="price-${p.name}">${p.price} ج</span>
+            <input type="number" class="weight-input" id="qty-${p.name}" placeholder="${p.unit}" min="0" step="${p.unit === 'صحن' ? '1' : '0.1'}" oninput="calculateTotal()">
+            <button type="button" class="delete-btn" onclick="clearProduct('${p.name}')">🗑️</button>
+        </div>
+    `).join('');
+}
+
+// ========== الفواتير ==========
+window.setTab = function(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+    renderInvoices();
+};
 
 function renderInvoices() {
     const list = document.getElementById('invoicesList');
     let filtered = currentTab === 'all' ? invoices : invoices.filter(inv => inv.status === currentTab);
+    const search = document.getElementById('searchInput')?.value?.trim() || '';
 
-    const unpaid = invoices.filter(i => i.status === 'unpaid').reduce((s, i) => s + i.total, 0);
-    const partial = invoices.filter(i => i.status === 'partial').reduce((s, i) => s + i.remaining, 0);
-    const paid = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.total, 0);
+    if (search) {
+        filtered = filtered.filter(inv => 
+            inv.customer?.includes(search) || 
+            inv.number?.includes(search) ||
+            inv.items?.some(i => i.name?.includes(search))
+        );
+    }
+
+    const unpaid = invoices.filter(i => i.status === 'unpaid').reduce((s, i) => s + (i.total || 0), 0);
+    const partial = invoices.filter(i => i.status === 'partial').reduce((s, i) => s + (i.remaining || 0), 0);
+    const paid = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + (i.total || 0), 0);
 
     document.getElementById('unpaidTotal').textContent = formatNumber(unpaid);
     document.getElementById('partialTotal').textContent = formatNumber(partial);
@@ -372,11 +489,11 @@ function renderInvoices() {
             <div class="flex justify-between items-start mb-2">
                 <div>
                     <div class="font-bold text-slate-800">${inv.customer}</div>
-                    <div class="text-xs text-slate-400">${inv.number} • ${new Date(inv.date).toLocaleString('ar-SA')}</div>
+                    <div class="text-xs text-slate-400">${inv.number} • ${new Date(inv.timestamp).toLocaleString('ar-SA')}</div>
                 </div>
                 <div class="text-left">
-                    <div class="font-bold text-lg">${formatNumber(inv.total)} ج</div>
-                    ${inv.status === 'partial' ? `<div class="text-xs text-amber-600">متبقي: ${formatNumber(inv.remaining)} ج</div>` : ''}
+                    <div class="font-bold text-lg">${formatNumber(inv.total || 0)} ج</div>
+                    ${inv.status === 'partial' ? `<div class="text-xs text-amber-600">متبقي: ${formatNumber(inv.remaining || 0)} ج</div>` : ''}
                 </div>
             </div>
             <div class="flex justify-between items-center">
@@ -387,57 +504,53 @@ function renderInvoices() {
     `).join('');
 }
 
+window.handleSearch = function() {
+    renderInvoices();
+};
+
 function getStatusClass(s) {
     return s === 'paid' ? 'bg-emerald-100 text-emerald-700' : s === 'partial' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
 }
-
 function getStatusText(s) {
     return s === 'paid' ? 'مدفوعة' : s === 'partial' ? 'جزئية' : 'غير مدفوعة';
 }
 
 // ========== إنشاء فاتورة ==========
-function openInvoiceModal() {
+window.openInvoiceModal = function() {
     document.getElementById('invoiceModal').classList.add('active');
     generateInvoiceNumber();
     calculateTotal();
-}
+};
 
-function closeModal(type) {
+window.closeModal = function(type) {
     document.getElementById(type + 'Modal').classList.remove('active');
-}
+};
 
-function selectPaymentStatus(btn) {
+window.selectPaymentStatus = function(btn) {
     document.querySelectorAll('.pay-btn').forEach(b => {
-        b.style.borderColor = '#e2e8f0';
-        b.style.background = 'white';
+        b.style.borderColor = '#e2e8f0'; b.style.background = 'white';
         const txt = b.querySelector('div:last-child');
-        txt.style.color = '';
-        txt.classList.remove('font-bold');
+        txt.style.color = ''; txt.classList.remove('font-bold');
     });
     const val = btn.dataset.value;
     const colors = { unpaid: ['#ef4444', '#fef2f2', '#b91c1c'], partial: ['#f59e0b', '#fffbeb', '#b45309'], paid: ['#10b981', '#f0fdf4', '#047857'] };
     const [border, bg, text] = colors[val];
-    btn.style.borderColor = border;
-    btn.style.background = bg;
+    btn.style.borderColor = border; btn.style.background = bg;
     const txt = btn.querySelector('div:last-child');
-    txt.style.color = text;
-    txt.classList.add('font-bold');
+    txt.style.color = text; txt.classList.add('font-bold');
     document.getElementById('paymentStatus').value = val;
 
-    const section = document.getElementById('paymentSection');
-    section.classList.toggle('hidden', val === 'unpaid');
+    document.getElementById('paymentSection').classList.toggle('hidden', val === 'unpaid');
     if (val === 'paid') {
         document.getElementById('paidAmount').value = formatNumber(parseFloat(document.getElementById('invoiceTotal').textContent.replace(/[^0-9]/g, '')) || 0);
         calculateRemaining();
     }
-}
+};
 
-function selectPayMethod(btn) {
+window.selectPayMethod = function(btn) {
     document.querySelectorAll('.pay-method-btn').forEach(b => {
-        b.style.borderColor = '#e2e8f0';
-        b.style.background = 'white';
-        b.querySelector('div').style.color = '';
-        b.querySelector('div').classList.remove('font-bold');
+        b.style.borderColor = '#e2e8f0'; b.style.background = 'white';
+        b.querySelector('div').style.color = ''; b.querySelector('div').classList.remove('font-bold');
     });
     const isCash = btn.dataset.value === 'كاش';
     btn.style.borderColor = isCash ? '#10b981' : '#3b82f6';
@@ -445,122 +558,197 @@ function selectPayMethod(btn) {
     btn.querySelector('div').style.color = isCash ? '#047857' : '#1d4ed8';
     btn.querySelector('div').classList.add('font-bold');
     document.getElementById('payMethod').value = btn.dataset.value;
-    document.getElementById('bankFeeWarning').classList.toggle('hidden', isCash);
-}
+};
 
-function updateCustomerPrice() {
-    loadPricesFromControl(); // تحديث الأسعار من صفحة التحكم
-    const customer = document.getElementById('invoiceCustomer').value;
-    const prices = (customers[customer] && customers[customer].prices) || {};
-
-    document.querySelectorAll('.product-row').forEach(row => {
-        const name = row.querySelector('span').textContent;
-        const price = prices[name] || DEFAULT_PRICES[name] || 0;
-        const unit = PRODUCT_UNITS[name] || 'كجم';
-        row.querySelector('.price-tag').textContent = price + ' ج';
-        const input = row.querySelector('.weight-input');
-        if (input) input.placeholder = unit;
-    });
-    calculateTotal();
-}
-
-function clearProduct(name) {
+window.clearProduct = function(name) {
     document.getElementById('qty-' + name).value = '';
     calculateTotal();
-}
+};
 
-function calculateTotal() {
+window.calculateTotal = function() {
     let total = 0;
+    let kgTotal = 0, dishTotal = 0, pieceTotal = 0;
+
     document.querySelectorAll('.product-row').forEach(row => {
         const name = row.querySelector('span').textContent;
         const priceText = row.querySelector('.price-tag').textContent;
         const price = parseFloat(priceText) || 0;
         const qty = parseFloat(document.getElementById('qty-' + name).value) || 0;
         total += price * qty;
-    });
-    document.getElementById('invoiceTotal').textContent = formatNumber(total) + ' ج';
-    calculateRemaining();
-}
 
-function calculateRemaining() {
+        const unit = productPrices[name]?.unit || 'كجم';
+        if (unit === 'كجم') kgTotal += qty;
+        else if (unit === 'صحن') dishTotal += qty;
+        else if (unit === 'حبة') pieceTotal += qty;
+    });
+
+    document.getElementById('invoiceTotal').textContent = formatNumber(total) + ' ج';
+    document.getElementById('unitSummary').innerHTML = `
+        <span class="unit-chip">⚖️ الكيلو: ${kgTotal.toFixed(1)}</span>
+        <span class="unit-chip">🍽️ الصحون: ${dishTotal}</span>
+        <span class="unit-chip">📦 الحبات: ${pieceTotal}</span>
+    `;
+    calculateRemaining();
+};
+
+window.calculateRemaining = function() {
     const total = parseFloat(document.getElementById('invoiceTotal').textContent.replace(/[^0-9]/g, '')) || 0;
     const paid = parseFloat((document.getElementById('paidAmount').value || '').replace(/,/g, '')) || 0;
-    const remaining = Math.max(0, total - paid);
-    document.getElementById('remainingAmount').textContent = formatNumber(remaining) + ' ج';
-}
+    document.getElementById('remainingAmount').textContent = formatNumber(Math.max(0, total - paid)) + ' ج';
+};
 
-function formatNumberInput(input) {
+window.formatNumberInput = function(input) {
     let val = input.value.replace(/[^0-9]/g, '');
     input.value = val ? parseInt(val).toLocaleString('en-US') : '';
-}
+};
 
 function formatNumber(num) {
-    return num.toLocaleString('en-US');
+    return (num || 0).toLocaleString('en-US');
 }
 
-function handleInvoiceSubmit(e) {
+// ========== حفظ الفاتورة مع التكامل مع Firebase ==========
+window.handleInvoiceSubmit = async function(e) {
     e.preventDefault();
-    const customer = document.getElementById('invoiceCustomer').value;
-    if (!customer) return showToast('اختر الزبون أولاً', 'error');
+    const btn = document.getElementById('invoiceSubmitBtn');
+    if (btn.disabled) return;
+    btn.disabled = true;
 
-    const status = document.getElementById('paymentStatus').value;
-    const total = parseFloat(document.getElementById('invoiceTotal').textContent.replace(/[^0-9]/g, '')) || 0;
-    if (total === 0) return showToast('أضف منتجات للفاتورة', 'error');
+    try {
+        const customer = document.getElementById('invoiceCustomer').value;
+        if (!customer) { showToast('اختر الزبون أولاً', 'error'); return; }
 
-    const paid = status === 'unpaid' ? 0 : parseFloat((document.getElementById('paidAmount').value || '').replace(/,/g, '')) || 0;
+        const status = document.getElementById('paymentStatus').value;
+        const total = parseFloat(document.getElementById('invoiceTotal').textContent.replace(/[^0-9]/g, '')) || 0;
+        if (total === 0) { showToast('أضف منتجات للفاتورة', 'error'); return; }
 
-    const invoice = {
-        id: Date.now().toString(),
-        number: document.getElementById('invoiceNumberDisplay').textContent,
-        customer: customer,
-        date: document.getElementById('invoiceDate').value,
-        total: total,
-        paid: paid,
-        remaining: Math.max(0, total - paid),
-        status: status,
-        method: status === 'unpaid' ? null : document.getElementById('payMethod').value,
-        items: []
-    };
+        const paid = status === 'unpaid' ? 0 : parseFloat((document.getElementById('paidAmount').value || '').replace(/,/g, '')) || 0;
+        const method = status === 'unpaid' ? null : document.getElementById('payMethod').value;
+        const remaining = Math.max(0, total - paid);
 
-    document.querySelectorAll('.product-row').forEach(row => {
-        const name = row.querySelector('span').textContent;
-        const qty = parseFloat(document.getElementById('qty-' + name).value) || 0;
-        if (qty > 0) {
-            const price = parseFloat(row.querySelector('.price-tag').textContent) || 0;
-            invoice.items.push({ name: name, qty: qty, price: price, total: qty * price, unit: PRODUCT_UNITS[name] || 'كجم' });
+        const items = [];
+        document.querySelectorAll('.product-row').forEach(row => {
+            const name = row.querySelector('span').textContent;
+            const qty = parseFloat(document.getElementById('qty-' + name).value) || 0;
+            if (qty > 0) {
+                const price = parseFloat(row.querySelector('.price-tag').textContent) || 0;
+                const unit = productPrices[name]?.unit || 'كجم';
+                items.push({ name, qty, price, total: qty * price, unit });
+            }
+        });
+
+        const timestamp = new Date(document.getElementById('invoiceDate').value).getTime() || Date.now();
+        const number = document.getElementById('invoiceNumberDisplay').textContent;
+        const uid = Date.now().toString(36).toUpperCase().slice(-6);
+
+        // تحديث الأرصدة حسب طريقة الدفع
+        const balanceUpdate = {};
+        if (status === 'paid' && method === 'كاش') {
+            balanceUpdate.cash = (balances.cash || 0) + total;
+        } else if (status === 'paid' && method === 'بنكك') {
+            balanceUpdate.bank = (balances.bank || 0) + total;
+        } else if (status === 'partial' && method === 'كاش') {
+            balanceUpdate.cash = (balances.cash || 0) + paid;
+        } else if (status === 'partial' && method === 'بنكك') {
+            balanceUpdate.bank = (balances.bank || 0) + paid;
         }
-    });
 
-    invoices.unshift(invoice);
-    localStorage.setItem('invoices', JSON.stringify(invoices));
+        const invoice = {
+            id: uid,
+            number,
+            customer,
+            timestamp,
+            total,
+            paid,
+            remaining,
+            status,
+            method,
+            items,
+            createdAt: Date.now()
+        };
 
-    if (!customers[customer]) customers[customer] = { debt: 0, prices: {} };
-    customers[customer].debt = (customers[customer].debt || 0) + invoice.remaining;
-    localStorage.setItem('customers', JSON.stringify(customers));
+        const updates = [];
 
-    showToast('تم حفظ الفاتورة بنجاح', 'success');
-    closeModal('invoice');
-    renderInvoices();
-    updateCustomersList();
-    e.target.reset();
-    updateCustomerPrice();
-    document.getElementById('paymentStatus').value = 'unpaid';
-    document.getElementById('paymentSection').classList.add('hidden');
-    selectPaymentStatus(document.querySelector('[data-value="unpaid"]'));
-}
+        // حفظ الفاتورة
+        updates.push(push(ref(database, 'invoices'), invoice));
+
+        // تحديث الأرصدة إذا كان هناك دفع
+        if (Object.keys(balanceUpdate).length > 0) {
+            updates.push(update(ref(database, 'balances'), balanceUpdate));
+        }
+
+        // تسجيل في السجلات (transactions)
+        const opNum = await generateOperationNumber();
+        const txTitle = status === 'paid' 
+            ? `فاتورة مبيعات - ${customer} (${method})` 
+            : status === 'partial' 
+                ? `فاتورة جزئية - ${customer} (${method})` 
+                : `فاتورة آجلة - ${customer}`;
+
+        updates.push(push(ref(database, 'transactions'), {
+            type: 'sales',
+            title: txTitle,
+            amount: paid > 0 ? paid : 0,
+            timestamp,
+            uid,
+            operationNumber: opNum.replace('G-', ''),
+            payment: method || 'آجل',
+            dept: 'فواتير',
+            customer,
+            invoiceNumber: number,
+            invoiceTotal: total,
+            invoicePaid: paid,
+            invoiceRemaining: remaining,
+            date: new Date(timestamp).toISOString().slice(0, 10)
+        }));
+
+        // تسجيل الدين إذا كان آجل أو جزئي
+        if (remaining > 0) {
+            updates.push(push(ref(database, 'debts'), {
+                type: 'invoice',
+                customer,
+                amount: remaining,
+                originalAmount: total,
+                paidAmount: paid,
+                status: 'pending',
+                createdAt: timestamp,
+                invoiceNumber: number,
+                invoiceId: uid
+            }));
+        }
+
+        await Promise.all(updates);
+
+        showToast('تم حفظ الفاتورة بنجاح', 'success');
+        closeModal('invoice');
+        e.target.reset();
+        document.getElementById('paymentStatus').value = 'unpaid';
+        document.getElementById('paymentSection').classList.add('hidden');
+        selectPaymentStatus(document.querySelector('[data-value="unpaid"]'));
+        renderProductsInputs();
+        generateInvoiceNumber();
+    } catch (err) {
+        console.error(err);
+        showToast('حدث خطأ أثناء الحفظ', 'error');
+    } finally {
+        btn.disabled = false;
+    }
+};
 
 // ========== تفاصيل الفاتورة ==========
-function showInvoiceDetail(id) {
+window.showInvoiceDetail = function(id) {
     const inv = invoices.find(i => i.id === id);
     if (!inv) return;
     currentInvoiceId = id;
+
+    const customerData = Object.values(customers).find(c => c.name === inv.customer);
+    const phone = customerData ? customerData.phone : null;
 
     const content = document.getElementById('detailContent');
     content.innerHTML = `
         <div class="text-center mb-4">
             <div class="text-sm text-slate-400">${inv.number}</div>
             <div class="text-xl font-bold text-slate-800">${inv.customer}</div>
-            <div class="text-sm text-slate-400">${new Date(inv.date).toLocaleString('ar-SA')}</div>
+            <div class="text-sm text-slate-400">${new Date(inv.timestamp).toLocaleString('ar-SA')}</div>
         </div>
         <div class="space-y-2 mb-4">
             ${inv.items.map(item => `
@@ -572,51 +760,134 @@ function showInvoiceDetail(id) {
         </div>
         <div class="total-box mb-4">
             <div class="text-sm text-slate-300">المجموع</div>
-            <div class="text-2xl font-bold">${formatNumber(inv.total)} ج</div>
-            ${inv.paid > 0 ? `<div class="text-sm text-emerald-300">مدفوع: ${formatNumber(inv.paid)} ج</div>` : ''}
+            <div class="text-2xl font-bold">${formatNumber(inv.total || 0)} ج</div>
+            ${inv.paid > 0 ? `<div class="text-sm text-emerald-300">مدفوع: ${formatNumber(inv.paid)} ج (${inv.method})</div>` : ''}
             ${inv.remaining > 0 ? `<div class="text-sm text-amber-300">متبقي: ${formatNumber(inv.remaining)} ج</div>` : ''}
         </div>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-2 mb-3">
             ${inv.remaining > 0 ? `<button onclick="openPayDebt('${inv.id}')" class="bg-emerald-500 text-white rounded-xl p-3 font-bold btn-press">💵 تسديد</button>` : ''}
             <button onclick="deleteInvoice('${inv.id}')" class="bg-red-500 text-white rounded-xl p-3 font-bold btn-press">🗑️ حذف</button>
         </div>
+        ${phone ? `<button onclick="shareInvoice('${inv.id}')" class="w-full share-btn btn-press">📤 مشاركة الفاتورة عبر واتساب</button>` : '<div class="text-xs text-slate-400 text-center">لا يوجد رقم هاتف مسجل لهذا الزبون</div>'}
     `;
     document.getElementById('detailModal').classList.add('active');
-}
+};
 
-function deleteInvoice(id) {
-    if (!confirm('هل تريد حذف الفاتورة؟')) return;
+// ========== مشاركة الفاتورة ==========
+window.shareInvoice = function(id) {
     const inv = invoices.find(i => i.id === id);
-    if (inv && customers[inv.customer]) {
-        customers[inv.customer].debt = Math.max(0, (customers[inv.customer].debt || 0) - inv.remaining);
-        localStorage.setItem('customers', JSON.stringify(customers));
+    if (!inv) return;
+
+    const customerData = Object.values(customers).find(c => c.name === inv.customer);
+    if (!customerData || !customerData.phone) { showToast('لا يوجد رقم هاتف لهذا الزبون', 'error'); return; }
+
+    const days = ['الاحد', 'الاثنين', 'الثلاثاء', 'الاربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const date = new Date(inv.timestamp);
+    const dayName = days[date.getDay()];
+    const dateStr = date.toLocaleDateString('ar-SA');
+    const timeStr = date.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+
+    let itemsText = inv.items.map(i => `- ${i.name}: ${i.qty} ${i.unit || 'كجم'} × ${i.price} = ${formatNumber(i.total)} ج`).join('\n');
+
+    let statusText = inv.status === 'paid' ? 'مدفوعة كاملة' : inv.status === 'partial' ? `جزئية (مدفوع: ${formatNumber(inv.paid)} ج - متبقي: ${formatNumber(inv.remaining)} ج)` : 'آجلة بالكامل';
+
+    const message = `فاتورة مبيعات\n================\nرقم: ${inv.number}\nالزبون: ${inv.customer}\nالتاريخ: ${dayName} ${dateStr}\nالوقت: ${timeStr}\n================\nالمنتجات:\n${itemsText}\n================\nالمجموع: ${formatNumber(inv.total)} ج\nالحالة: ${statusText}\n================\nمدير حسابات صلاح الدين`;
+
+    const waUrl = `https://wa.me/${customerData.phone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank');
+};
+
+// ========== حذف الفاتورة مع إرجاع المعاملة ==========
+window.deleteInvoice = async function(id) {
+    const inv = invoices.find(i => i.id === id);
+    if (!inv) return;
+
+    const confirmMsg = inv.status === 'paid' 
+        ? `هل أنت متأكد من حذف الفاتورة ${inv.number}؟\nسيتم خصم ${formatNumber(inv.total)} ج من رصيد ${inv.method}`
+        : inv.status === 'partial'
+            ? `هل أنت متأكد من حذف الفاتورة ${inv.number}؟\nسيتم خصم ${formatNumber(inv.paid)} ج من رصيد ${inv.method} وإلغاء الدين المتبقي ${formatNumber(inv.remaining)} ج`
+            : `هل أنت متأكد من حذف الفاتورة ${inv.number}؟\nسيتم إلغاء الدين ${formatNumber(inv.total)} ج`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        const updates = [];
+
+        // إرجاع المبلغ للرصيد
+        const balanceUpdate = {};
+        if (inv.status === 'paid' && inv.method === 'كاش') {
+            balanceUpdate.cash = (balances.cash || 0) - (inv.total || 0);
+        } else if (inv.status === 'paid' && inv.method === 'بنكك') {
+            balanceUpdate.bank = (balances.bank || 0) - (inv.total || 0);
+        } else if (inv.status === 'partial' && inv.method === 'كاش') {
+            balanceUpdate.cash = (balances.cash || 0) - (inv.paid || 0);
+        } else if (inv.status === 'partial' && inv.method === 'بنكك') {
+            balanceUpdate.bank = (balances.bank || 0) - (inv.paid || 0);
+        }
+
+        if (Object.keys(balanceUpdate).length > 0) {
+            updates.push(update(ref(database, 'balances'), balanceUpdate));
+        }
+
+        // حذف الفاتورة
+        const invRef = ref(database, 'invoices');
+        const snap = await get(invRef);
+        snap.forEach((child) => {
+            if (child.val().id === id) {
+                updates.push(set(ref(database, 'invoices/' + child.key), null));
+            }
+        });
+
+        // حذف الدين المرتبط
+        const debtsRef = ref(database, 'debts');
+        const debtsSnap = await get(debtsRef);
+        debtsSnap.forEach((child) => {
+            const debt = child.val();
+            if (debt.invoiceId === id || debt.invoiceNumber === inv.number) {
+                updates.push(set(ref(database, 'debts/' + child.key), null));
+            }
+        });
+
+        // تسجيل عملية الحذف في السجلات
+        updates.push(push(ref(database, 'transactions'), {
+            type: 'shopExpense',
+            title: `حذف فاتورة ${inv.number} - ${inv.customer}`,
+            amount: -(inv.paid || 0),
+            timestamp: Date.now(),
+            uid: Date.now().toString(36).toUpperCase().slice(-6),
+            payment: inv.method || 'آجل',
+            dept: 'فواتير',
+            customer: inv.customer,
+            note: 'حذف فاتورة',
+            date: new Date().toISOString().slice(0, 10)
+        }));
+
+        await Promise.all(updates);
+
+        showToast('تم حذف الفاتورة وإرجاع المبالغ', 'success');
+        closeModal('detail');
+    } catch (err) {
+        console.error(err);
+        showToast('حدث خطأ أثناء الحذف', 'error');
     }
-    invoices = invoices.filter(i => i.id !== id);
-    localStorage.setItem('invoices', JSON.stringify(invoices));
-    showToast('تم حذف الفاتورة', 'success');
-    closeModal('detail');
-    renderInvoices();
-    updateCustomersList();
-}
+};
 
 // ========== تسديد الدين ==========
-function openPayDebt(id) {
+window.openPayDebt = function(id) {
     const inv = invoices.find(i => i.id === id);
     if (!inv) return;
     document.getElementById('payDebtInvoiceId').value = id;
-    document.getElementById('debtAmountDisplay').textContent = formatNumber(inv.remaining) + ' ج';
+    document.getElementById('debtAmountDisplay').textContent = formatNumber(inv.remaining || 0) + ' ج';
     document.getElementById('debtCustomerName').textContent = inv.customer;
     document.getElementById('debtPayAmount').value = '';
     closeModal('detail');
     document.getElementById('payDebtModal').classList.add('active');
-}
+};
 
-function selectDebtPayMethod(btn) {
+window.selectDebtPayMethod = function(btn) {
     document.querySelectorAll('.debt-pay-btn').forEach(b => {
-        b.style.borderColor = '#e2e8f0';
-        b.style.background = 'white';
-        b.querySelector('div').style.color = '';
-        b.querySelector('div').classList.remove('font-bold');
+        b.style.borderColor = '#e2e8f0'; b.style.background = 'white';
+        b.querySelector('div').style.color = ''; b.querySelector('div').classList.remove('font-bold');
     });
     const isCash = btn.dataset.value === 'كاش';
     btn.style.borderColor = isCash ? '#10b981' : '#3b82f6';
@@ -624,39 +895,114 @@ function selectDebtPayMethod(btn) {
     btn.querySelector('div').style.color = isCash ? '#047857' : '#1d4ed8';
     btn.querySelector('div').classList.add('font-bold');
     document.getElementById('debtPayMethod').value = btn.dataset.value;
-    document.getElementById('debtBankFeeWarning').classList.toggle('hidden', isCash);
-}
+};
 
-function handlePayDebt(e) {
+window.handlePayDebt = async function(e) {
     e.preventDefault();
     const id = document.getElementById('payDebtInvoiceId').value;
     const inv = invoices.find(i => i.id === id);
     if (!inv) return;
 
     const amount = parseFloat((document.getElementById('debtPayAmount').value || '').replace(/,/g, '')) || 0;
-    if (amount <= 0 || amount > inv.remaining) return showToast('المبلغ غير صحيح', 'error');
+    if (amount <= 0 || amount > (inv.remaining || 0)) { showToast('المبلغ غير صحيح', 'error'); return; }
 
-    inv.paid += amount;
-    inv.remaining -= amount;
-    if (inv.remaining <= 0) inv.status = 'paid';
-    else inv.status = 'partial';
+    const method = document.getElementById('debtPayMethod').value;
 
-    if (customers[inv.customer]) {
-        customers[inv.customer].debt = Math.max(0, (customers[inv.customer].debt || 0) - amount);
-        localStorage.setItem('customers', JSON.stringify(customers));
+    try {
+        const newPaid = (inv.paid || 0) + amount;
+        const newRemaining = (inv.total || 0) - newPaid;
+        const newStatus = newRemaining <= 0 ? 'paid' : 'partial';
+
+        // تحديث الأرصدة (إضافة وليس خصم - لأنها فلوس داخلة)
+        const balanceUpdate = {};
+        if (method === 'كاش') balanceUpdate.cash = (balances.cash || 0) + amount;
+        else balanceUpdate.bank = (balances.bank || 0) + amount;
+
+        const updates = [];
+        updates.push(update(ref(database, 'balances'), balanceUpdate));
+
+        // تحديث الفاتورة
+        const invRef = ref(database, 'invoices');
+        const snap = await get(invRef);
+        snap.forEach((child) => {
+            if (child.val().id === id) {
+                updates.push(update(ref(database, 'invoices/' + child.key), {
+                    paid: newPaid,
+                    remaining: newRemaining,
+                    status: newStatus,
+                    method: method,
+                    lastPaymentAt: Date.now()
+                }));
+            }
+        });
+
+        // تسجيل في السجلات
+        const opNum = await generateOperationNumber();
+        updates.push(push(ref(database, 'transactions'), {
+            type: 'sales',
+            title: `تسديد فاتورة - ${inv.customer} (${method})`,
+            amount: amount,
+            timestamp: Date.now(),
+            uid: Date.now().toString(36).toUpperCase().slice(-6),
+            operationNumber: opNum.replace('G-', ''),
+            payment: method,
+            dept: 'فواتير',
+            customer: inv.customer,
+            invoiceNumber: inv.number,
+            note: `تسديد جزء من فاتورة ${inv.number}`,
+            date: new Date().toISOString().slice(0, 10)
+        }));
+
+        // تحديث الديون
+        const debtsRef = ref(database, 'debts');
+        const debtsSnap = await get(debtsRef);
+        debtsSnap.forEach((child) => {
+            const debt = child.val();
+            if (debt.invoiceId === id) {
+                const newDebtPaid = (debt.paidAmount || 0) + amount;
+                const newDebtRemaining = (debt.originalAmount || 0) - newDebtPaid;
+                updates.push(update(ref(database, 'debts/' + child.key), {
+                    paidAmount: newDebtPaid,
+                    amount: newDebtRemaining,
+                    status: newDebtRemaining <= 0 ? 'paid' : 'pending',
+                    lastPaymentAt: Date.now()
+                }));
+            }
+        });
+
+        await Promise.all(updates);
+
+        showToast('تم التسديد بنجاح', 'success');
+        closeModal('payDebt');
+    } catch (err) {
+        console.error(err);
+        showToast('حدث خطأ أثناء التسديد', 'error');
     }
-    localStorage.setItem('invoices', JSON.stringify(invoices));
-
-    showToast('تم التسديد بنجاح', 'success');
-    closeModal('payDebt');
-    renderInvoices();
-    updateCustomersList();
-}
+};
 
 // ========== قائمة الزبائن ==========
 function updateCustomersList() {
     const list = document.getElementById('customersList');
-    const debtors = Object.entries(customers).filter(([_, c]) => (c.debt || 0) > 0);
+    const customerDebts = {};
+
+    // حساب الديون لكل زبون
+    invoices.forEach(inv => {
+        if (inv.remaining > 0) {
+            customerDebts[inv.customer] = (customerDebts[inv.customer] || 0) + inv.remaining;
+        }
+    });
+
+    // إضافة ديون من قاعدة البيانات
+    onValue(ref(database, 'debts'), (snap) => {
+        snap.forEach((child) => {
+            const debt = child.val();
+            if (debt.status === 'pending' && debt.customer) {
+                customerDebts[debt.customer] = (customerDebts[debt.customer] || 0) + (debt.amount || 0);
+            }
+        });
+    }, { onlyOnce: true });
+
+    const debtors = Object.entries(customerDebts).filter(([_, amount]) => amount > 0);
     document.getElementById('customerCount').textContent = debtors.length + ' زبون';
 
     if (debtors.length === 0) {
@@ -664,33 +1010,31 @@ function updateCustomersList() {
         return;
     }
 
-    list.innerHTML = debtors.map(([name, c]) => `
+    list.innerHTML = debtors.map(([name, amount]) => `
         <div class="customer-badge owes" onclick="filterByCustomer('${name}')">
             <span>${name}</span>
-            <span>${formatNumber(c.debt || 0)} ج</span>
+            <span>${formatNumber(amount)} ج</span>
         </div>
     `).join('');
 }
 
-function filterByCustomer(name) {
-    document.getElementById('invoiceCustomer').value = name;
-    openInvoiceModal();
-}
+window.filterByCustomer = function(name) {
+    document.getElementById('searchInput').value = name;
+    handleSearch();
+};
 
 // ========== إشعارات ==========
-function showToast(msg, type) {
+window.showToast = function(msg, type) {
     const toast = document.getElementById('toast');
     toast.className = 'toast toast-' + type;
     toast.textContent = msg;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3000);
-}
+};
 
-// إغلاق النوافذ بالزر Escape
+// إغلاق بالـ Escape
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        ['invoice', 'detail', 'payDebt'].forEach(t => closeModal(t));
-    }
+    if (e.key === 'Escape') ['invoice', 'detail', 'payDebt'].forEach(t => closeModal(t));
 });
 </script>
 </body>
